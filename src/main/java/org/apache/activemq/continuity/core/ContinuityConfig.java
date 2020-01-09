@@ -29,7 +29,7 @@ public class ContinuityConfig {
   private static final String DEFAULT_OUTFLOW_ACKS_SUFFIX = ".out.acks";
   private static final String DEFAULT_INFLOW_MIRROR_SUFFIX = ".in.mirror";
   private static final String DEFAULT_INFLOW_ACKS_SUFFIX = ".in.acks";
-  private static final String DEFAULT_CMD_DESTINATION = "artemis.continuity.commands";
+  private static final String DEFAULT_CMD_DESTINATION_PREFIX = "artemis.continuity.commands";
 
   private String siteId; // site ID is annotated on messages to identify origin
   
@@ -43,7 +43,7 @@ public class ContinuityConfig {
   private String inflowAcksSuffix;
   private Long inflowStagingDelay;
 
-  private String commandDestination;
+  private String commandDestinationPrefix;
   
   private String localConnectorRef;
   private String remoteConnectorRef;
@@ -60,7 +60,7 @@ public class ContinuityConfig {
     this.inflowMirrorSuffix = parseProperty(properties, "inflow-mirror-suffix", ".in.mirror");
     this.inflowAcksSuffix = parseProperty(properties, "inflow-acks-suffix", ".in.acks");
     this.inflowStagingDelay = parseLongProperty(properties, "inflow-staging-delay-ms", 60000L);
-    this.commandDestination = parseProperty(properties, "command-destination", "artemis.continuity.commands");
+    this.commandDestinationPrefix = parseProperty(properties, "command-destination-prefix", "artemis.continuity.commands");
     this.localConnectorRef = parseProperty(properties, "local-connector-ref");
     this.remoteConnectorRef = parseProperty(properties, "remote-connector-ref");
 
@@ -106,8 +106,8 @@ public class ContinuityConfig {
     return inflowStagingDelay;
   }
 
-  public String getCommandDestination() {
-    return commandDestination;
+  public String getCommandDestinationPrefix() {
+    return commandDestinationPrefix;
   }
 
   public String getLocalConnectorRef() {
@@ -134,6 +134,7 @@ public class ContinuityConfig {
       ", inMirrorSuffix=" + inflowMirrorSuffix +
       ", inAcksSuffix=" + inflowAcksSuffix +    
       ", inflowStagingDelay=" + inflowStagingDelay +
+      ", commandDestinationPrefix=" + commandDestinationPrefix +
       ", localConnectorRef=" + localConnectorRef + 
       ", remoteConnectorRef=" + remoteConnectorRef + 
       ", addresses=" + addresses + "]";

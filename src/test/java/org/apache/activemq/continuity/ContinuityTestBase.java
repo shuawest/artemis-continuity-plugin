@@ -79,7 +79,7 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     when(serviceMock.getServer()).thenReturn(serverContext.getServer());
     when(serviceMock.getConfig()).thenReturn(configMock);
     when(configMock.getSiteId()).thenReturn(serverId);
-    when(configMock.getCommandDestination()).thenReturn("artemis.continuity.commands");
+    when(configMock.getCommandDestinationPrefix()).thenReturn("artemis.continuity.commands");
     when(configMock.getLocalInVmUri()).thenReturn("vm://" + inVmAcceptorId);
     when(configMock.getLocalUsername()).thenReturn("myuser");
     when(configMock.getLocalPassword()).thenReturn("mypass");

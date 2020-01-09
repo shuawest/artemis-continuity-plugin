@@ -61,9 +61,9 @@ public class CommandManager {
   public CommandManager(final ContinuityService service, final CommandHandler commandHandler) {
     this.service = service;
     this.commandHandler = commandHandler;
-    this.commandInQueueName = getConfig().getCommandDestination() + ".in";
-    this.commandOutQueueName = getConfig().getCommandDestination() + ".out";
-    this.commandOutBridgeName = getConfig().getCommandDestination() + ".out.bridge";
+    this.commandInQueueName = getConfig().getCommandDestinationPrefix() + ".in";
+    this.commandOutQueueName = getConfig().getCommandDestinationPrefix() + ".out";
+    this.commandOutBridgeName = getConfig().getCommandDestinationPrefix() + ".out.bridge";
   }
 
   public void initialize() throws ContinuityException {
