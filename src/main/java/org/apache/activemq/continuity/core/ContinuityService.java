@@ -19,6 +19,7 @@ import java.util.Map;
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.Queue;
+import org.jgroups.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +79,25 @@ public class ContinuityService {
   }
   
   public void handleIncomingCommand(ContinuityCommand command) throws ContinuityException {
-    // TODO
+    if(log.isDebugEnabled()) {
+      log.debug("Continuity service received command: {}", command);
+    }
+
+    switch(command.getAction()) {
+      case ContinuityCommand.ACTION_ADD_QUEUE:
+        QueueInfo queueInfo = new QueueInfo();
+        queueInfo.setAddressName(command.getAddress());
+        queueInfo.setQueueName(command.getQueue());
+        if(locateFlow(queueInfo.getQueueName()) == null) {
+          createFlow(queueInfo);
+        }
+        break;
+
+      case ContinuityCommand.ACTION_REMOVE_QUEUE:
+        // TODO
+        break;
+
+    }
   }
 
   private void createCommandManager() throws ContinuityException {
@@ -88,18 +107,7 @@ public class ContinuityService {
   }
 
   
-  private void createFlow(Queue queue) throws ContinuityException {
-    String addressName = queue.getAddress().toString();
-    String queueName = queue.getName().toString();
-
-    if(locateFlow(queueName) != null) {
-      throw new ContinuityException("Continuity flow already exists: " + queueName); 
-    }
-
-    QueueInfo queueInfo = new QueueInfo();
-    queueInfo.setAddressName(addressName);
-    queueInfo.setQueueName(queueName);
-
+  private void createFlow(QueueInfo queueInfo) throws ContinuityException {
     ContinuityFlow flow = new ContinuityFlow(this, queueInfo);
     flow.initialize();
   }
@@ -113,13 +121,39 @@ public class ContinuityService {
 
   public void handleAddQueue(Queue queue) throws ContinuityException {
     if(isSubjectQueue(queue)) {
-      createFlow(queue);
-      // TODO: call command manager to send info about queue being added
+      QueueInfo queueInfo = createQueueInfo(queue);
+
+      if(locateFlow(queueInfo.getQueueName()) == null) {
+        createFlow(queueInfo);
+        
+        ContinuityCommand cmd = new ContinuityCommand();
+        cmd.setAction(ContinuityCommand.ACTION_ADD_QUEUE);
+        cmd.setAddress(queueInfo.getAddressName());
+        cmd.setQueue(queueInfo.getQueueName());
+        cmd.setUuid(UUID.randomUUID().toString());
+        commandManager.sendCommand(cmd);
+      }
     }
   }
+
   public void handleRemoveQueue(Queue queue) throws ContinuityException {
-    // TODO
+    QueueInfo queueInfo = createQueueInfo(queue);
+
+    ContinuityCommand cmd = new ContinuityCommand();
+    cmd.setAction(ContinuityCommand.ACTION_REMOVE_QUEUE);
+    cmd.setAddress(queueInfo.getAddressName());
+    cmd.setQueue(queueInfo.getQueueName());
+    cmd.setUuid(UUID.randomUUID().toString());
+    commandManager.sendCommand(cmd);
   }
+
+  private QueueInfo createQueueInfo(Queue queue) {
+    QueueInfo queueInfo = new QueueInfo();
+    queueInfo.setAddressName(queue.getAddress().toString());
+    queueInfo.setQueueName(queue.getName().toString());
+    return queueInfo;
+  }
+
   public void stop() throws ContinuityException {
     // TODO
   }

@@ -16,7 +16,10 @@ package org.apache.activemq.continuity.core;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -111,12 +114,14 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     when(continuityCtx.getConfig().getInflowAcksSuffix()).thenReturn(".in.acks");
 
     ContinuityService svc = new ContinuityService(serverCtx.getServer(), continuityCtx.getConfig());
+    svc.registerCommandManager(continuityCtx.getCommandManager());
 
     Queue queue = serverCtx.getServer().locateQueue(SimpleString.toSimpleString("async-sample1"));
 
     svc.handleAddQueue(queue);
 
     assertThat(svc.locateFlow("async-sample1"), notNullValue());
+    verify(continuityCtx.getCommandManager(), times(1)).sendCommand(any(ContinuityCommand.class));
   }
 
 }

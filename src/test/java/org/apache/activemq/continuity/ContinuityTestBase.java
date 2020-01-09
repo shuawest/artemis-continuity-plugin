@@ -74,6 +74,7 @@ public class ContinuityTestBase extends ActiveMQTestBase {
   public ContinuityContext createMockContext(ServerContext serverContext, String serverId, int inVmAcceptorId) {
     ContinuityService serviceMock = mock(ContinuityService.class);
     ContinuityConfig configMock = mock(ContinuityConfig.class);
+    CommandManager commandManagerMock = mock(CommandManager.class);
     CommandHandler commandHandlerMock = mock(CommandHandler.class);
 
     when(serviceMock.getServer()).thenReturn(serverContext.getServer());
@@ -89,6 +90,7 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     ContinuityContext continuityCtx = new ContinuityContext();
     continuityCtx.setConfig(configMock);
     continuityCtx.setService(serviceMock);
+    continuityCtx.setCommandManager(commandManagerMock);
     continuityCtx.setCommandHandler(commandHandlerMock);
     return continuityCtx;
   }
