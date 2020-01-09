@@ -92,6 +92,7 @@ public class ContinuityFlowTest extends ContinuityTestBase {
 
     ContinuityFlow flow = new ContinuityFlow(continuityCtx.getService(), queueInfo);
     flow.initialize();
+    Thread.sleep(100L);
     
     verify(continuityCtx.getService(), times(1)).registerContinuityFlow(eq(subjectQueueName), eq(flow));
 

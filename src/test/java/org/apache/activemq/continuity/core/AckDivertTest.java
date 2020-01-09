@@ -107,6 +107,7 @@ public class AckDivertTest extends ContinuityTestBase {
     divert.initialize();
 
     AckInfo ack = new AckInfo();
+    ack.setMessageSendTime(new Date(System.currentTimeMillis() - 1000));
     ack.setAckTime(new Date(System.currentTimeMillis()));
     ack.setMessageUuid(UUID.randomUUID().toString());
     ack.setSourceQueueName("async-sample1");

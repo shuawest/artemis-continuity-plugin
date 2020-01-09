@@ -13,7 +13,9 @@
  */
 package org.apache.activemq.continuity.core;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.api.core.SimpleString;
@@ -28,6 +30,7 @@ import org.apache.activemq.artemis.core.config.BridgeConfiguration;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.ComponentConfigurationRoutingType;
 import org.apache.activemq.artemis.core.server.Queue;
+import org.apache.activemq.artemis.core.server.cluster.Bridge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,9 +43,13 @@ public class CommandManager {
   private final ContinuityService service;
   private final CommandHandler commandHandler;
 
-  private Queue commandQueue = null;
-  private Queue commandBridgeQueue = null;
-  private String bridgeName = null;
+  private final String commandInQueueName; 
+  private final String commandOutQueueName;
+  private final String commandOutBridgeName;
+
+  private Queue commandInQueue = null;
+  private Queue commandOutQueue = null;
+  private Bridge commandOutBridge = null;
 
   private boolean isInitialized = false;
   private ClientSession session = null;
@@ -54,32 +61,38 @@ public class CommandManager {
   public CommandManager(final ContinuityService service, final CommandHandler commandHandler) {
     this.service = service;
     this.commandHandler = commandHandler;
+    this.commandInQueueName = getConfig().getCommandDestination() + ".in";
+    this.commandOutQueueName = getConfig().getCommandDestination() + ".out";
+    this.commandOutBridgeName = getConfig().getCommandDestination() + ".out.bridge";
   }
 
   public void initialize() throws ContinuityException {
     if(!isInitialized) {
-      String commandQueueName = getConfig().getCommandDestination();
-      String commandBridgeQueueName = getConfig().getCommandDestination() + ".bridge";
-      createCommandQueue(commandQueueName, commandQueueName);
-      createCommandQueue(commandQueueName, commandBridgeQueueName);
+      commandInQueue = createCommandQueue(commandInQueueName, commandInQueueName);
       prepareSession();
-      createCommandBridge();
+      
+      commandOutQueue = createCommandQueue(commandOutQueueName, commandOutQueueName);
+      commandOutBridge = createCommandBridge(commandOutBridgeName, getConfig().getRemoteConnectorRef(), commandOutQueueName, commandInQueueName);
+
       service.registerCommandManager(this);
+
       isInitialized = true;
-      log.debug("Finished initializing continuity manager");
+
+      if(log.isDebugEnabled()) {
+        log.debug("Finished initializing continuity command manager");
+      }
     }
   }
 
-  
   public void stop() throws ContinuityException {
     try {
       if(isInitialized) {
+        getServer().getActiveMQServerControl().destroyBridge(commandOutBridgeName);
         consumer.close();
         producer.close();
         session.close();
         factory.close();
         locator.close();
-        getServer().getActiveMQServerControl().destroyBridge(bridgeName);
       }
     } catch (final Exception e) {
       String eMessage = "Failed to stop command manager";
@@ -88,34 +101,31 @@ public class CommandManager {
     }
   }
 
-  private void createCommandQueue(String addressName, String queueName) throws ContinuityException {
+  private Queue createCommandQueue(String addressName, String queueName) throws ContinuityException {
     log.debug("Creating continuity command queue: address {}, queue {}", addressName, queueName);
-    
+    Queue queue = null;
     try {
-      this.commandQueue = getServer()
-        .createQueue(new SimpleString(addressName), // address
-          RoutingType.MULTICAST, // routing type
-          new SimpleString(queueName), // queue name
-          null, // filter
-          true, // durable
-          false); // temporary
+      queue = getServer().createQueue(new SimpleString(addressName), // address
+                                      RoutingType.MULTICAST, // routing type
+                                      new SimpleString(queueName), // queue name
+                                      null, // filter
+                                      true, // durable
+                                      false); // temporary
 
     } catch (final Exception e) {
       log.error("Failed to create continuity command destination", e);
       throw new ContinuityException("Failed to create continuity command destination", e);
     }
+    return queue;
   }
 
-  private void createCommandBridge() throws ContinuityException {
-    String fromQueue = getConfig().getCommandDestination() + ".bridge";
-    String toAddress = getConfig().getCommandDestination();
-    this.bridgeName = getServer().getIdentity() + "-command-Bridge";
-    
+  private Bridge createCommandBridge(String bridgeName, String remoteUri, String fromQueueName, String toAddressName) throws ContinuityException {
+    Bridge bridge; 
     try {
       BridgeConfiguration bridgeConfig = new BridgeConfiguration()
         .setName(bridgeName)
-        .setQueueName(fromQueue)
-        .setForwardingAddress(toAddress)
+        .setQueueName(fromQueueName)
+        .setForwardingAddress(toAddressName)
         .setHA(true)
         .setRetryIntervalMultiplier(1.0)
         .setInitialConnectAttempts(-1)
@@ -128,11 +138,14 @@ public class CommandManager {
 
       getServer().deployBridge(bridgeConfig);
 
+      bridge = getServer().getClusterManager().getBridges().get(bridgeName);
+
     } catch (Exception e) {
-      String eMessage = String.format("Failed to create divert, from '%s' to '%s.%s'", fromQueue, getConfig().getRemoteConnectorRef(), toAddress);
+      String eMessage = String.format("Failed to create command bridge, from '%s' to '%s.%s'", fromQueueName, remoteUri, toAddressName);
       log.error(eMessage, e);
       throw new ContinuityException(eMessage, e);
     }
+    return bridge;
   }
 
   private void prepareSession() throws ContinuityException {
@@ -147,13 +160,13 @@ public class CommandManager {
       }
 
       if(producer == null || producer.isClosed()) {
-        log.debug("Creating producer for commands {}", getConfig().getCommandDestination());
-        this.producer = session.createProducer(getConfig().getCommandDestination());
+        log.debug("Creating producer for commands {}", commandOutQueueName);
+        this.producer = session.createProducer(commandOutQueueName);
       }
 
       if(consumer == null || consumer.isClosed()) {
-        log.debug("Creating consumer for commands {}", getConfig().getCommandDestination());
-        this.consumer = session.createConsumer(getConfig().getCommandDestination());
+        log.debug("Creating consumer for commands {}", commandInQueueName);
+        this.consumer = session.createConsumer(commandInQueueName);
         consumer.setMessageHandler(commandHandler);
       }
 
@@ -196,6 +209,30 @@ public class CommandManager {
 
   public boolean isInitialized() {
     return isInitialized;
+  }
+
+  public String getCommandInQueueName() {
+    return commandInQueueName;
+  }
+
+  public String getCommandOutQueueName() {
+    return commandOutQueueName;
+  }
+
+  public String getCommandOutBridgeName() {
+    return commandOutBridgeName;
+  }
+
+  public Queue getCommandInQueue() {
+    return commandInQueue;
+  }
+
+  public Queue getCommandOutQueue() {
+    return commandOutQueue;
+  }
+
+  public Bridge getCommandOutBridge() {
+    return commandOutBridge;
   }
 
 }

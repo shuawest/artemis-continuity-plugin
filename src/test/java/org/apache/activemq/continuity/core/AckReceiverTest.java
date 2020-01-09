@@ -74,6 +74,7 @@ public class AckReceiverTest extends ContinuityTestBase {
     when(flowMock.getInflowAcksName()).thenReturn(inflowAckName);
 
     AckInfo expectedAck = new AckInfo();
+    expectedAck.setMessageSendTime(new Date(System.currentTimeMillis() - 1000));
     expectedAck.setAckTime(new Date(System.currentTimeMillis()));
     expectedAck.setMessageUuid(UUID.randomUUID().toString());
     expectedAck.setSourceQueueName("async-sample1");
