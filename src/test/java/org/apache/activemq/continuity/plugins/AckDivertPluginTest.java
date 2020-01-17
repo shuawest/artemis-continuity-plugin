@@ -107,7 +107,7 @@ public class AckDivertPluginTest extends ContinuityTestBase {
     when(continuityCtx.getService().isSubjectQueue(any(Queue.class))).thenReturn(true);
 
     // Send a message - expecting the message will still be sent, and the ack details will be captured by the ack-divert
-    produceAndConsumeMessage(continuityCtx, serverCtx, addressName, expectedQueueName, handlerMock, expectedMessage, expectedUuid);
+    produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, addressName, expectedQueueName, handlerMock, expectedMessage, expectedUuid);
     
     ArgumentCaptor<ClientMessage> msgCaptor = ArgumentCaptor.forClass(ClientMessage.class);
     verify(handlerMock, times(1)).onMessage(msgCaptor.capture());
@@ -154,7 +154,7 @@ public class AckDivertPluginTest extends ContinuityTestBase {
     when(continuityCtx.getService().isSubjectQueue(any(Queue.class))).thenReturn(true);
 
     // Send a message - expecting the message will still be sent, and the ack details will be captured by the ack-divert
-    produceAndConsumeMessage(continuityCtx, serverCtx, addressName, expectedQueueName, handlerMock, expectedMessage, null);
+    produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, addressName, expectedQueueName, handlerMock, expectedMessage, null);
  
     ArgumentCaptor<ClientMessage> msgCaptor = ArgumentCaptor.forClass(ClientMessage.class);
     verify(handlerMock, times(1)).onMessage(msgCaptor.capture());

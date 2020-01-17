@@ -45,6 +45,7 @@ public class AckDivert {
 
   public void initialize() throws ContinuityException {
     prepareSession();
+    isInitialized = true;
     log.debug("Finished initializing ack divert for {}", flow.getSubjectQueueName());
   }
 
@@ -55,9 +56,10 @@ public class AckDivert {
         session.close();
         factory.close();
         locator.close();
+        isInitialized = false;
       }
     } catch (final Exception e) {
-      String eMessage = "Failed to stop command manager";
+      String eMessage = "Failed to stop ack divert";
       log.error(eMessage, e);
       throw new ContinuityException(eMessage, e);
     }
@@ -118,6 +120,10 @@ public class AckDivert {
 
   private ActiveMQServer getServer() {
     return service.getServer();
+  }
+
+  public Boolean isInitialized() {
+    return isInitialized;
   }
 
 }

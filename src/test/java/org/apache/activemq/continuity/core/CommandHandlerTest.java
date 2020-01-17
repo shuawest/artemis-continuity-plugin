@@ -44,7 +44,7 @@ public class CommandHandlerTest extends ContinuityTestBase {
     
     CommandHandler handler = new CommandHandler(continuityCtx.getService());
 
-    produceAndConsumeMessage(continuityCtx, serverCtx, "cmd-mock", "cmd-mock", handler, cmdJson, null);
+    produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, "cmd-mock", "cmd-mock", handler, cmdJson, null);
 
     ArgumentCaptor<ContinuityCommand> cmdCaptor = ArgumentCaptor.forClass(ContinuityCommand.class);
     verify(continuityCtx.getService()).handleIncomingCommand(cmdCaptor.capture());
@@ -67,7 +67,7 @@ public class CommandHandlerTest extends ContinuityTestBase {
 
     CommandHandler handler = new CommandHandler(continuityCtx.getService());
 
-    produceAndConsumeMessage(continuityCtx, serverCtx, "cmd-mock", "cmd-mock", handler, cmdJson, null);
+    produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, "cmd-mock", "cmd-mock", handler, cmdJson, null);
 
     verify(continuityCtx.getService(), times(0)).handleIncomingCommand(any());
   }

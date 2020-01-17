@@ -25,18 +25,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class ContinuityDestinationPlugin implements ActiveMQServerPlugin {
+public class DestinationPlugin implements ActiveMQServerPlugin {
 
-  private static final Logger log = LoggerFactory.getLogger(ContinuityDestinationPlugin.class);
+  private static final Logger log = LoggerFactory.getLogger(DestinationPlugin.class);
 
   private ContinuityService continuityService;
 
-  public ContinuityDestinationPlugin(ContinuityService continuityService) {
+  public DestinationPlugin(ContinuityService continuityService) {
     this.continuityService = continuityService;
   } 
 
   public void registered(ActiveMQServer server) {
-    log.debug("ContinuityDestinationPlugin registered");
+    log.debug("DestinationPlugin registered");
   }
 
   @Override

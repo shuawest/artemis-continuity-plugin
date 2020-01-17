@@ -111,7 +111,7 @@ public class InflowMirrorPluginTest extends ContinuityTestBase {
     InflowMirrorPlugin plugin = new InflowMirrorPlugin(continuityCtx.getService());
     serverCtx.getServer().getConfiguration().registerBrokerPlugin(plugin);
     
-    produceAndConsumeMessage(continuityCtx, serverCtx, inMirrorName, inMirrorName, handlerMock, expectedMessage, null);
+    produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, inMirrorName, inMirrorName, handlerMock, expectedMessage, null);
     
     // ArgumentCaptor<ClientMessage> msgCaptor = ArgumentCaptor.forClass(ClientMessage.class);
     // verify(handlerMock, times(1)).onMessage(msgCaptor.capture());

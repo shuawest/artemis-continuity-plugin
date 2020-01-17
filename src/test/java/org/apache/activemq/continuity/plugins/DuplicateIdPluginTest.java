@@ -120,7 +120,7 @@ public class DuplicateIdPluginTest extends ContinuityTestBase {
     DuplicateIdPlugin plugin = new DuplicateIdPlugin(continuityCtx.getService());
     serverCtx.getServer().getConfiguration().registerBrokerPlugin(plugin);
     
-    produceAndConsumeMessage(continuityCtx, serverCtx, addressName, queueName, handlerMock, expectedMessage, null);
+    produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, addressName, queueName, handlerMock, expectedMessage, null);
     
     ArgumentCaptor<ClientMessage> msgCaptor = ArgumentCaptor.forClass(ClientMessage.class);
     verify(handlerMock, times(1)).onMessage(msgCaptor.capture());
@@ -150,7 +150,7 @@ public class DuplicateIdPluginTest extends ContinuityTestBase {
     DuplicateIdPlugin plugin = new DuplicateIdPlugin(continuityCtx.getService());
     serverCtx.getServer().getConfiguration().registerBrokerPlugin(plugin);
     
-    produceAndConsumeMessage(continuityCtx, serverCtx, addressName, queueName, handlerMock, expectedMessage, expectedUuid);
+    produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, addressName, queueName, handlerMock, expectedMessage, expectedUuid);
     
     ArgumentCaptor<ClientMessage> msgCaptor = ArgumentCaptor.forClass(ClientMessage.class);
     verify(handlerMock, times(1)).onMessage(msgCaptor.capture());

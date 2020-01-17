@@ -49,9 +49,9 @@ public class AckManagerTest extends ContinuityTestBase {
     when(flowMock.getSubjectQueueName()).thenReturn(expectedSubjectQueueName);
     when(flowMock.getInflowMirrorName()).thenReturn(expectedInflowQueueName);
 
-    produceMessage(continuityCtx, serverCtx, expectedInflowQueueName, expectedInflowQueueName, "test message 1", UUID.randomUUID().toString());
-    produceMessage(continuityCtx, serverCtx, expectedInflowQueueName, expectedInflowQueueName, "test message 2", expectedUuid);
-    produceMessage(continuityCtx, serverCtx, expectedInflowQueueName, expectedInflowQueueName, "test message 3", UUID.randomUUID().toString());
+    produceMessage(continuityCtx.getConfig(), serverCtx, expectedInflowQueueName, expectedInflowQueueName, "test message 1", UUID.randomUUID().toString());
+    produceMessage(continuityCtx.getConfig(), serverCtx, expectedInflowQueueName, expectedInflowQueueName, "test message 2", expectedUuid);
+    produceMessage(continuityCtx.getConfig(), serverCtx, expectedInflowQueueName, expectedInflowQueueName, "test message 3", UUID.randomUUID().toString());
 
     Queue inflowMirrorQueue = serverCtx.getServer().locateQueue(SimpleString.toSimpleString(expectedInflowQueueName));
     long preHandleQueueCount = inflowMirrorQueue.getDurableMessageCount();
@@ -81,9 +81,9 @@ public class AckManagerTest extends ContinuityTestBase {
     AckManager ackManager = new AckManager(continuityCtx.getService(), flowMock);
     ackManager.addDuplicateIdToTarget(expectedUuid);
 
-    produceMessage(continuityCtx, serverCtx, expectedSubjectQueueName, expectedSubjectQueueName, "test message 1", UUID.randomUUID().toString());
-    produceMessage(continuityCtx, serverCtx, expectedSubjectQueueName, expectedSubjectQueueName, "test message 2", expectedUuid);
-    produceMessage(continuityCtx, serverCtx, expectedSubjectQueueName, expectedSubjectQueueName, "test message 3", UUID.randomUUID().toString());
+    produceMessage(continuityCtx.getConfig(), serverCtx, expectedSubjectQueueName, expectedSubjectQueueName, "test message 1", UUID.randomUUID().toString());
+    produceMessage(continuityCtx.getConfig(), serverCtx, expectedSubjectQueueName, expectedSubjectQueueName, "test message 2", expectedUuid);
+    produceMessage(continuityCtx.getConfig(), serverCtx, expectedSubjectQueueName, expectedSubjectQueueName, "test message 3", UUID.randomUUID().toString());
 
     if(log.isDebugEnabled())
       ackManager.printDupIdCache(expectedSubjectQueueName);
@@ -119,9 +119,9 @@ public class AckManagerTest extends ContinuityTestBase {
     when(continuityCtx.getService().locateFlow(subjectQueueName)).thenReturn(flowMock);
     
     long preSendTime = System.currentTimeMillis();
-    produceMessage(continuityCtx, serverCtx, inflowMirrorQueueName, inflowMirrorQueueName, "test message 1", UUID.randomUUID().toString());
-    produceMessage(continuityCtx, serverCtx, inflowMirrorQueueName, inflowMirrorQueueName, "test message 2", UUID.randomUUID().toString());
-    produceMessage(continuityCtx, serverCtx, inflowMirrorQueueName, inflowMirrorQueueName, "test message 3", UUID.randomUUID().toString());    
+    produceMessage(continuityCtx.getConfig(), serverCtx, inflowMirrorQueueName, inflowMirrorQueueName, "test message 1", UUID.randomUUID().toString());
+    produceMessage(continuityCtx.getConfig(), serverCtx, inflowMirrorQueueName, inflowMirrorQueueName, "test message 2", UUID.randomUUID().toString());
+    produceMessage(continuityCtx.getConfig(), serverCtx, inflowMirrorQueueName, inflowMirrorQueueName, "test message 3", UUID.randomUUID().toString());    
 
     MessageHandler handlerStub = new MessageHandlerStub();
     Queue inflowMirrorQueue = serverCtx.getServer().locateQueue(SimpleString.toSimpleString(inflowMirrorQueueName));
@@ -136,7 +136,7 @@ public class AckManagerTest extends ContinuityTestBase {
       if (System.currentTimeMillis() >= pollTimeout) {
         break;
       }
-      consumeMessages(continuityCtx, serverCtx, inflowMirrorQueueName, inflowMirrorQueueName, handlerStub);
+      consumeMessages(continuityCtx.getConfig(), serverCtx, inflowMirrorQueueName, inflowMirrorQueueName, handlerStub);
       Thread.sleep(10L);
     }
 

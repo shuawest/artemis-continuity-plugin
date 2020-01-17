@@ -24,7 +24,7 @@ import org.apache.activemq.artemis.core.config.TransformerConfiguration;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.QueueQueryResult;
 import org.apache.activemq.artemis.core.server.cluster.Bridge;
-import org.apache.activemq.continuity.plugins.MessageOriginTransformer;
+import org.apache.activemq.continuity.plugins.OriginTransformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +50,8 @@ public class ContinuityFlow {
   private final String inflowAcksName;
   private final String targetBridgeName;
 
+  private boolean isInitialized = false;
+  
   private Bridge outflowMirrorBridge;
   private Bridge outflowAcksBridge;
   private Bridge targetBridge;
@@ -79,6 +81,7 @@ public class ContinuityFlow {
   public void initialize() throws ContinuityException {
     service.registerContinuityFlow(queueInfo.getQueueName(), this);
     constructFlowPrimitives();
+    isInitialized = true;
   }
 
   private void constructFlowPrimitives() throws ContinuityException {
@@ -164,7 +167,7 @@ public class ContinuityFlow {
 
   private void createDivert(final String divertName, final String sourceAddress, final String targetAddress) throws ContinuityException {
     try {
-      final TransformerConfiguration originTransformer = new TransformerConfiguration(MessageOriginTransformer.class.getName());
+      final TransformerConfiguration originTransformer = new TransformerConfiguration(OriginTransformer.class.getName());
       originTransformer.setProperties(new HashMap<String, String>() {{
         put("messageOrigin", getConfig().getSiteId());
       }});
@@ -220,6 +223,10 @@ public class ContinuityFlow {
   }
   private ActiveMQServer getServer() {
     return service.getServer();
+  }
+
+  public boolean isInitialized() {
+    return isInitialized;
   }
 
   public AckDivert getAckDivert() {

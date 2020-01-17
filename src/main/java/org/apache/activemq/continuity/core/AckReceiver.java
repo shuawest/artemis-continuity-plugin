@@ -47,6 +47,7 @@ public class AckReceiver implements MessageHandler {
 
   public void initialize() throws ContinuityException {
     prepareSession();
+    isInitialized = true;
     log.debug("Finished initializing ack receiver for {}", flow.getInflowAcksName());
   }
 
@@ -57,6 +58,7 @@ public class AckReceiver implements MessageHandler {
         session.close();
         factory.close();
         locator.close();
+        isInitialized = false;
       }
     } catch (final Exception e) {
       String eMessage = String.format("Failed to stop ack receiver for %s", flow.getInflowAcksName());
@@ -117,6 +119,10 @@ public class AckReceiver implements MessageHandler {
 
   private ActiveMQServer getServer() {
     return service.getServer();
+  }
+
+  public boolean isInitialized() {
+    return isInitialized;
   }
 
 }

@@ -151,7 +151,11 @@ public class CommandManager {
   private void prepareSession() throws ContinuityException {
     try {
       if (this.session == null || session.isClosed()) {
-        log.debug("Creating local session for commands on '{}' with user '{}'", getConfig().getLocalInVmUri(), getConfig().getLocalUsername());
+
+        if(log.isDebugEnabled()) {
+          log.debug("Creating local session for commands on '{}' with user '{}'", getConfig().getLocalInVmUri(), getConfig().getLocalUsername());
+        }
+        
         this.locator = ActiveMQClient.createServerLocator(getConfig().getLocalInVmUri());
         this.factory = locator.createSessionFactory();
         this.session = factory.createSession(getConfig().getLocalUsername(),
@@ -233,6 +237,10 @@ public class CommandManager {
 
   public Bridge getCommandOutBridge() {
     return commandOutBridge;
+  }
+
+  public CommandHandler getCommandHandler() {
+    return commandHandler;
   }
 
 }

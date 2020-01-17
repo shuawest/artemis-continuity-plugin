@@ -85,7 +85,7 @@ public class AckReceiverTest extends ContinuityTestBase {
     ackReceiver.initialize();
 
     // Send a ack over the inflow queue
-    produceMessage(continuityCtx, serverCtx, inflowAckName, inflowAckName, expectedAckJson, null);
+    produceMessage(continuityCtx.getConfig(), serverCtx, inflowAckName, inflowAckName, expectedAckJson, null);
     Thread.sleep(500);
     
     ArgumentCaptor<AckInfo> ackCaptor = ArgumentCaptor.forClass(AckInfo.class);

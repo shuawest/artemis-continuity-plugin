@@ -157,7 +157,7 @@ public class ContinuityConfig {
 
   private static Long parseLongProperty(Map<String, String> properties, String name) {
     String value = properties.get(name);
-    Long longValue = Long.parseLong(value);
+    Long longValue = (value == null)? null : Long.parseLong(value);
     return longValue;
   }
 }

@@ -20,9 +20,9 @@ import org.apache.activemq.artemis.core.server.transformer.Transformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MessageOriginTransformer implements Transformer {
+public class OriginTransformer implements Transformer {
 
-  private static final Logger log = LoggerFactory.getLogger(MessageOriginTransformer.class);
+  private static final Logger log = LoggerFactory.getLogger(OriginTransformer.class);
 
   private static final String MESSAGE_ORIGIN_HEADER = "ARTEMIS_MESSAGE_ORIGIN";
 

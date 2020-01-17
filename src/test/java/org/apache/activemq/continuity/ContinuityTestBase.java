@@ -95,15 +95,15 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     return continuityCtx;
   }
 
-  public void produceAndConsumeMessage(ContinuityContext continuityCtx, ServerContext serverCtx, 
+  public void produceAndConsumeMessage(ContinuityConfig continuityConfig, ServerContext serverCtx, 
                                        String address, String queueName, MessageHandler handler, 
                                        String messageBody, String dupId) throws Exception {
 
-    ServerLocator locator = ActiveMQClient.createServerLocator(continuityCtx.getConfig().getLocalInVmUri());
+    ServerLocator locator = ActiveMQClient.createServerLocator(continuityConfig.getLocalInVmUri());
     ClientSessionFactory factory = locator.createSessionFactory();
-    ClientSession session = factory.createSession(continuityCtx.getConfig().getLocalUsername(),
-        continuityCtx.getConfig().getLocalPassword(), false, true, true, false, locator.getAckBatchSize());
-    ;
+    ClientSession session = factory.createSession(continuityConfig.getLocalUsername(),
+      continuityConfig.getLocalPassword(), false, true, true, false, locator.getAckBatchSize());
+    
     ClientProducer producer = session.createProducer(address);
     ClientConsumer consumer = session.createConsumer(queueName);
     consumer.setMessageHandler(handler);
@@ -131,13 +131,13 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     locator.close();
   }
 
-  public void produceMessage(ContinuityContext continuityCtx, ServerContext serverCtx, 
+  public void produceMessage(ContinuityConfig continuityConfig, ServerContext serverCtx, 
                              String address, String queueName, 
                              String messageBody, String dupId) throws Exception {  
 
-    ServerLocator locator = ActiveMQClient.createServerLocator(continuityCtx.getConfig().getLocalInVmUri());
+    ServerLocator locator = ActiveMQClient.createServerLocator(continuityConfig.getLocalInVmUri());
     ClientSessionFactory factory = locator.createSessionFactory();
-    ClientSession session = factory.createSession(continuityCtx.getConfig().getLocalUsername(), continuityCtx.getConfig().getLocalPassword(), false, true, true, false, locator.getAckBatchSize());;
+    ClientSession session = factory.createSession(continuityConfig.getLocalUsername(), continuityConfig.getLocalPassword(), false, true, true, false, locator.getAckBatchSize());;
     ClientProducer producer = session.createProducer(address);
    
     session.start();
@@ -156,12 +156,12 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     locator.close();
   }
 
-  public void consumeMessages(ContinuityContext continuityCtx, ServerContext serverCtx, String address, String queueName, MessageHandler handler) throws Exception {
+  public void consumeMessages(ContinuityConfig continuityConfig, ServerContext serverCtx, String address, String queueName, MessageHandler handler) throws Exception {
 
-    ServerLocator locator = ActiveMQClient.createServerLocator(continuityCtx.getConfig().getLocalInVmUri());
+    ServerLocator locator = ActiveMQClient.createServerLocator(continuityConfig.getLocalInVmUri());
     ClientSessionFactory factory = locator.createSessionFactory();
-    ClientSession session = factory.createSession(continuityCtx.getConfig().getLocalUsername(),
-        continuityCtx.getConfig().getLocalPassword(), false, true, true, false, locator.getAckBatchSize());
+    ClientSession session = factory.createSession(continuityConfig.getLocalUsername(),
+      continuityConfig.getLocalPassword(), false, true, true, false, locator.getAckBatchSize());
   
     ClientConsumer consumer = session.createConsumer(queueName);
     consumer.setMessageHandler(handler);

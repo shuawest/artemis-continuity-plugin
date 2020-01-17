@@ -13,7 +13,10 @@
  */
 package org.apache.activemq.continuity.core;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.activemq.artemis.api.core.SimpleString;
@@ -30,6 +33,7 @@ public class ContinuityService {
   private final ActiveMQServer server;
   private final ContinuityConfig config;
 
+  private boolean isInitialized;
   private CommandManager commandManager;
   private Map<String,ContinuityFlow> flows = new HashMap<String,ContinuityFlow>();
 
@@ -68,6 +72,13 @@ public class ContinuityService {
 
   public void initialize() throws ContinuityException {
     createCommandManager();
+    isInitialized = true;
+  }
+
+  private void createCommandManager() throws ContinuityException {
+    CommandHandler cmdHandler = new CommandHandler(this);
+    CommandManager cmdMgr = new CommandManager(this, cmdHandler);
+    cmdMgr.initialize();
   }
 
   public void registerCommandManager(CommandManager mgr) {
@@ -100,12 +111,6 @@ public class ContinuityService {
     }
   }
 
-  private void createCommandManager() throws ContinuityException {
-    CommandHandler cmdHandler = new CommandHandler(this);
-    CommandManager cmdMgr = new CommandManager(this, cmdHandler);
-    cmdMgr.initialize();
-  }
-
   
   private void createFlow(QueueInfo queueInfo) throws ContinuityException {
     ContinuityFlow flow = new ContinuityFlow(this, queueInfo);
@@ -121,8 +126,11 @@ public class ContinuityService {
 
   public void handleAddQueue(Queue queue) throws ContinuityException {
     if(isSubjectQueue(queue)) {
-      QueueInfo queueInfo = createQueueInfo(queue);
+      QueueInfo queueInfo = extractQueueInfo(queue);
 
+      if(!isInitialized)
+        initialize();
+      
       if(locateFlow(queueInfo.getQueueName()) == null) {
         createFlow(queueInfo);
         
@@ -137,7 +145,7 @@ public class ContinuityService {
   }
 
   public void handleRemoveQueue(Queue queue) throws ContinuityException {
-    QueueInfo queueInfo = createQueueInfo(queue);
+    QueueInfo queueInfo = extractQueueInfo(queue);
 
     ContinuityCommand cmd = new ContinuityCommand();
     cmd.setAction(ContinuityCommand.ACTION_REMOVE_QUEUE);
@@ -147,7 +155,7 @@ public class ContinuityService {
     commandManager.sendCommand(cmd);
   }
 
-  private QueueInfo createQueueInfo(Queue queue) {
+  private QueueInfo extractQueueInfo(Queue queue) {
     QueueInfo queueInfo = new QueueInfo();
     queueInfo.setAddressName(queue.getAddress().toString());
     queueInfo.setQueueName(queue.getName().toString());
@@ -163,6 +171,14 @@ public class ContinuityService {
   }
   public ActiveMQServer getServer() {
     return server;
+  }
+
+  public boolean isInitialized() {
+    return isInitialized;
+  }
+
+  public Collection<ContinuityFlow> getFlows() {
+    return flows.values();
   }
 
 }
