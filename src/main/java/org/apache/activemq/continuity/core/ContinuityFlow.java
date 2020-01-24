@@ -51,10 +51,12 @@ public class ContinuityFlow {
   private final String targetBridgeName;
 
   private boolean isInitialized = false;
-  
+  private boolean isStarted = false;
+
   private Bridge outflowMirrorBridge;
   private Bridge outflowAcksBridge;
   private Bridge targetBridge;
+
   private AckDivert ackDivert;
   private AckReceiver ackReceiver;
   private AckManager ackManager;
@@ -84,6 +86,25 @@ public class ContinuityFlow {
     isInitialized = true;
   }
 
+  public void start() throws ContinuityException {
+    ackDivert.start();
+    ackReceiver.start();
+    isStarted = true;
+  }
+
+  public void stop() throws ContinuityException {
+    try {
+      outflowMirrorBridge.stop();
+      outflowAcksBridge.stop();
+      targetBridge.stop();
+    } catch (Exception e) {
+      throw new ContinuityException("Unable to stop bridge", e);
+    }
+    ackDivert.stop();
+    ackReceiver.stop();
+    isStarted = false;
+  }
+
   private void constructFlowPrimitives() throws ContinuityException {
     createFlowQueue(outflowMirrorName, outflowMirrorName);
     createDivert(outflowDivertName, subjectAddressName, outflowMirrorName);
@@ -104,12 +125,10 @@ public class ContinuityFlow {
 
   private void createAckDivert() throws ContinuityException {
     this.ackDivert = new AckDivert(service, this);
-    ackDivert.initialize();
   }
   
   private void createAckReceiver() throws ContinuityException {
     this.ackReceiver = new AckReceiver(service, this);
-    ackReceiver.initialize();
   }
 
   private void createAckManager() throws ContinuityException {
@@ -214,10 +233,6 @@ public class ContinuityFlow {
     return bridge;
   }
 
-  public void stop() throws ContinuityException {
-    // TODO
-  }
-
   private ContinuityConfig getConfig() {
     return service.getConfig();
   }
@@ -227,6 +242,9 @@ public class ContinuityFlow {
 
   public boolean isInitialized() {
     return isInitialized;
+  }
+  public boolean isStarted() {
+    return isStarted;
   }
 
   public AckDivert getAckDivert() {

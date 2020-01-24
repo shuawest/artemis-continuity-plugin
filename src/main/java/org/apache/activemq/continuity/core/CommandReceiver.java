@@ -21,13 +21,13 @@ import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CommandHandler implements MessageHandler {
+public class CommandReceiver implements MessageHandler {
 
-  private static final Logger log = LoggerFactory.getLogger(CommandHandler.class);
+  private static final Logger log = LoggerFactory.getLogger(CommandReceiver.class);
 
   private final ContinuityService service;
 
-  public CommandHandler(final ContinuityService service) {
+  public CommandReceiver(final ContinuityService service) {
     this.service = service;
   }
 

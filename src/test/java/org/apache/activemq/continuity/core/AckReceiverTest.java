@@ -51,7 +51,9 @@ public class AckReceiverTest extends ContinuityTestBase {
     int connectionCount = serverCtx.getServer().getConnectionCount();
 
     AckReceiver ackReceiver = new AckReceiver(continuityCtx.getService(), flowMock);
-    ackReceiver.initialize();
+    ackReceiver.start();
+
+    assertThat("receiver not started", ackReceiver.isStarted(), equalTo(true));
     
     Queue outAcksQueue = serverCtx.getServer().locateQueue(SimpleString.toSimpleString(inflowAckName));
     assertThat("cannot find in acks queue after divert", outAcksQueue, notNullValue());
@@ -82,7 +84,7 @@ public class AckReceiverTest extends ContinuityTestBase {
     log.debug("Expected ack json: {}", expectedAckJson);
 
     AckReceiver ackReceiver = new AckReceiver(continuityCtx.getService(), flowMock);
-    ackReceiver.initialize();
+    ackReceiver.start();
 
     // Send a ack over the inflow queue
     produceMessage(continuityCtx.getConfig(), serverCtx, inflowAckName, inflowAckName, expectedAckJson, null);

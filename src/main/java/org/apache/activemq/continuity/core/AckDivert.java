@@ -32,7 +32,7 @@ public class AckDivert {
   private final ContinuityService service;
   private final ContinuityFlow flow;
 
-  private Boolean isInitialized = false;
+  private Boolean isStarted = false;
   private ClientSession session = null;
   private ServerLocator locator = null;
   private ClientSessionFactory factory = null; 
@@ -43,20 +43,20 @@ public class AckDivert {
     this.flow = flow;
   }
 
-  public void initialize() throws ContinuityException {
+  public void start() throws ContinuityException {
     prepareSession();
-    isInitialized = true;
+    isStarted = true;
     log.debug("Finished initializing ack divert for {}", flow.getSubjectQueueName());
   }
 
   public void stop() throws ContinuityException {
     try {
-      if(isInitialized) {
+      if(isStarted) {
         producer.close();
         session.close();
         factory.close();
         locator.close();
-        isInitialized = false;
+        isStarted = false;
       }
     } catch (final Exception e) {
       String eMessage = "Failed to stop ack divert";
@@ -122,8 +122,8 @@ public class AckDivert {
     return service.getServer();
   }
 
-  public Boolean isInitialized() {
-    return isInitialized;
+  public Boolean isStarted() {
+    return isStarted;
   }
 
 }

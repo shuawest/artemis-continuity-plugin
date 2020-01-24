@@ -18,6 +18,7 @@ import static org.hamcrest.Matchers.notNullValue;
 
 import java.util.HashMap;
 
+import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.continuity.ContinuityTestBase;
 import org.apache.activemq.continuity.core.ContinuityFlow;
 import org.junit.Test;
@@ -44,9 +45,11 @@ public class ContinuityPluginTest extends ContinuityTestBase {
 
     serverCtx.getServer().getConfiguration().registerBrokerPlugin(plugin);
     serverCtx.getServer().start();
-    Thread.sleep(1000L);
-
-    //produceMessage(plugin.getConfig(), serverCtx, "async-sample1", "async-sample1", "test message", null);
+    Thread.sleep(100L);
+    
+    // create a dummy connection to the server to start the plugin
+    MessageHandlerStub dummyHandler = new MessageHandlerStub();
+    consumeDirect("tcp://localhost:61617", "myuser", "mypass", "artemis.continuity.commands.in", RoutingType.MULTICAST, "commandStubQueue", dummyHandler);
 
     assertThat(plugin.getConfig(), notNullValue());
     assertThat(plugin.getConfig().getSiteId(), equalTo("site2"));
@@ -59,18 +62,20 @@ public class ContinuityPluginTest extends ContinuityTestBase {
 
     assertThat(plugin.getService(), notNullValue());
     assertThat(plugin.getService().isInitialized(), equalTo(true));
+    assertThat(plugin.getService().isStarted(), equalTo(true));
     assertThat(plugin.getService().getCommandManager(), notNullValue());
     assertThat(plugin.getService().getCommandManager().isInitialized(), equalTo(true));
-    assertThat(plugin.getService().getCommandManager().getCommandHandler(), notNullValue());
+    assertThat(plugin.getService().getCommandManager().isStarted(), equalTo(true));
+    assertThat(plugin.getService().getCommandManager().getCommandReceiver(), notNullValue());
 
     assertThat(plugin.getService().getFlows().size(), equalTo(1));
     ContinuityFlow flow1 = plugin.getService().locateFlow("async-sample1");
     assertThat(flow1, notNullValue());
     assertThat(flow1.isInitialized(), equalTo(true));
     assertThat(flow1.getAckDivert(), notNullValue());
-    assertThat(flow1.getAckDivert().isInitialized(), equalTo(true));
+    assertThat(flow1.getAckDivert().isStarted(), equalTo(true));
     assertThat(flow1.getAckReceiver(), notNullValue());
-    assertThat(flow1.getAckReceiver().isInitialized(), equalTo(true));
+    assertThat(flow1.getAckReceiver().isStarted(), equalTo(true));
     assertThat(flow1.getAckManager(), notNullValue());
   }
   

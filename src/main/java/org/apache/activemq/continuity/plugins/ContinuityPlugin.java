@@ -20,8 +20,6 @@ import org.apache.activemq.artemis.core.config.Configuration;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerPlugin;
 import org.apache.activemq.artemis.spi.core.protocol.RemotingConnection;
-import org.apache.activemq.continuity.core.CommandHandler;
-import org.apache.activemq.continuity.core.CommandManager;
 import org.apache.activemq.continuity.core.ContinuityConfig;
 import org.apache.activemq.continuity.core.ContinuityException;
 import org.apache.activemq.continuity.core.ContinuityService;
@@ -59,37 +57,30 @@ public class ContinuityPlugin implements ActiveMQServerPlugin {
 
   @Override
   public void registered(ActiveMQServer server) {
-    log.debug("Creating continuity service");
-    this.continuityService = new ContinuityService(server, continuityConfig);
+    try {
+      log.debug("Creating continuity service");
+      this.continuityService = new ContinuityService(server, continuityConfig);
+      continuityService.initialize();
 
-    log.debug("Registering dependent plugins");
-    Configuration brokerConfig = server.getConfiguration();
-    brokerConfig.registerBrokerPlugin(new DestinationPlugin(continuityService));
-    brokerConfig.registerBrokerPlugin(new DuplicateIdPlugin(continuityService));
-    brokerConfig.registerBrokerPlugin(new InflowMirrorPlugin(continuityService));
-    brokerConfig.registerBrokerPlugin(new AckDivertPlugin(continuityService));
+      log.debug("Registering dependent plugins");
+      Configuration brokerConfig = server.getConfiguration();
+      brokerConfig.registerBrokerPlugin(new DestinationPlugin(continuityService));
+      brokerConfig.registerBrokerPlugin(new DuplicateIdPlugin(continuityService));
+      brokerConfig.registerBrokerPlugin(new InflowMirrorPlugin(continuityService));
+      brokerConfig.registerBrokerPlugin(new AckDivertPlugin(continuityService));
+    } catch (ContinuityException e) {
+      log.error("Failed to initialize continuity plugin", e);
+    }
   }
 
+  // Command manager can't be started until the broker is running 
   @Override
   public void afterCreateConnection(RemotingConnection connection) throws ActiveMQException {
-    log.debug("\n\nafterCreateConnection: {}\n\n", connection.getRemoteAddress());
-    
+    log.debug("Initializing command manager", connection.getRemoteAddress());
+    if(!continuityService.isStarted() && !continuityService.isStarting()) {
+      continuityService.start();
+    }
   }
-  //   try {
-  //     log.debug("Initializing continuity service");
-  //     continuityService.initialize();
-
-  //     log.debug("Registering dependent plugins");
-  //     Configuration brokerConfig = server.getConfiguration();
-  //     brokerConfig.registerBrokerPlugin(new DestinationPlugin(continuityService));
-  //     brokerConfig.registerBrokerPlugin(new DuplicateIdPlugin(continuityService));
-  //     brokerConfig.registerBrokerPlugin(new InflowMirrorPlugin(continuityService));
-  //     brokerConfig.registerBrokerPlugin(new AckDivertPlugin(continuityService));
-      
-  //   } catch(ContinuityException e) {
-  //     log.error("Failed to initialize continuity plugin", e);
-  //   }
-  // }
 
   public ContinuityService getService() {
     return continuityService;

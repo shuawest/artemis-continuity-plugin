@@ -50,7 +50,9 @@ public class AckDivertTest extends ContinuityTestBase {
     int connectionCount = serverCtx.getServer().getConnectionCount();
 
     AckDivert divert = new AckDivert(continuityCtx.getService(), flow);
-    divert.initialize();
+    divert.start();
+
+    assertThat("divert not started", divert.isStarted(), equalTo(true));
     
     Queue outflowAcksQueue = serverCtx.getServer().locateQueue(SimpleString.toSimpleString(outflowAcksName));
     assertThat("cannot find outflow acks queue after divert", outflowAcksQueue, notNullValue());
@@ -74,7 +76,7 @@ public class AckDivertTest extends ContinuityTestBase {
     when(flow.getOutflowAcksName()).thenReturn(outflowAcksName);
 
     AckDivert divert = new AckDivert(continuityCtx.getService(), flow);
-    divert.initialize();
+    divert.start();
 
     divert.sendAck("test message");
     Thread.sleep(10);
@@ -104,7 +106,7 @@ public class AckDivertTest extends ContinuityTestBase {
     when(flow.getOutflowAcksName()).thenReturn(outflowAcksName);
 
     AckDivert divert = new AckDivert(continuityCtx.getService(), flow);
-    divert.initialize();
+    divert.start();
 
     AckInfo ack = new AckInfo();
     ack.setMessageSendTime(new Date(System.currentTimeMillis() - 1000));

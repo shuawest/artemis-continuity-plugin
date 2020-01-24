@@ -38,8 +38,9 @@ public class CommandManagerTest extends ContinuityTestBase {
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
     
-    CommandManager manager = new CommandManager(continuityCtx.getService(), continuityCtx.getCommandHandler());
+    CommandManager manager = new CommandManager(continuityCtx.getService(), continuityCtx.getCommandReceiver());
     manager.initialize();
+    manager.start();
 
     assertThat("isinitialized", manager.isInitialized(), equalTo(true));
     assertThat("getCommandInQueueName", manager.getCommandInQueueName(), equalTo("artemis.continuity.commands.in"));
@@ -66,14 +67,17 @@ public class CommandManagerTest extends ContinuityTestBase {
     ContinuityContext continuityCtx2 = createMockContext(serverCtx2, "backup", 2);
     serverCtx2.getServer().start();
 
-    CommandManager manager1 = new CommandManager(continuityCtx1.getService(), continuityCtx1.getCommandHandler());
+    CommandManager manager1 = new CommandManager(continuityCtx1.getService(), continuityCtx1.getCommandReceiver());
     manager1.initialize();
 
-    CommandManager manager2 = new CommandManager(continuityCtx2.getService(), continuityCtx2.getCommandHandler());
+    CommandManager manager2 = new CommandManager(continuityCtx2.getService(), continuityCtx2.getCommandReceiver());
     manager2.initialize();
 
+    manager1.start();
+    manager2.start();
+
     manager1.sendCommand("test message from primary");
-    Thread.sleep(200);
+    Thread.sleep(200L);
 
     verifyMessage(continuityCtx2, "test message from primary", serverCtx1.getServer().getIdentity(), 
         1, "Failed to receive command on backup from primary");
@@ -94,14 +98,17 @@ public class CommandManagerTest extends ContinuityTestBase {
     ContinuityContext continuityCtx2 = createMockContext(serverCtx2, "backup", 2);
     serverCtx2.getServer().start();
 
-    CommandManager manager1 = new CommandManager(continuityCtx1.getService(), continuityCtx1.getCommandHandler());
+    CommandManager manager1 = new CommandManager(continuityCtx1.getService(), continuityCtx1.getCommandReceiver());
     manager1.initialize();
 
-    CommandManager manager2 = new CommandManager(continuityCtx2.getService(), continuityCtx2.getCommandHandler());
+    CommandManager manager2 = new CommandManager(continuityCtx2.getService(), continuityCtx2.getCommandReceiver());
     manager2.initialize();
 
+    manager1.start();
+    manager2.start();
+
     manager2.sendCommand("test message from backup");
-    Thread.sleep(200);
+    Thread.sleep(200L);
 
     verifyMessage(continuityCtx1, "test message from backup", serverCtx2.getServer().getIdentity(), 
         1, "Failed to receive command on primary from backup");
@@ -119,9 +126,9 @@ public class CommandManagerTest extends ContinuityTestBase {
   private void verifyMessage(ContinuityContext cctx, String body, String originHeader, int count, String description) {
     ArgumentCaptor<ClientMessage> msgCaptor = ArgumentCaptor.forClass(ClientMessage.class);
     if(count == 0) { 
-      verify(cctx.getCommandHandler(), times(count).description(description)).onMessage(any());
+      verify(cctx.getCommandReceiver(), times(count).description(description)).onMessage(any());
     } else {
-      verify(cctx.getCommandHandler(), times(count).description(description)).onMessage(msgCaptor.capture());
+      verify(cctx.getCommandReceiver(), times(count).description(description)).onMessage(msgCaptor.capture());
       ClientMessage msg = msgCaptor.getValue();
       String actualBody = msg.getReadOnlyBodyBuffer().readString().toString();
       String actualOrigin = msg.getStringProperty(CommandManager.ORIGIN_HEADER); 

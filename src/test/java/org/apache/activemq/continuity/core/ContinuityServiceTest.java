@@ -107,6 +107,7 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
+    when(continuityCtx.getCommandManager().isStarted()).thenReturn(true);
     when(continuityCtx.getConfig().getAddresses()).thenReturn(Arrays.asList("async-sample1"));
     when(continuityCtx.getConfig().getOutflowMirrorSuffix()).thenReturn(".out.mirror");
     when(continuityCtx.getConfig().getOutflowAcksSuffix()).thenReturn(".out.acks");

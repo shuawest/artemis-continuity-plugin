@@ -33,7 +33,10 @@ public class ContinuityService {
   private final ActiveMQServer server;
   private final ContinuityConfig config;
 
-  private boolean isInitialized;
+  private boolean isInitialized = false;
+  private boolean isStarting = false;
+  private boolean isStarted = false;
+
   private CommandManager commandManager;
   private Map<String,ContinuityFlow> flows = new HashMap<String,ContinuityFlow>();
 
@@ -76,8 +79,8 @@ public class ContinuityService {
   }
 
   private void createCommandManager() throws ContinuityException {
-    CommandHandler cmdHandler = new CommandHandler(this);
-    CommandManager cmdMgr = new CommandManager(this, cmdHandler);
+    CommandReceiver cmdReceiver = new CommandReceiver(this);
+    CommandManager cmdMgr = new CommandManager(this, cmdReceiver);
     cmdMgr.initialize();
   }
 
@@ -107,7 +110,6 @@ public class ContinuityService {
       case ContinuityCommand.ACTION_REMOVE_QUEUE:
         // TODO
         break;
-
     }
   }
 
@@ -128,31 +130,33 @@ public class ContinuityService {
     if(isSubjectQueue(queue)) {
       QueueInfo queueInfo = extractQueueInfo(queue);
 
-      if(!isInitialized)
-        initialize();
-      
       if(locateFlow(queueInfo.getQueueName()) == null) {
+        
         createFlow(queueInfo);
         
-        ContinuityCommand cmd = new ContinuityCommand();
-        cmd.setAction(ContinuityCommand.ACTION_ADD_QUEUE);
-        cmd.setAddress(queueInfo.getAddressName());
-        cmd.setQueue(queueInfo.getQueueName());
-        cmd.setUuid(UUID.randomUUID().toString());
-        commandManager.sendCommand(cmd);
+        if(commandManager.isStarted()) {
+          ContinuityCommand cmd = new ContinuityCommand();
+          cmd.setAction(ContinuityCommand.ACTION_ADD_QUEUE);
+          cmd.setAddress(queueInfo.getAddressName());
+          cmd.setQueue(queueInfo.getQueueName());
+          cmd.setUuid(UUID.randomUUID().toString());
+          commandManager.sendCommand(cmd);
+        }
       }
     }
   }
 
   public void handleRemoveQueue(Queue queue) throws ContinuityException {
-    QueueInfo queueInfo = extractQueueInfo(queue);
+    if(commandManager.isStarted() && isSubjectQueue(queue)) {
+      QueueInfo queueInfo = extractQueueInfo(queue);
 
-    ContinuityCommand cmd = new ContinuityCommand();
-    cmd.setAction(ContinuityCommand.ACTION_REMOVE_QUEUE);
-    cmd.setAddress(queueInfo.getAddressName());
-    cmd.setQueue(queueInfo.getQueueName());
-    cmd.setUuid(UUID.randomUUID().toString());
-    commandManager.sendCommand(cmd);
+      ContinuityCommand cmd = new ContinuityCommand();
+      cmd.setAction(ContinuityCommand.ACTION_REMOVE_QUEUE);
+      cmd.setAddress(queueInfo.getAddressName());
+      cmd.setQueue(queueInfo.getQueueName());
+      cmd.setUuid(UUID.randomUUID().toString());
+      commandManager.sendCommand(cmd);
+    }
   }
 
   private QueueInfo extractQueueInfo(Queue queue) {
@@ -162,8 +166,22 @@ public class ContinuityService {
     return queueInfo;
   }
 
+  public void start() throws ContinuityException {
+    isStarting = true;
+    commandManager.start();
+    for(ContinuityFlow flow : flows.values()) {
+      flow.start();
+    }
+    isStarted = true;
+    isStarting = false;
+  }
+
   public void stop() throws ContinuityException {
-    // TODO
+    commandManager.stop();
+    for(ContinuityFlow flow : flows.values()) {
+      flow.stop();
+    }
+    isStarted = false;
   }
 
   public ContinuityConfig getConfig() {
@@ -175,6 +193,12 @@ public class ContinuityService {
 
   public boolean isInitialized() {
     return isInitialized;
+  }
+  public boolean isStarting() {
+    return isStarting;
+  }
+  public boolean isStarted() {
+    return isStarted;
   }
 
   public Collection<ContinuityFlow> getFlows() {

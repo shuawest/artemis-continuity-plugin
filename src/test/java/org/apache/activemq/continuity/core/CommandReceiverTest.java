@@ -25,9 +25,9 @@ import org.mockito.ArgumentCaptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CommandHandlerTest extends ContinuityTestBase {
+public class CommandReceiverTest extends ContinuityTestBase {
  
-  private static final Logger log = LoggerFactory.getLogger(CommandHandlerTest.class);
+  private static final Logger log = LoggerFactory.getLogger(CommandReceiverTest.class);
 
   @Test
   public void sendCommandTest() throws Exception {
@@ -41,10 +41,10 @@ public class CommandHandlerTest extends ContinuityTestBase {
     cmd.setQueue("myqueue");
     cmd.setUuid("asdf-asdf-asdf-asdf");
     String cmdJson = ContinuityCommand.toJSON(cmd);
-    
-    CommandHandler handler = new CommandHandler(continuityCtx.getService());
 
-    produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, "cmd-mock", "cmd-mock", handler, cmdJson, null);
+    CommandReceiver receiver = new CommandReceiver(continuityCtx.getService());
+
+    produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, "cmd-mock", "cmd-mock", receiver, cmdJson, null);
 
     ArgumentCaptor<ContinuityCommand> cmdCaptor = ArgumentCaptor.forClass(ContinuityCommand.class);
     verify(continuityCtx.getService()).handleIncomingCommand(cmdCaptor.capture());
@@ -65,9 +65,9 @@ public class CommandHandlerTest extends ContinuityTestBase {
     
     String cmdJson = "{asdfasfs}";
 
-    CommandHandler handler = new CommandHandler(continuityCtx.getService());
+    CommandReceiver receiver = new CommandReceiver(continuityCtx.getService());
 
-    produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, "cmd-mock", "cmd-mock", handler, cmdJson, null);
+    produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, "cmd-mock", "cmd-mock", receiver, cmdJson, null);
 
     verify(continuityCtx.getService(), times(0)).handleIncomingCommand(any());
   }

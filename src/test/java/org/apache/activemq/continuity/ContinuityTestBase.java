@@ -22,6 +22,7 @@ import javax.management.MBeanServer;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.Message;
+import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
@@ -40,7 +41,7 @@ import org.apache.activemq.artemis.spi.core.security.ActiveMQJAASSecurityManager
 import org.apache.activemq.artemis.spi.core.security.ActiveMQSecurityManager;
 import org.apache.activemq.artemis.spi.core.security.jaas.InVMLoginModule;
 import org.apache.activemq.artemis.tests.util.ActiveMQTestBase;
-import org.apache.activemq.continuity.core.CommandHandler;
+import org.apache.activemq.continuity.core.CommandReceiver;
 import org.apache.activemq.continuity.core.CommandManager;
 import org.apache.activemq.continuity.core.ContinuityConfig;
 import org.apache.activemq.continuity.core.ContinuityService;
@@ -75,7 +76,7 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     ContinuityService serviceMock = mock(ContinuityService.class);
     ContinuityConfig configMock = mock(ContinuityConfig.class);
     CommandManager commandManagerMock = mock(CommandManager.class);
-    CommandHandler commandHandlerMock = mock(CommandHandler.class);
+    CommandReceiver commandRecieverMock = mock(CommandReceiver.class);
 
     when(serviceMock.getServer()).thenReturn(serverContext.getServer());
     when(serviceMock.getConfig()).thenReturn(configMock);
@@ -91,7 +92,7 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     continuityCtx.setConfig(configMock);
     continuityCtx.setService(serviceMock);
     continuityCtx.setCommandManager(commandManagerMock);
-    continuityCtx.setCommandHandler(commandHandlerMock);
+    continuityCtx.setCommandReceiver(commandRecieverMock);
     return continuityCtx;
   }
 
@@ -157,7 +158,6 @@ public class ContinuityTestBase extends ActiveMQTestBase {
   }
 
   public void consumeMessages(ContinuityConfig continuityConfig, ServerContext serverCtx, String address, String queueName, MessageHandler handler) throws Exception {
-
     ServerLocator locator = ActiveMQClient.createServerLocator(continuityConfig.getLocalInVmUri());
     ClientSessionFactory factory = locator.createSessionFactory();
     ClientSession session = factory.createSession(continuityConfig.getLocalUsername(),
@@ -173,6 +173,21 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     session.close();
     factory.close();
     locator.close();
+  }
+
+  public ClientSession consumeDirect(String url, String username, String password, String address, RoutingType routingType, String queueName, MessageHandler handler) throws Exception {
+    ServerLocator locator = ActiveMQClient.createServerLocator(url);
+    ClientSessionFactory factory = locator.createSessionFactory();
+    ClientSession session = factory.createSession(username, password, false, true, true, false, locator.getAckBatchSize());
+  
+    session.createQueue(address, routingType, queueName);
+
+    ClientConsumer consumer = session.createConsumer(queueName);
+    consumer.setMessageHandler(handler);
+
+    session.start();
+
+    return session;
   }
 
   public class MessageHandlerStub implements MessageHandler {    
@@ -222,7 +237,7 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     private ContinuityConfig config;
     private ContinuityService service;
     private CommandManager commandManager;
-    private CommandHandler commandHandler;
+    private CommandReceiver commandReceiver;
     
     public ContinuityContext() {}
 
@@ -244,11 +259,11 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     public void setCommandManager(CommandManager commandManager) {
       this.commandManager = commandManager;
     }
-    public CommandHandler getCommandHandler() {
-      return commandHandler;
+    public CommandReceiver getCommandReceiver() {
+      return commandReceiver;
     }
-    public void setCommandHandler(CommandHandler commandHandler) {
-      this.commandHandler = commandHandler;
+    public void setCommandReceiver(CommandReceiver commandReceiver) {
+      this.commandReceiver = commandReceiver;
     }
   }
 }

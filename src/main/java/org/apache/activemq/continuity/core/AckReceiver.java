@@ -34,7 +34,7 @@ public class AckReceiver implements MessageHandler {
   private final ContinuityService service;
   private final ContinuityFlow flow;
 
-  private Boolean isInitialized = false;
+  private Boolean isStarted = false;
   private ServerLocator locator = null;
   private ClientSessionFactory factory = null;
   private ClientSession session = null;
@@ -45,20 +45,20 @@ public class AckReceiver implements MessageHandler {
     this.flow = flow;
   }
 
-  public void initialize() throws ContinuityException {
+  public void start() throws ContinuityException {
     prepareSession();
-    isInitialized = true;
+    isStarted = true;
     log.debug("Finished initializing ack receiver for {}", flow.getInflowAcksName());
   }
 
   public void stop() throws ContinuityException {
     try {
-      if(isInitialized) {
+      if(isStarted) {
         consumer.close();
         session.close();
         factory.close();
         locator.close();
-        isInitialized = false;
+        isStarted = false;
       }
     } catch (final Exception e) {
       String eMessage = String.format("Failed to stop ack receiver for %s", flow.getInflowAcksName());
@@ -121,8 +121,8 @@ public class AckReceiver implements MessageHandler {
     return service.getServer();
   }
 
-  public boolean isInitialized() {
-    return isInitialized;
+  public boolean isStarted() {
+    return isStarted;
   }
 
 }

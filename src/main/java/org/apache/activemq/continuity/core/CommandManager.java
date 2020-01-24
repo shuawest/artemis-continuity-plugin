@@ -41,7 +41,7 @@ public class CommandManager {
   public static final String ORIGIN_HEADER = "CONTINUITY_ORIGIN";
 
   private final ContinuityService service;
-  private final CommandHandler commandHandler;
+  private final CommandReceiver commandReceiver;
 
   private final String commandInQueueName; 
   private final String commandOutQueueName;
@@ -52,15 +52,18 @@ public class CommandManager {
   private Bridge commandOutBridge = null;
 
   private boolean isInitialized = false;
+  private boolean isStarted = false;
+
+  //TODO: move command session control to CommandHandler -> CommandReceiver
   private ClientSession session = null;
   private ServerLocator locator = null;
   private ClientSessionFactory factory = null; 
   private ClientProducer producer = null;
   private ClientConsumer consumer = null;
 
-  public CommandManager(final ContinuityService service, final CommandHandler commandHandler) {
+  public CommandManager(final ContinuityService service, final CommandReceiver commandReceiver) {
     this.service = service;
-    this.commandHandler = commandHandler;
+    this.commandReceiver = commandReceiver;
     this.commandInQueueName = getConfig().getCommandDestinationPrefix() + ".in";
     this.commandOutQueueName = getConfig().getCommandDestinationPrefix() + ".out";
     this.commandOutBridgeName = getConfig().getCommandDestinationPrefix() + ".out.bridge";
@@ -68,18 +71,25 @@ public class CommandManager {
 
   public void initialize() throws ContinuityException {
     if(!isInitialized) {
+      service.registerCommandManager(this);
       commandInQueue = createCommandQueue(commandInQueueName, commandInQueueName);
-      prepareSession();
-      
       commandOutQueue = createCommandQueue(commandOutQueueName, commandOutQueueName);
       commandOutBridge = createCommandBridge(commandOutBridgeName, getConfig().getRemoteConnectorRef(), commandOutQueueName, commandInQueueName);
-
-      service.registerCommandManager(this);
-
       isInitialized = true;
 
       if(log.isDebugEnabled()) {
         log.debug("Finished initializing continuity command manager");
+      }
+    }
+  }
+
+  public void start() throws ContinuityException {
+    if(!isStarted) {
+      prepareSession();
+      isStarted = true;
+
+      if(log.isDebugEnabled()) {
+        log.debug("Finished starting continuity command manager");
       }
     }
   }
@@ -171,7 +181,7 @@ public class CommandManager {
       if(consumer == null || consumer.isClosed()) {
         log.debug("Creating consumer for commands {}", commandInQueueName);
         this.consumer = session.createConsumer(commandInQueueName);
-        consumer.setMessageHandler(commandHandler);
+        consumer.setMessageHandler(commandReceiver);
       }
 
     } catch (Exception e) {
@@ -215,6 +225,10 @@ public class CommandManager {
     return isInitialized;
   }
 
+  public boolean isStarted() {
+    return isStarted;
+  }
+
   public String getCommandInQueueName() {
     return commandInQueueName;
   }
@@ -239,8 +253,8 @@ public class CommandManager {
     return commandOutBridge;
   }
 
-  public CommandHandler getCommandHandler() {
-    return commandHandler;
+  public CommandReceiver getCommandReceiver() {
+    return commandReceiver;
   }
 
 }
