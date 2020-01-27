@@ -43,15 +43,17 @@ It is installed and configured in an artemis broker as a plugin. The plugin conf
 
 Producers and Consumers can optionally already be started on the remote site no messages will be delivered to the target destinations until site is activated. 
 
-.*Orchestrated Swapover*
+.*Orchestrated Active:Passive Swapover*
 1. Stop producers and consumers on site1
 2. Wait mirror and ack outflow queues to be fully bridged to remote site
 3. Signal activation of target remote site
 
-.*Failover*
+.*Active:Passive Failover*
 1. When it is detected that site1 is down
 2. Signal activation of target remote site
 3. Recover journals and restart site1 to bridge missing messages and acks to the remote site
 
-Alternatively, both sites can be kept active and the configured staging delay can be used. They delau must be longer than the delta between the initial message produce, and acknowledgement recieve on the remote site side. This time delta average and maximum is measured by the plugin (and will be able to be monitored). 
+.*Active:Active*
+Both sites can be kept active and the configured staging delay can be used. They delau must be longer than the delta between the initial message produce, and acknowledgement recieve on the remote site side. This time delta average and maximum is measured by the plugin (and will be able to be monitored). It is highly recommended that the message consumers are strictly idempotent if his model is used.
+
 
