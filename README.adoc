@@ -1,90 +1,22 @@
+# Artemis Continuity Plugin
 
+Provides a continuity model for the ActiveMQ Artemis Broker allowing multiple sites to asynchronously replicate to one another over a WAN for providing continuity of business / disaster recovery without overburdening the application with complexity. The plugin uses broker primitives of addresses, queues, and duplicate id caches to keep the remote site ready for swapover.  
 
+With a controlled swapover plugin and approach is capable of having zero message loss, and zero message duplication. With an abrupt failover of the main site, the approach minimizes message loss and duplication message consumption. 
 
+The plugin reflects on the configured and dynamically created destintions in the broker to spin up the replication flows on startup or at runtime. This allows a simple static configuration to be added to a broker, while adding replicated destinations can be done with the typical configuration. 
 
-```
-   <broker-plugins>
-      <broker-plugin class-name="org.apache.activemq.continuity.plugins.ContinuityPlugin">
-         <property key="mode" value="ASYNC" />
-         <property key="siteId" value="us-east-1" />
-         <property key="mirrorSuffix" value="mirror" />
-         <property key="acksSuffix" value="acks" />
-         <property key="uuidHeader" value="continuity-uuid" />
-      </broker-plugin> 
-   </broker-plugins>
-```
+A goal of the plugin will be to detect and measure the estimated RPO (Recovery Point Objective) and RTO (Recovery Time Objective), then surface these metrics to standardized monitoring tools to be compared against the required SLA for the application use case. 
 
+## Design
 
-# ID Cache
-Likely need to size the id cache and make sure it is large enough for the mirror queues, also make sure it is persistent
-https://activemq.apache.org/components/artemis/documentation/latest/duplicate-detection.html
-```
-The maximum size of the cache is configured by the parameter id-cache-size in broker.xml, the default value is 2000 elements.
+As messages are sent, received, and acknowledged in one site, both the messages and acknowledgements are diverted to a remote site. The remote site stages the messages in an inflow destination where the the acknowledged messages are removed as inflow acknowledgements are recieved. 
 
-The caches can also be configured to persist to disk or not. This is configured by the parameter persist-id-cache, also in broker.xml. If this is set to true then each id will be persisted to permanent storage as they are received. The default value for this parameter is true.
-```
+It is installed and configured in an artemis broker as a plugin. The plugin configuration identifies the remote site, the target addresses to be replicated, necessary authentication details, and replication strategy. Brokers establish a command connection to transfer configuration at startup or as updates occur at runtime. 
 
+### Current State
+* Broker plugin that replicates broker configuration across two brokers
+* Plugin config statically identifies destination address(s) to be replicated
+* Only durabled non-temporary queues are setup for replication flows
+* Test swapover and failover across across two brokers 
 
-# Logging dependency versions
-   <!-- Logging for tests --> 
-   <!-- <dependency>
-      <groupId>org.jboss.logging</groupId>
-      <artifactId>jboss-logging-processor</artifactId>
-      <version>2.2.0.Final</version>
-      <scope>test</scope>
-   </dependency>
-   <dependency>
-      <groupId>org.jboss.logging</groupId>
-      <artifactId>jboss-logging-annotations</artifactId>
-      <version>2.2.0.Final</version>
-      <scope>test</scope>
-   </dependency> -->
-   <!-- <dependency>
-      <groupId>org.jboss.slf4j</groupId>
-      <artifactId>slf4j-jboss-logmanager</artifactId>
-      <version>${jb.slf4j-jboss-logmanager.version}</version>
-      <scope>test</scope>
-   </dependency> -->
-   <dependency>
-       <groupId>org.slf4j</groupId>
-       <artifactId>slf4j-simple</artifactId>
-       <version>${slf4j.version}</version>
-       <scope>test</scope>
-   </dependency>
-   <!-- <dependency>
-       <groupId>org.slf4j</groupId>
-       <artifactId>slf4j-nop</artifactId>
-       <version>${slf4j.version}</version>
-       <scope>test</scope>
-   </dependency>
-   <dependency>
-       <groupId>org.slf4j</groupId>
-       <artifactId>slf4j-log4j12</artifactId>
-       <version>${slf4j.version}</version>
-       <scope>test</scope>
-   </dependency> -->
-   <!-- <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.16</version>
-      <scope>test</scope>
-   </dependency>
-   <dependency>
-      <groupId>org.jboss.logging</groupId>
-      <artifactId>jboss-logging</artifactId>
-      <version>${jboss.logging.version}</version>
-      <scope>test</scope>
-   </dependency>
-   <dependency>
-    <groupId>org.jboss.logmanager</groupId>
-    <artifactId>jboss-logmanager</artifactId>
-    <version>${jb.logmanager.version}</version>
-    <scope>test</scope>
-   </dependency> -->
-
-   <dependency>
-       <groupId>org.slf4j</groupId>
-       <artifactId>slf4j-simple</artifactId>
-       <version>${slf4j.version}</version>
-       <scope>test</scope>
-   </dependency>
