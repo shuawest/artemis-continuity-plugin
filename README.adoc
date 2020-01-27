@@ -8,7 +8,7 @@ The plugin reflects on the configured and dynamically created destinations in th
 
 A goal of the plugin will be to detect and measure the estimated RPO (Recovery Point Objective) and RTO (Recovery Time Objective) based on the message throughput, consumption speed, and client acknowledgement model. These metrics will then be surfaced to standardized monitoring tools to be compared against the required SLA for the application use case. 
 
-## Intent 
+### Intent 
 
 The intent of this plugin is to give more options for cross-site resilience. Adding continuity at the broker isolates each broker's resilience to each broker installation, and depend less on the infrastructure / cloud provider. This will:
 * allow application teams to 'shift left'
@@ -21,58 +21,24 @@ Adding continuity does have impact on performance. However, an overwhelming majo
 
 Traditional messaging heavily depends on the infrastructure and storage layer to provide replication. In a cloud / container environment, as the broker estate grows the pressure on the storage as a surface layer increases. Delegating resilience to a storage layer increases complexity and cost of operating the underlying cloud/infrastructure pattern and couples each messaging platform to a single point of failure. Many large firms have not yet added the three datacenter block storage quorum, and don't necessarily plan to. Many don't have three data centers. This plugin is intended to bypass this organizational challenge. 
 
-## Infrastructure Requirements
-
-* Shared Nothing Broker Cluster Model
-  1. Two relatively close data centers sites
-  2. Local block storage with three availability zones
-  3. OpenShift if installing with the container based approach
-
-* Master:Slave Broker Cluster Model
-  1.  Two relatively close data centers sites
-  2. Replciated block storage (replicated across racks)
-  3. OpenShift if installing with the container based approach
-
 ## Design
 
 As messages are sent, received, and acknowledged in one site, both the messages and acknowledgements are diverted to a remote site. The remote site stages the messages in an inflow destination where the the acknowledged messages are removed as inflow acknowledgements are recieved. 
 
-It is installed and configured in an artemis broker as a plugin. The plugin configuration identifies the remote site, the target addresses to be replicated, necessary authentication details, and replication strategy. Brokers establish a command connection to transfer configuration at startup or as updates occur at runtime. 
+It is installed and configured in an artemis broker as a plugin. The plugin configuration identifies the remote site, the target addresses to be replicated, necessary authentication details, and replication strategy. Brokers establish a command connection to transfer configuration at startup or as updates occur at runtime.
 
-### Current State
+### Infrastructure Requirements
 
-* Broker plugin that replicates broker configuration across two brokers
-* Plugin config statically identifies destination address(s) to be replicated
-* Only durabled non-temporary queues are setup for replication flows
-* Test swapover and failover across across two brokers 
+* Shared Nothing Broker Cluster Model
+ 1. Two relatively close data centers sites
+ 2. Local block storage with three availability zones
+ 3. OpenShift if installing with the container based approach
 
-### Artemis Enhancements
+* Master:Slave Broker Cluster Model
+ 1.  Two relatively close data centers sites
+ 2. Replciated block storage (replicated across racks)
+ 3. OpenShift if installing with the container based approach
 
-1. Broker Startup Plugin hook - The plugin requires connection destinations within the broker. There is currently no plugin interface that signals the broker has started and is ready to accept incoming connnectiong. The plug currently finalizes its initialization on the first inbound connection, however it would be better if there was a plugin hook to signal that the broker is started. 
+ 
 
-### Risks
 
-1. Clients by default batch message acknowledgement, which prevents the acks from being captured and forwarded to the remote site. This may improve client performance, but cause the window of ack replication to be large, and stress the remote broker as batches of acks are received. This can be aided by having smaller batch sizes or using transactional consumers which acknowledge each message received. 
-2. Slow consumers may cause a build up of staged messages. As messages are acknowledged on the remote site the seek and removal time will be heavy for large staged queues. Using a message delivery delay and the duplicate id cache may be a good alternative. Load and soak testing is required to understand this risk better. 
-
-### TODO
-
-1. create image and automated deployment to push to multiple openshift sites
-2. load test 2 site single broker install (compare with single site without the plugin)
-3. soak test broker with continuity replication
-3. test model with shared nothing broker cluster in two sites
-4. add mbeans for observability of plugin components, and RTO/RPO estimate metrics
-5. add additional queue configuration synchronization (beyond initial queue/address pair it does now - filters, diverts, etc)
-6. deal with queue configuration updates (beyond the add it has today)
-7. implement queue / address removal
-8. allow for more than one remote site
-9. add security configuration to allow more than static user/pass for intra-broker communication
-10. add discovery groups for remote site connectivity
-11. add finer tuning of continuity strategy
-12. create examples of swapover for local DC, and DC spanned clients, with swapover model
-13. create Operator to orchestrate the broker swapover
-14. automatically adjust delivery delay strategy timeframe based on detected RTO/RPO
-15. improve plugin failure / error handling, and shutdown cleanup
-16. improve documentation - add user level topology diagrams/docs, and detailed level contributor diagrams/docs
-17. create Continuity Plugin overview presentation
-18. evaluate adding synchronous replication model (custom divert that sends message and acks remotely, preventing delivery if 1 or more remotes are not available)

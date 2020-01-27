@@ -1,0 +1,96 @@
+# Artemis Continuity Plugin v2
+
+### Current State
+
+* Broker plugin that replicates broker configuration across two brokers
+* Plugin config statically identifies destination address(s) to be replicated
+* Only durabled non-temporary queues are setup for replication flows
+* Test swapover and failover across across two brokers 
+
+### Artemis Enhancements
+
+1. Broker Startup Plugin hook - The plugin requires connection destinations within the broker. There is currently no plugin interface that signals the broker has started and is ready to accept incoming connnectiong. The plug currently finalizes its initialization on the first inbound connection, however it would be better if there was a plugin hook to signal that the broker is started. 
+
+### Risks
+
+1. Clients by default batch message acknowledgement, which prevents the acks from being captured and forwarded to the remote site. This may improve client performance, but cause the window of ack replication to be large, and stress the remote broker as batches of acks are received. This can be aided by having smaller batch sizes or using transactional consumers which acknowledge each message received. 
+2. Slow consumers may cause a build up of staged messages. As messages are acknowledged on the remote site the seek and removal time will be heavy for large staged queues. Using a message delivery delay and the duplicate id cache may be a good alternative. Load and soak testing is required to understand this risk better. 
+
+### TODO
+
+1. create image and automated deployment to push to multiple openshift sites
+2. load test 2 site single broker install (compare with single site without the plugin)
+3. soak test broker with continuity replication
+3. test model with shared nothing broker cluster in two sites
+4. add mbeans for observability of plugin components, and RTO/RPO estimate metrics
+5. add additional queue configuration synchronization (beyond initial queue/address pair it does now - filters, diverts, etc)
+6. deal with queue configuration updates (beyond the add it has today)
+7. implement queue / address removal
+8. allow for more than one remote site
+9. add security configuration to allow more than static user/pass for intra-broker communication
+10. add discovery groups for remote site connectivity
+11. add finer tuning of continuity strategy
+12. create examples of swapover for local DC, and DC spanned clients, with swapover model
+13. create Operator to orchestrate the broker swapover
+14. automatically adjust delivery delay strategy timeframe based on detected RTO/RPO
+15. improve plugin failure / error handling, and shutdown cleanup
+16. improve documentation - add user level topology diagrams/docs, and detailed level contributor diagrams/docs
+17. create Continuity Plugin overview presentation
+18. evaluate adding synchronous replication model (custom divert that sends message and acks remotely, preventing delivery if 1 or more remotes are not available)
+
+### Ontology
+
+- Plugins
+ - ContinuityPlugin
+   - bootstraps the continuity service
+   - registers dependent plugins
+ - DestinationPlugin
+   - Signals the add and remove of queues and addresses
+ - InflowMirrorPlugin
+   - Intercepts messages coming into remote site delegating to the AckManager for the appropriate flow
+   - Updates by appropriate flow
+ - DuplicateIdPlugin
+   - Ensures there is a duplicate ID on each incoming message on subject queues
+ - AckDivertPlugin
+   - Captures acknowledgements to be sent to the remote site by appropriate flow
+  
+- Core Service Components
+ - ContinuityService
+  - Manages the state of overall continuity service in the broker
+  - Orchestrates the initialization and startup of the service
+  - Handles the add/removal of destination flows
+  - Owns identification of subject queues and addresses
+  - Orchestrates site activation on swapover/failover within the broker
+ - ContinuityFlow
+  - Handles creation of replication queues, bridges, diverts, etc for each subject queue
+  - Handles activation of the flow to the target queue on swapover/failover to start delivery of messages 
+ - AckManager
+  - Handles removal, scheduling, and duplicate id cache of messages on inflow messages and acks
+ - ContinuityConfig
+  - Reads and parses settings from flat config properties
+  - Defines continuity configuration defaults
+  - Provides access to the configuration across service components 
+  
+- Primitive Hook Components
+ - CommandManager
+  - Creation of command inflow and outflow destinations and bridges
+  - Manages sessions for command producer and consumer
+  - Delegates handling of the commands to the ContinuityService
+ - CommandReceiver
+  - Message handler incoming commands
+  - Delegates messages to the ContinuityService to orchestrate handling
+ - AckReceiver
+  - Manages session for each ack inflow queue
+  - Delegates ack handling to the appropriate AckManager for the flow
+ - AckDivert
+  - Manages session to the outflow ack destination
+  - Sends ack info on the outflow ack destination
+  
+- Domain Models
+ - ContinuityCommand
+   - Represents actions that used to control the site, and between sites to share configuration
+ - AckInfo
+   - Represents acknowledgement details captured and passed to remote site 
+ - QueueInfo
+   - Represents the subject queue configuration
+
