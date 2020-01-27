@@ -1,12 +1,12 @@
 # Artemis Continuity Plugin
 
-Provides a continuity model for the ActiveMQ Artemis Broker allowing multiple sites to asynchronously replicate to one another over a WAN for providing continuity of business / disaster recovery without overburdening the application with complexity. The plugin uses broker primitives of addresses, queues, and duplicate id caches to keep the remote site ready for swapover.  
+Provides a continuity model for the ActiveMQ Artemis Broker allowing multiple sites to asynchronously replicate to one another over a WAN. The intent is to provide simpler continuity of business / disaster recovery without overburdening the application with complexity. The plugin uses broker primitives of addresses, queues, message delivery scheduling, and duplicate id caches to keep the remote site ready for swapover.  
 
-With a controlled swapover plugin and approach is capable of having zero message loss, and zero message duplication. With an abrupt failover of the main site, the approach minimizes message loss and duplication message consumption. 
+With a controlled swapover, the approach implemented by this plugin is capable of having zero message loss, and zero message duplication. With an abrupt failover of the main site, the approach minimizes message loss and duplication message consumption. 
 
-The plugin reflects on the configured and dynamically created destintions in the broker to spin up the replication flows on startup or at runtime. This allows a simple static configuration to be added to a broker, while adding replicated destinations can be done with the typical configuration. 
+The plugin reflects on the configured and dynamically created destinations in the broker to spin up the replication flows on startup or at runtime. This allows a simple static configuration to be added to a broker, while adding replicated destinations can be done with the typical configuration. 
 
-A goal of the plugin will be to detect and measure the estimated RPO (Recovery Point Objective) and RTO (Recovery Time Objective), then surface these metrics to standardized monitoring tools to be compared against the required SLA for the application use case. 
+A goal of the plugin will be to detect and measure the estimated RPO (Recovery Point Objective) and RTO (Recovery Time Objective) based on the message throughput, consumption speed, and client acknowledgement model. These metrics will then be surfaced to standardized monitoring tools to be compared against the required SLA for the application use case. 
 
 ## Design
 
@@ -15,8 +15,18 @@ As messages are sent, received, and acknowledged in one site, both the messages 
 It is installed and configured in an artemis broker as a plugin. The plugin configuration identifies the remote site, the target addresses to be replicated, necessary authentication details, and replication strategy. Brokers establish a command connection to transfer configuration at startup or as updates occur at runtime. 
 
 ### Current State
+
 * Broker plugin that replicates broker configuration across two brokers
 * Plugin config statically identifies destination address(s) to be replicated
 * Only durabled non-temporary queues are setup for replication flows
 * Test swapover and failover across across two brokers 
+
+### Artemis Enhancements
+
+1. Broker Startup Plugin hook - The plugin requires connection destinations within the broker. There is currently no plugin interface that signals the broker has started and is ready to accept incoming connnectiong. The plug currently finalizes its initialization on the first inbound connection, however it would be better if there was a plugin hook to signal that the broker is started. 
+
+### Risks
+
+1. Clients by default batch message acknowledgement, which prevents the acks from being captured and forwarded to the remote site. This may improve client performance, but cause the window of ack replication to be large, and stress the remote broker as batches of acks are received. This can be aided by having smaller batch sizes or using transactional consumers which acknowledge each message received. 
+2. Slow consumers may cause a build up of staged messages. As messages are acknowledged on the remote site the seek and removal time will be heavy for large staged queues. Using a message delivery delay and the duplicate id cache may be a good alternative. Load and soak testing is required to understand this risk better. 
 

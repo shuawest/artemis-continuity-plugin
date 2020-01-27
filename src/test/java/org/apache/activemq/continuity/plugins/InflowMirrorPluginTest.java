@@ -113,11 +113,6 @@ public class InflowMirrorPluginTest extends ContinuityTestBase {
     
     produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, inMirrorName, inMirrorName, handlerMock, expectedMessage, null);
     
-    // ArgumentCaptor<ClientMessage> msgCaptor = ArgumentCaptor.forClass(ClientMessage.class);
-    // verify(handlerMock, times(1)).onMessage(msgCaptor.capture());
-    // ClientMessage receivedMessage = msgCaptor.getValue();
-    // log.debug("Received message: {}", receivedMessage);
-
     ArgumentCaptor<Message> msgCaptor = ArgumentCaptor.forClass(Message.class); 
     verify(ackManager, times(1).description("message was not passed to ackManager")).handleInflowMirrorMessage(msgCaptor.capture());
     Message actualMsg = msgCaptor.getValue();
