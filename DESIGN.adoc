@@ -40,7 +40,7 @@
 
 ### Ontology
 
-.Plugins
+.*Plugins*
 * ContinuityPlugin
   - bootstraps the continuity service
   - registers dependent plugins
@@ -54,7 +54,7 @@
 * AckDivertPlugin
   - Captures acknowledgements to be sent to the remote site by appropriate flow
   
-.Core Service Components
+.*Core Service Components*
 * ContinuityService
   - Manages the state of overall continuity service in the broker
   - Orchestrates the initialization and startup of the service
@@ -71,7 +71,7 @@
   - Defines continuity configuration defaults
   - Provides access to the configuration across service components 
   
-.Primitive Hook Components
+.*Primitive Hook Components*
 * CommandManager
   - Creation of command inflow and outflow destinations and bridges
   - Manages sessions for command producer and consumer
@@ -86,7 +86,7 @@
   - Manages session to the outflow ack destination
   - Sends ack info on the outflow ack destination
   
-.Domain Models
+.*Domain Models*
 * ContinuityCommand
    - Represents actions that used to control the site, and between sites to share configuration
 * AckInfo
