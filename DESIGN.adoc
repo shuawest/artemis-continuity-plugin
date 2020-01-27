@@ -41,8 +41,8 @@
 ### Ontology
 
 - Plugins
- - ContinuityPlugin
-   - bootstraps the continuity service
+- - ContinuityPlugin
+- - - bootstraps the continuity service
    - registers dependent plugins
  - DestinationPlugin
    - Signals the add and remove of queues and addresses
