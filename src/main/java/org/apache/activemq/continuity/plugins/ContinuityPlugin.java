@@ -26,23 +26,6 @@ import org.apache.activemq.continuity.core.ContinuityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO: finish core components and wiring
-// TODO: create integration test for dual server failover
-// TODO: test with shared nothing cluster
-// TODO: test with active:passive cluster
-// TODO: add mbeans - see ManagementServiceImpl.java.registerInJmx
-// TODO: evaluate address & queue federation and how to use it instead of mirrors
-// TODO: add continuity strategy config for delayed delivery, auto-adjusted delivery delay, zero delivery until activation, or ...
-// TODO: adjust delivery delay based on stats
-// TOOD: determine error handling strategy, capture messages and gracefully fail, or take down server
-// TOOD: send command info across sites - addresses/queues, bridges?, diverts?, etc?
-// TODO: deal with queue updates
-// TOOD: deal with graceful teardown of continuity elements on server shutdown
-// TODO: peformance test - measure impact of continuity
-// TODO: create a k8s operator for managing failover
-// TODO: create strong documentation
-// TODO: create presentation to engineering
-// TODO: update to contribute to ActiveMQ community
 public class ContinuityPlugin implements ActiveMQServerPlugin {
 
   private static final Logger log = LoggerFactory.getLogger(ContinuityPlugin.class);
