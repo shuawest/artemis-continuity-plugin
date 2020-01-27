@@ -40,20 +40,6 @@
 
 ### Ontology
 
-.*Plugins*
-* ContinuityPlugin
-  - bootstraps the continuity service
-  - registers dependent plugins
-* DestinationPlugin
-  - Signals the add and remove of queues and addresses
-* InflowMirrorPlugin
-  - Intercepts messages coming into remote site delegating to the AckManager for the appropriate flow
-  - Updates by appropriate flow
-* DuplicateIdPlugin
-  - Ensures there is a duplicate ID on each incoming message on subject queues
-* AckDivertPlugin
-  - Captures acknowledgements to be sent to the remote site by appropriate flow
-  
 .*Core Service Components*
 * ContinuityService
   - Manages the state of overall continuity service in the broker
@@ -71,7 +57,7 @@
   - Defines continuity configuration defaults
   - Provides access to the configuration across service components 
   
-.*Primitive Hook Components*
+.*Additional Service Components*
 * CommandManager
   - Creation of command inflow and outflow destinations and bridges
   - Manages sessions for command producer and consumer
@@ -85,7 +71,21 @@
 * AckDivert
   - Manages session to the outflow ack destination
   - Sends ack info on the outflow ack destination
-  
+
+.*Plugins*
+* ContinuityPlugin
+  - bootstraps the continuity service
+  - registers dependent plugins
+* DestinationPlugin
+  - Signals the add and remove of queues and addresses
+* InflowMirrorPlugin
+  - Intercepts messages coming into remote site delegating to the AckManager for the appropriate flow
+  - Updates by appropriate flow
+* DuplicateIdPlugin
+  - Ensures there is a duplicate ID on each incoming message on subject queues
+* AckDivertPlugin
+  - Captures acknowledgements to be sent to the remote site by appropriate flow
+    
 .*Domain Models*
 * ContinuityCommand
    - Represents actions that used to control the site, and between sites to share configuration
