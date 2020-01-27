@@ -53,5 +53,5 @@ Producers and Consumers can optionally already be started on the remote site no 
 2. Signal activation of target remote site
 3. Recover journals and restart site1 to bridge missing messages and acks to the remote site
 
-Alternatively, both sites can be kept active and the staging delay can be used as long as the delay is longer than the delta between the initial message produce, and acknowledgement recieve on the remote site side. This time delta average and maximum is measured by the plugin (and will be able to be monitored). 
+Alternatively, both sites can be kept active and the configured staging delay can be used. They delau must be longer than the delta between the initial message produce, and acknowledgement recieve on the remote site side. This time delta average and maximum is measured by the plugin (and will be able to be monitored). 
 
