@@ -40,57 +40,57 @@
 
 ### Ontology
 
-- Plugins
-- - ContinuityPlugin
-- - - bootstraps the continuity service
-   - registers dependent plugins
- - DestinationPlugin
-   - Signals the add and remove of queues and addresses
- - InflowMirrorPlugin
-   - Intercepts messages coming into remote site delegating to the AckManager for the appropriate flow
-   - Updates by appropriate flow
- - DuplicateIdPlugin
-   - Ensures there is a duplicate ID on each incoming message on subject queues
- - AckDivertPlugin
-   - Captures acknowledgements to be sent to the remote site by appropriate flow
+.Plugins
+* ContinuityPlugin
+  - bootstraps the continuity service
+  - registers dependent plugins
+* DestinationPlugin
+  - Signals the add and remove of queues and addresses
+* InflowMirrorPlugin
+  - Intercepts messages coming into remote site delegating to the AckManager for the appropriate flow
+  - Updates by appropriate flow
+* DuplicateIdPlugin
+  - Ensures there is a duplicate ID on each incoming message on subject queues
+* AckDivertPlugin
+  - Captures acknowledgements to be sent to the remote site by appropriate flow
   
-- Core Service Components
- - ContinuityService
+.Core Service Components
+* ContinuityService
   - Manages the state of overall continuity service in the broker
   - Orchestrates the initialization and startup of the service
   - Handles the add/removal of destination flows
   - Owns identification of subject queues and addresses
   - Orchestrates site activation on swapover/failover within the broker
- - ContinuityFlow
+* ContinuityFlow
   - Handles creation of replication queues, bridges, diverts, etc for each subject queue
   - Handles activation of the flow to the target queue on swapover/failover to start delivery of messages 
- - AckManager
+* AckManager
   - Handles removal, scheduling, and duplicate id cache of messages on inflow messages and acks
- - ContinuityConfig
+* ContinuityConfig
   - Reads and parses settings from flat config properties
   - Defines continuity configuration defaults
   - Provides access to the configuration across service components 
   
-- Primitive Hook Components
- - CommandManager
+.Primitive Hook Components
+* CommandManager
   - Creation of command inflow and outflow destinations and bridges
   - Manages sessions for command producer and consumer
   - Delegates handling of the commands to the ContinuityService
- - CommandReceiver
+* CommandReceiver
   - Message handler incoming commands
   - Delegates messages to the ContinuityService to orchestrate handling
- - AckReceiver
+* AckReceiver
   - Manages session for each ack inflow queue
   - Delegates ack handling to the appropriate AckManager for the flow
- - AckDivert
+* AckDivert
   - Manages session to the outflow ack destination
   - Sends ack info on the outflow ack destination
   
-- Domain Models
- - ContinuityCommand
+.Domain Models
+* ContinuityCommand
    - Represents actions that used to control the site, and between sites to share configuration
- - AckInfo
+* AckInfo
    - Represents acknowledgement details captured and passed to remote site 
- - QueueInfo
+* QueueInfo
    - Represents the subject queue configuration
 
