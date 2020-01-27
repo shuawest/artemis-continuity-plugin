@@ -56,7 +56,7 @@
 * QueueInfo
    - Represents the subject queue configuration
 
-### Current State
+## Current State
 
 * Broker plugin that replicates broker configuration across two brokers
 * Plugin config statically identifies destination address(s) to be replicated
