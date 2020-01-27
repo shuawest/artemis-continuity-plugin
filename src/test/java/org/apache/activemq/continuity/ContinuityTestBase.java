@@ -17,7 +17,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.List;
 
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
+import javax.jms.MessageProducer;
+import javax.jms.Queue;
+import javax.jms.Session;
+import javax.jms.TextMessage;
 import javax.management.MBeanServer;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
@@ -31,18 +43,20 @@ import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
+import org.apache.activemq.artemis.api.jms.ActiveMQJMSClient;
 import org.apache.activemq.artemis.core.config.Configuration;
 import org.apache.activemq.artemis.core.config.FileDeploymentManager;
 import org.apache.activemq.artemis.core.config.impl.FileConfiguration;
 import org.apache.activemq.artemis.core.config.impl.SecurityConfiguration;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.ActiveMQServers;
+import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.activemq.artemis.spi.core.security.ActiveMQJAASSecurityManager;
 import org.apache.activemq.artemis.spi.core.security.ActiveMQSecurityManager;
 import org.apache.activemq.artemis.spi.core.security.jaas.InVMLoginModule;
 import org.apache.activemq.artemis.tests.util.ActiveMQTestBase;
-import org.apache.activemq.continuity.core.CommandReceiver;
 import org.apache.activemq.continuity.core.CommandManager;
+import org.apache.activemq.continuity.core.CommandReceiver;
 import org.apache.activemq.continuity.core.ContinuityConfig;
 import org.apache.activemq.continuity.core.ContinuityService;
 import org.slf4j.Logger;
@@ -103,7 +117,7 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     ServerLocator locator = ActiveMQClient.createServerLocator(continuityConfig.getLocalInVmUri());
     ClientSessionFactory factory = locator.createSessionFactory();
     ClientSession session = factory.createSession(continuityConfig.getLocalUsername(),
-      continuityConfig.getLocalPassword(), false, true, true, false, locator.getAckBatchSize());
+      continuityConfig.getLocalPassword(), false, true, true, true, locator.getAckBatchSize());
     
     ClientProducer producer = session.createProducer(address);
     ClientConsumer consumer = session.createConsumer(queueName);
@@ -157,6 +171,25 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     locator.close();
   }
 
+  public void produceMessage(String url, String username, String password, String address, String messageBody) throws Exception {  
+    ServerLocator locator = ActiveMQClient.createServerLocator(url);
+    ClientSessionFactory factory = locator.createSessionFactory();
+    ClientSession session = factory.createSession(username, password, false, true, true, false, locator.getAckBatchSize());;
+    ClientProducer producer = session.createProducer(address);
+   
+    session.start();
+    
+    ClientMessage msg = session.createMessage(true);
+    msg.getBodyBuffer().writeString(messageBody);
+     
+    producer.send(msg);
+
+    producer.close();
+    session.close();
+    factory.close();
+    locator.close();
+  }
+
   public void consumeMessages(ContinuityConfig continuityConfig, ServerContext serverCtx, String address, String queueName, MessageHandler handler) throws Exception {
     ServerLocator locator = ActiveMQClient.createServerLocator(continuityConfig.getLocalInVmUri());
     ClientSessionFactory factory = locator.createSessionFactory();
@@ -173,6 +206,103 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     session.close();
     factory.close();
     locator.close();
+  }
+
+  public void produceMessages(String uri, String username, String password, String address, String messageBody, int count) throws Exception {
+    ServerLocator locator = ActiveMQClient.createServerLocator(uri);
+    ClientSessionFactory factory = locator.createSessionFactory();
+    ClientSession session = factory.createSession(username, password, false, true, true, true, locator.getAckBatchSize());
+    ClientProducer producer = session.createProducer(address);
+    session.start();
+
+    for(int i=0; i < count; i++) {
+      ClientMessage msg = session.createMessage(true);
+      msg.getBodyBuffer().writeString(messageBody + " " + i);
+      producer.send(msg);
+    }
+
+    producer.close();
+    session.close();
+    factory.close();
+    locator.close();
+  }
+
+  public void consumeMessages(ServerContext serverCtx, String inVmUri, String username, String password,
+      String queueName, MessageHandler handler) throws Exception {
+
+    ServerLocator locator = ActiveMQClient.createServerLocator(inVmUri);
+    ClientSessionFactory factory = locator.createSessionFactory();
+    ClientSession session = factory.createSession(username, password, false, true, true, true,
+        locator.getAckBatchSize());
+
+    ClientConsumer consumer = session.createConsumer(queueName);
+    consumer.setMessageHandler(handler);
+
+    session.start();
+    Thread.sleep(100L);
+
+    consumer.close();
+    session.close();
+    factory.close();
+    locator.close();
+  }
+
+  public void produceJmsMessages(String uri, String username, String password, String address, String messageBody, int count) throws Exception {
+    Destination dest = ActiveMQJMSClient.createTopic(address);
+    ConnectionFactory factory = new ActiveMQConnectionFactory(uri);
+    Connection connection = factory.createConnection(username, password);
+    Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+    connection.start();
+    MessageProducer producer = session.createProducer(dest);
+    Thread.sleep(500);
+
+    for(int i=0; i < count; i++) {
+      TextMessage message = session.createTextMessage(messageBody + " " + i);
+      producer.send(message);
+    }
+    
+    connection.close();
+  }
+
+  public void startConsumer(ServerContext serverCtx, String inVmUri, String username, String password, String queueName, MessageHandler handler) throws Exception {
+    ServerLocator locator = ActiveMQClient.createServerLocator(inVmUri);
+    ClientSessionFactory factory = locator.createSessionFactory();
+    ClientSession session = factory.createSession(username, password, false, true, true, true, locator.getAckBatchSize());
+
+    ClientConsumer consumer = session.createConsumer(queueName, "AMQDurable = 'DURABLE'");
+    consumer.setMessageHandler(handler);
+
+    session.start();
+  }
+
+  public ClientSession startCoreConsumer(String url, String username, String password, String queueName, CoreMessageHandlerStub handler) throws Exception {
+    ServerLocator locator = ActiveMQClient.createServerLocator(url);
+    ClientSessionFactory factory = locator.createSessionFactory();
+    ClientSession session = factory.createSession(username, password, false, false, false, false, 1); // locator.getAckBatchSize());
+    handler.setSession(session);
+
+    ClientConsumer consumer = session.createConsumer(queueName, "AMQDurable = 'DURABLE'");
+    consumer.setMessageHandler(handler);
+
+    session.start();
+
+    return session;
+  }
+
+  public Connection startJmsConsumer(String uri, String username, String password, String queueName, JmsMessageListenerStub listener) throws Exception {
+    ConnectionFactory factory = new ActiveMQConnectionFactory(uri);
+    Connection connection = factory.createConnection(username, password);
+    Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
+    Queue queue = session.createQueue(queueName);
+    
+    MessageConsumer consumer = session.createConsumer(queue);
+    consumer.setMessageListener(listener);
+
+    listener.setConnection(connection);
+
+    connection.start();
+
+    return connection;
   }
 
   public ClientSession consumeDirect(String url, String username, String password, String address, RoutingType routingType, String queueName, MessageHandler handler) throws Exception {
@@ -203,6 +333,128 @@ public class ContinuityTestBase extends ActiveMQTestBase {
       } catch (ActiveMQException e) {
         log.error("Unable to acknowledge message", e);
       }
+    }
+  }
+
+  public class CoreMessageHandlerStub implements MessageHandler {
+    private final String name;
+    
+    private List<String> messages = new ArrayList<String>();
+    private int messageCount = 0;
+
+    private Connection connection; 
+    private ClientSession session; 
+    
+    public CoreMessageHandlerStub(final String name) {
+      this.name = name;
+    }
+
+    @Override
+    public void onMessage(ClientMessage message) {
+      messageCount++;
+      
+      if (log.isDebugEnabled()) {
+        String body = null;
+        try {
+          body = message.getBodyBuffer().readString();
+        } catch (Exception e) {
+          log.error("Failed while reading core message body", e);
+        }
+
+        log.debug("Received core message on '{}': {}", name, body);
+        messages.add(body);     
+      }
+
+      try {
+        //message.acknowledge();
+        message.individualAcknowledge();
+      } catch (ActiveMQException e) {
+        log.error("Unable to acknowledge core message", e);
+      }
+    }
+    public List<String> getMessages() {
+      return messages;
+    }
+    public String getMessagesAsString() {
+      String messagesString = "";
+      for(String msg : messages) {
+        messagesString += msg + "\n";
+      }
+      return messagesString;
+    }
+
+    public ClientSession getSession() {
+      return session;
+    }
+    public void setSession(ClientSession session) {
+      this.session = session;
+    }
+    
+    public int getMessageCount() {
+      return messageCount;
+    }
+    public void setMessageCount(int messageCount) {
+      this.messageCount = messageCount;
+    }
+  }
+
+  public class JmsMessageListenerStub implements MessageListener {
+    private final String name;
+    
+    private List<String> messages = new ArrayList<String>();
+    private int messageCount = 0;
+
+    private Connection connection; 
+    
+    public JmsMessageListenerStub(final String name) {
+      this.name = name;
+    }
+
+    @Override
+    public void onMessage(javax.jms.Message message) {
+      messageCount++;
+      
+      if (log.isDebugEnabled()) {
+        String body = null;
+        try {
+          body = message.getBody(String.class);
+        } catch (JMSException e) {
+          log.error("Failed while reading jms message body", e);
+        }
+
+        log.debug("Received JMS message on '{}': {}", name, body);
+        messages.add(body);     
+      }
+
+      try {
+        message.acknowledge();
+      } catch (JMSException e) {
+        log.error("Unable to acknowledge jms message", e);
+      }
+    }
+    public List<String> getMessages() {
+      return messages;
+    }
+    public String getMessagesAsString() {
+      String messagesString = "";
+      for(String msg : messages) {
+        messagesString += msg + "\n";
+      }
+      return messagesString;
+    }
+
+    public Connection getConnection() {
+      return connection;
+    }
+    public void setConnection(Connection connection) {
+      this.connection = connection;
+    }
+
+    public int getMessageCount() {
+      return messageCount;
+    }
+    public void setMessageCount(int messageCount) {
+      this.messageCount = messageCount;
     }
   }
 

@@ -13,16 +13,13 @@
  */
 package org.apache.activemq.continuity.core;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.Queue;
-import org.jgroups.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,12 +95,27 @@ public class ContinuityService {
     }
 
     switch(command.getAction()) {
+      case ContinuityCommand.ACTION_ACTIVATE_SITE: 
+        activateSite();
+        break;
+
+      case ContinuityCommand.ACTION_BROKER_CONNECT:
+        for(ContinuityFlow flow : flows.values()) {
+          ContinuityCommand cmd = new ContinuityCommand();
+          cmd.setAction(ContinuityCommand.ACTION_ADD_QUEUE);
+          cmd.setAddress(flow.getSubjectAddressName());
+          cmd.setQueue(flow.getSubjectQueueName());
+          commandManager.sendCommand(cmd);
+        }
+        break; 
+
       case ContinuityCommand.ACTION_ADD_QUEUE:
         QueueInfo queueInfo = new QueueInfo();
         queueInfo.setAddressName(command.getAddress());
         queueInfo.setQueueName(command.getQueue());
         if(locateFlow(queueInfo.getQueueName()) == null) {
-          createFlow(queueInfo);
+          ContinuityFlow flow = createFlow(queueInfo);
+          flow.start();
         }
         break;
 
@@ -113,10 +125,16 @@ public class ContinuityService {
     }
   }
 
+  public void activateSite() throws ContinuityException {
+    for(ContinuityFlow flow : flows.values()) {
+      flow.startSubjectQueueDelivery();
+    }
+  }
   
-  private void createFlow(QueueInfo queueInfo) throws ContinuityException {
+  private ContinuityFlow createFlow(QueueInfo queueInfo) throws ContinuityException {
     ContinuityFlow flow = new ContinuityFlow(this, queueInfo);
     flow.initialize();
+    return flow;
   }
 
   public void registerContinuityFlow(String queueName, ContinuityFlow flow) throws ContinuityException {
@@ -139,7 +157,6 @@ public class ContinuityService {
           cmd.setAction(ContinuityCommand.ACTION_ADD_QUEUE);
           cmd.setAddress(queueInfo.getAddressName());
           cmd.setQueue(queueInfo.getQueueName());
-          cmd.setUuid(UUID.randomUUID().toString());
           commandManager.sendCommand(cmd);
         }
       }
@@ -154,7 +171,6 @@ public class ContinuityService {
       cmd.setAction(ContinuityCommand.ACTION_REMOVE_QUEUE);
       cmd.setAddress(queueInfo.getAddressName());
       cmd.setQueue(queueInfo.getQueueName());
-      cmd.setUuid(UUID.randomUUID().toString());
       commandManager.sendCommand(cmd);
     }
   }
@@ -166,12 +182,25 @@ public class ContinuityService {
     return queueInfo;
   }
 
-  public void start() throws ContinuityException {
+  public synchronized void start() throws ContinuityException {
+    if(isStarted || isStarting)
+      return;
+
     isStarting = true;
+    
+    if(log.isDebugEnabled()) {
+      log.debug("Starting continuity service connections");
+    }
+
     commandManager.start();
     for(ContinuityFlow flow : flows.values()) {
       flow.start();
     }
+
+    ContinuityCommand cmdStarted = new ContinuityCommand();
+    cmdStarted.setAction(ContinuityCommand.ACTION_BROKER_CONNECT);
+    commandManager.sendCommand(cmdStarted);
+
     isStarted = true;
     isStarting = false;
   }

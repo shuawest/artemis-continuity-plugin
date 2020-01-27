@@ -19,6 +19,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.util.HashMap;
 
 import org.apache.activemq.artemis.api.core.RoutingType;
+import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerBasePlugin;
 import org.apache.activemq.continuity.ContinuityTestBase;
 import org.apache.activemq.continuity.core.ContinuityFlow;
 import org.junit.Test;
@@ -47,7 +48,7 @@ public class ContinuityPluginTest extends ContinuityTestBase {
     serverCtx.getServer().start();
     Thread.sleep(100L);
     
-    // create a dummy connection to the server to start the plugin
+    // create a dummy connection to start the plugin
     MessageHandlerStub dummyHandler = new MessageHandlerStub();
     consumeDirect("tcp://localhost:61617", "myuser", "mypass", "artemis.continuity.commands.in", RoutingType.MULTICAST, "commandStubQueue", dummyHandler);
 
@@ -79,4 +80,43 @@ public class ContinuityPluginTest extends ContinuityTestBase {
     assertThat(flow1.getAckManager(), notNullValue());
   }
   
+  @Test
+  public void brokerConnectTest() throws Exception { 
+    ServerContext serverCtx1 = createServerContext("broker1-with-plugin.xml", "test-broker1", "myuser", "mypass");
+    ServerContext serverCtx2 = createServerContext("broker2-with-plugin.xml", "test-broker2", "myuser", "mypass");
+    serverCtx1.getServer().start();
+    serverCtx2.getServer().start();
+
+    Thread.sleep(500L);
+  
+    log.debug("\n\nServers started\n\n");
+
+    ContinuityPlugin plugin1 = getContinuityPlugin(serverCtx1);
+    ContinuityPlugin plugin2 = getContinuityPlugin(serverCtx2);
+    assertThat(plugin1, notNullValue());
+    assertThat(plugin2, notNullValue());
+
+    assertThat(plugin2.getService().getFlows().size(), equalTo(2));
+    ContinuityFlow flow2a = plugin2.getService().locateFlow("example1-durable");
+    ContinuityFlow flow2b = plugin2.getService().locateFlow("example2-durable");
+    assertThat(flow2a, notNullValue());
+    assertThat(flow2b, notNullValue());
+
+    assertThat(plugin1.getService().getFlows().size(), equalTo(2));
+    ContinuityFlow flow1a = plugin1.getService().locateFlow("example1-durable");
+    ContinuityFlow flow1b = plugin1.getService().locateFlow("example2-durable");
+    assertThat(flow1a, notNullValue());
+    assertThat(flow1b, notNullValue());
+  }
+
+  private ContinuityPlugin getContinuityPlugin(ServerContext serverCtx) {
+    ContinuityPlugin plugin = null;
+    for(ActiveMQServerBasePlugin p : serverCtx.getServer().getBrokerPlugins()) {
+      if(p.getClass().equals(ContinuityPlugin.class)) {
+        plugin = (ContinuityPlugin)p;
+        break;
+      }
+    }
+    return plugin;
+  }
 }

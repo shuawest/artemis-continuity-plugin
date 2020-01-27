@@ -14,7 +14,6 @@
 package org.apache.activemq.continuity.core;
 
 import java.text.ParseException;
-import java.util.UUID;
 
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
@@ -24,36 +23,22 @@ import org.apache.activemq.artemis.utils.JsonLoader;
 
 public class ContinuityCommand {
 
+  public static final String ACTION_ACTIVATE_SITE = "activate-site";
+  public static final String ACTION_BROKER_CONNECT = "broker-connect";
   public static final String ACTION_ADD_ADDRESS = "add-address";
   public static final String ACTION_ADD_QUEUE = "add-queue";
   public static final String ACTION_REMOVE_ADDRESS = "remove-address";
   public static final String ACTION_REMOVE_QUEUE = "remove-queue";
 
-  private static final String UUID_FIELD = "uuid";
   private static final String ACTION_FIELD = "action";
   private static final String ADDRESS_FIELD = "addr";
   private static final String QUEUE_FIELD = "queue";
 
-  private String uuid; 
   private String action;
   private String address; 
   private String queue;
 
-  public static ContinuityCommand createCommand() {
-    ContinuityCommand cmd = new ContinuityCommand();
-    cmd.setUuid(UUID.randomUUID().toString());
-    return cmd;
-  }
-
   public ContinuityCommand() { }
-
-  public String getUuid() {
-    return uuid;
-  }
-
-  public void setUuid(String uuid) {
-    this.uuid = uuid;
-  }
 
   public String getAction() {
     return action;
@@ -83,10 +68,14 @@ public class ContinuityCommand {
 
   public static String toJSON(ContinuityCommand cc) {
     JsonObjectBuilder builder = JsonLoader.createObjectBuilder();
-    builder.add(UUID_FIELD, cc.getUuid());
-    builder.add(ACTION_FIELD, cc.getAction());
-    builder.add(ADDRESS_FIELD, cc.getAddress());
-    builder.add(QUEUE_FIELD, cc.getQueue());
+    
+    if(cc.getAction() != null)
+      builder.add(ACTION_FIELD, cc.getAction());
+    if(cc.getAddress() != null)
+      builder.add(ADDRESS_FIELD, cc.getAddress());
+    if(cc.getQueue() != null)
+      builder.add(QUEUE_FIELD, cc.getQueue());
+
     JsonObject jsonObject = builder.build();
     return jsonObject.toString();
   }
@@ -94,10 +83,14 @@ public class ContinuityCommand {
   public static ContinuityCommand fromJSON(String json) throws ParseException {
     JsonObject jsonObject = JsonUtil.readJsonObject(json);
     ContinuityCommand cc = new ContinuityCommand();
-    cc.setUuid(jsonObject.getString(UUID_FIELD));
-    cc.setAction(jsonObject.getString(ACTION_FIELD));
-    cc.setAddress(jsonObject.getString(ADDRESS_FIELD));
-    cc.setQueue(jsonObject.getString(QUEUE_FIELD));
+
+    if(jsonObject.containsKey(ACTION_FIELD))
+      cc.setAction(jsonObject.getString(ACTION_FIELD));
+    if(jsonObject.containsKey(ADDRESS_FIELD))
+      cc.setAddress(jsonObject.getString(ADDRESS_FIELD));
+    if(jsonObject.containsKey(QUEUE_FIELD))
+      cc.setQueue(jsonObject.getString(QUEUE_FIELD));
+
     return cc;
   }
 

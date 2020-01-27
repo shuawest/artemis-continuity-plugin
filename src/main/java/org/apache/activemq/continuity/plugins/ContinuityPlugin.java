@@ -73,11 +73,15 @@ public class ContinuityPlugin implements ActiveMQServerPlugin {
     }
   }
 
-  // Command manager can't be started until the broker is running 
   @Override
   public void afterCreateConnection(RemotingConnection connection) throws ActiveMQException {
-    log.debug("Initializing command manager", connection.getRemoteAddress());
+    // Plugin starts once the first connection is made to the server
+    // since internal sessions for CommandManager, AckDivert, and AckReceiver 
+    // can't be started until the broker is running 
     if(!continuityService.isStarted() && !continuityService.isStarting()) {
+      if(log.isDebugEnabled()) {
+        log.debug("Initializing continuity service, due to first connection from '{}'", connection.getRemoteAddress());
+      }
       continuityService.start();
     }
   }

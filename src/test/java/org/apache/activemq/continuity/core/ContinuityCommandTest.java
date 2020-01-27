@@ -31,7 +31,6 @@ public class ContinuityCommandTest extends ContinuityTestBase {
     cmd.setAction("didsomething");
     cmd.setAddress("myaddress");
     cmd.setQueue("myqueue");
-    cmd.setUuid("asdf-asdf-asdf-asdf");
     String cmdJson = ContinuityCommand.toJSON(cmd);
     ContinuityCommand actualCmd = ContinuityCommand.fromJSON(cmdJson);
 
@@ -39,7 +38,6 @@ public class ContinuityCommandTest extends ContinuityTestBase {
     assertThat(actualCmd.getAction(), equalTo(cmd.getAction()));
     assertThat(actualCmd.getAddress(), equalTo(cmd.getAddress()));
     assertThat(actualCmd.getQueue(), equalTo(cmd.getQueue()));
-    assertThat(actualCmd.getUuid(), equalTo(cmd.getUuid()));
   }
 
 }

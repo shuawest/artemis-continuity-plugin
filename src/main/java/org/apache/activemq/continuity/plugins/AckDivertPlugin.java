@@ -13,8 +13,6 @@
  */
 package org.apache.activemq.continuity.plugins;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
@@ -23,6 +21,7 @@ import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.MessageReference;
 import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.artemis.core.server.ServerConsumer;
+import org.apache.activemq.artemis.core.server.impl.AckReason;
 import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerMessagePlugin;
 import org.apache.activemq.continuity.core.AckDivert;
 import org.apache.activemq.continuity.core.AckInfo;
@@ -46,7 +45,7 @@ public class AckDivertPlugin implements ActiveMQServerMessagePlugin {
   }
 
   @Override
-  public void afterDeliver(ServerConsumer consumer, MessageReference ref) throws ActiveMQException {
+  public void messageAcknowledged(MessageReference ref, AckReason reason, ServerConsumer consumer) throws ActiveMQException {
     Queue sourceQueue = ref.getQueue();
     String queueName = sourceQueue.getName().toString();
 

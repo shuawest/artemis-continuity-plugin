@@ -15,6 +15,7 @@ package org.apache.activemq.continuity.core;
 
 import java.text.ParseException;
 
+import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
@@ -25,7 +26,6 @@ import org.apache.activemq.artemis.api.core.client.ServerLocator;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 public class AckReceiver implements MessageHandler {
 
@@ -53,7 +53,7 @@ public class AckReceiver implements MessageHandler {
 
   public void stop() throws ContinuityException {
     try {
-      if(isStarted) {
+      if (isStarted) {
         consumer.close();
         session.close();
         factory.close();
@@ -72,19 +72,20 @@ public class AckReceiver implements MessageHandler {
       if (session == null || session.isClosed()) {
         this.locator = ActiveMQClient.createServerLocator(getConfig().getLocalInVmUri());
         this.factory = locator.createSessionFactory();
-        this.session = factory.createSession(getConfig().getLocalUsername(), getConfig().getLocalPassword(), false, true, true, false, locator.getAckBatchSize());
+        this.session = factory.createSession(getConfig().getLocalUsername(), getConfig().getLocalPassword(), false,
+            false, false, false, locator.getAckBatchSize());
         session.start();
-        
-        if(log.isDebugEnabled())
-          log.debug("Created session for ack receiver {}", flow.getInflowAcksName());
+
+        if (log.isDebugEnabled())
+          log.debug("Created session for ack receiver {} ({})", flow.getInflowAcksName(), getConfig().getSiteId());
       }
 
-      if(consumer == null || consumer.isClosed()) {
+      if (consumer == null || consumer.isClosed()) {
         this.consumer = session.createConsumer(flow.getInflowAcksName());
         consumer.setMessageHandler(this);
-        
-        if(log.isDebugEnabled())
-          log.debug("Created consumer for ack receiver {}", flow.getInflowAcksName());
+
+        if (log.isDebugEnabled())
+          log.debug("Created consumer for ack receiver {} ({})", flow.getInflowAcksName(), getConfig().getSiteId());
       }
 
     } catch (Exception e) {
@@ -95,22 +96,26 @@ public class AckReceiver implements MessageHandler {
   }
 
   public void onMessage(ClientMessage message) {
-    if(log.isDebugEnabled())
-      log.debug("Received ack on '{}': {}", flow.getInflowAcksName(), message);
-    
-    String ackBody = message.getBodyBuffer().readString(); 
+    if (log.isDebugEnabled()) {
+      log.debug("Received ack on '{}' ({}): {}", flow.getInflowAcksName(), getConfig().getSiteId(), message);// message.getBodyBuffer().readString());
+    }
 
-    try { 
+    String ackBody = message.getBodyBuffer().readString();
+
+    try {
       AckInfo ack = AckInfo.fromJSON(ackBody);
       flow.getAckManager().handleAck(ack);
-
-    } catch(ParseException parseException) {
+      message.acknowledge();
+    } catch(ParseException e) {
       String eMessage = String.format("Unable to parse incoming ack: %s", ackBody);
-      log.error(eMessage, parseException);
-    } catch(ContinuityException continuityException) {
+      log.error(eMessage, e);
+    } catch(ContinuityException e) {
       String eMessage = String.format("Unable to handle ack: %s", ackBody);
-      log.error(eMessage, continuityException);
-    }
+      log.error(eMessage, e);
+    } catch (ActiveMQException e) {
+      String eMessage = String.format("Unable to acknowledge incoming ack: %s", ackBody);
+      log.error(eMessage, e);
+    } 
   }
 
   private ContinuityConfig getConfig() {

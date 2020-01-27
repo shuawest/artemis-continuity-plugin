@@ -30,7 +30,6 @@ import org.apache.activemq.artemis.core.server.Queue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public class AckManager {
 
   private static final Logger log = LoggerFactory.getLogger(AckManager.class);

@@ -28,6 +28,7 @@ import org.apache.activemq.continuity.plugins.OriginTransformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO: look into creating a custom bridge to target queue, instead of full address
 // TODO: refactor to have bridges on remote side, but consider 3+ site model
 public class ContinuityFlow {
 
@@ -89,7 +90,17 @@ public class ContinuityFlow {
   public void start() throws ContinuityException {
     ackDivert.start();
     ackReceiver.start();
+    startBridge(outflowMirrorBridge);
+    startBridge(outflowAcksBridge);
     isStarted = true;
+  }
+
+  public void startSubjectQueueDelivery() throws ContinuityException {
+    try {
+      targetBridge.start();
+    } catch (Exception e) {
+      throw new ContinuityException("Unable to start subject queue bridge", e);
+    }
   }
 
   public void stop() throws ContinuityException {
@@ -108,10 +119,10 @@ public class ContinuityFlow {
   private void constructFlowPrimitives() throws ContinuityException {
     createFlowQueue(outflowMirrorName, outflowMirrorName);
     createDivert(outflowDivertName, subjectAddressName, outflowMirrorName);
-    this.outflowMirrorBridge = createBridge(outflowMirrorBridgeName, outflowMirrorName, inflowMirrorName, true);
+    this.outflowMirrorBridge = createBridge(outflowMirrorBridgeName, outflowMirrorName, inflowMirrorName, getConfig().getRemoteConnectorRef(), false);
 
     createFlowQueue(outflowAcksName, outflowAcksName);
-    this.outflowAcksBridge = createBridge(outflowAcksBridgeName, outflowAcksName, inflowAcksName, true);
+    this.outflowAcksBridge = createBridge(outflowAcksBridgeName, outflowAcksName, inflowAcksName, getConfig().getRemoteConnectorRef(), false);
     createAckDivert();
 
     createFlowQueue(inflowMirrorName, inflowMirrorName);
@@ -120,7 +131,15 @@ public class ContinuityFlow {
     createAckReceiver();
 
     createMatchingQueue(queueInfo);
-    this.targetBridge = createBridge(targetBridgeName, inflowMirrorName, subjectQueueName, false);
+    this.targetBridge = createBridge(targetBridgeName, inflowMirrorName, subjectAddressName, getConfig().getLocalConnectorRef(), false);
+  }
+
+  private void startBridge(Bridge bridge) throws ContinuityException {
+    try {
+      bridge.start();
+    } catch (Exception e) {
+      throw new ContinuityException("Unabled to start bridge", e);
+    }
   }
 
   private void createAckDivert() throws ContinuityException {
@@ -207,7 +226,7 @@ public class ContinuityFlow {
     }
   }
 
-  private Bridge createBridge(final String bridgeName, final String fromQueue, final String toAddress, final boolean start) throws ContinuityException {
+  private Bridge createBridge(final String bridgeName, final String fromQueue, final String toAddress, final String connectorRef, final boolean start) throws ContinuityException {
     Bridge bridge = null;
     try {
       final BridgeConfiguration bridgeConfig = new BridgeConfiguration()
@@ -215,18 +234,24 @@ public class ContinuityFlow {
           .setQueueName(fromQueue)
           .setForwardingAddress(toAddress)
           .setHA(true)
-          .setStaticConnectors(Arrays.asList(getConfig().getRemoteConnectorRef()));
+          .setRetryInterval(100L)
+          .setRetryIntervalMultiplier(0.5)
+          .setInitialConnectAttempts(-1)
+          .setReconnectAttempts(-1)
+          .setUseDuplicateDetection(true)
+          .setConfirmationWindowSize(10000000)
+          .setStaticConnectors(Arrays.asList(connectorRef)); 
 
       getServer().deployBridge(bridgeConfig);
 
       bridge = getServer().getClusterManager().getBridges().get(bridgeName);
 
       if(!start) {
-        bridge.pause();
+        bridge.stop();
       }
 
     } catch (final Exception e) {
-      final String eMessage = String.format("Failed to create divert from '%s' to '$s'", fromQueue, toAddress);
+      final String eMessage = String.format("Failed to create divert from '%s' to '%s'", fromQueue, toAddress);
       log.error(eMessage, e);
       throw new ContinuityException(eMessage, e);
     }

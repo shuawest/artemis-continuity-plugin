@@ -98,9 +98,9 @@ public class ContinuityFlowTest extends ContinuityTestBase {
 
     verifyQueueExists(serverCtx, flow.getSubjectQueueName(), RoutingType.ANYCAST);
     verifyQueueExists(serverCtx, flow.getOutflowMirrorName(), RoutingType.MULTICAST);
-    verifyBridgeExistsInState(serverCtx, flow.getOutflowMirrorBridgeName(), flow.getOutflowMirrorName(), flow.getInflowMirrorName(), true);
+    verifyBridgeExistsInState(serverCtx, flow.getOutflowMirrorBridgeName(), flow.getOutflowMirrorName(), flow.getInflowMirrorName(), false);
     verifyQueueExists(serverCtx, flow.getOutflowAcksName(), RoutingType.MULTICAST);
-    verifyBridgeExistsInState(serverCtx, flow.getOutflowAcksBridgeName(), flow.getOutflowAcksName(), flow.getInflowAcksName(), true);
+    verifyBridgeExistsInState(serverCtx, flow.getOutflowAcksBridgeName(), flow.getOutflowAcksName(), flow.getInflowAcksName(), false);
     verifyQueueExists(serverCtx, flow.getInflowMirrorName(), RoutingType.MULTICAST);
     verifyQueueExists(serverCtx, flow.getInflowAcksName(), RoutingType.MULTICAST);
     verifyBridgeExistsInState(serverCtx, flow.getTargetBridgeName(), flow.getInflowMirrorName(), flow.getSubjectAddressName(), false);

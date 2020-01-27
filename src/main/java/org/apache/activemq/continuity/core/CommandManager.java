@@ -13,9 +13,7 @@
  */
 package org.apache.activemq.continuity.core;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.api.core.SimpleString;
@@ -35,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CommandManager {
- 
+
   private static final Logger log = LoggerFactory.getLogger(CommandManager.class);
 
   public static final String ORIGIN_HEADER = "CONTINUITY_ORIGIN";
@@ -43,7 +41,7 @@ public class CommandManager {
   private final ContinuityService service;
   private final CommandReceiver commandReceiver;
 
-  private final String commandInQueueName; 
+  private final String commandInQueueName;
   private final String commandOutQueueName;
   private final String commandOutBridgeName;
 
@@ -54,10 +52,10 @@ public class CommandManager {
   private boolean isInitialized = false;
   private boolean isStarted = false;
 
-  //TODO: move command session control to CommandHandler -> CommandReceiver
+  // TODO: move command session control to CommandHandler -> CommandReceiver
   private ClientSession session = null;
   private ServerLocator locator = null;
-  private ClientSessionFactory factory = null; 
+  private ClientSessionFactory factory = null;
   private ClientProducer producer = null;
   private ClientConsumer consumer = null;
 
@@ -70,25 +68,25 @@ public class CommandManager {
   }
 
   public void initialize() throws ContinuityException {
-    if(!isInitialized) {
+    if (!isInitialized) {
       service.registerCommandManager(this);
       commandInQueue = createCommandQueue(commandInQueueName, commandInQueueName);
       commandOutQueue = createCommandQueue(commandOutQueueName, commandOutQueueName);
-      commandOutBridge = createCommandBridge(commandOutBridgeName, getConfig().getRemoteConnectorRef(), commandOutQueueName, commandInQueueName);
+      commandOutBridge = createCommandBridge(commandOutBridgeName, getConfig().getRemoteConnectorRef(), commandOutQueueName, commandInQueueName, true);
       isInitialized = true;
 
-      if(log.isDebugEnabled()) {
+      if (log.isDebugEnabled()) {
         log.debug("Finished initializing continuity command manager");
       }
     }
   }
 
   public void start() throws ContinuityException {
-    if(!isStarted) {
+    if (!isStarted) {
       prepareSession();
       isStarted = true;
 
-      if(log.isDebugEnabled()) {
+      if (log.isDebugEnabled()) {
         log.debug("Finished starting continuity command manager");
       }
     }
@@ -129,7 +127,7 @@ public class CommandManager {
     return queue;
   }
 
-  private Bridge createCommandBridge(String bridgeName, String remoteUri, String fromQueueName, String toAddressName) throws ContinuityException {
+  private Bridge createCommandBridge(String bridgeName, String remoteUri, String fromQueueName, String toAddressName, final boolean start) throws ContinuityException {
     Bridge bridge; 
     try {
       BridgeConfiguration bridgeConfig = new BridgeConfiguration()
@@ -137,7 +135,8 @@ public class CommandManager {
         .setQueueName(fromQueueName)
         .setForwardingAddress(toAddressName)
         .setHA(true)
-        .setRetryIntervalMultiplier(1.0)
+        .setRetryInterval(100L)
+        .setRetryIntervalMultiplier(0.5)
         .setInitialConnectAttempts(-1)
         .setReconnectAttempts(-1)
         .setRoutingType(ComponentConfigurationRoutingType.MULTICAST)
@@ -149,6 +148,10 @@ public class CommandManager {
       getServer().deployBridge(bridgeConfig);
 
       bridge = getServer().getClusterManager().getBridges().get(bridgeName);
+
+      if(!start) {
+        bridge.stop();
+      }
 
     } catch (Exception e) {
       String eMessage = String.format("Failed to create command bridge, from '%s' to '%s.%s'", fromQueueName, remoteUri, toAddressName);
@@ -198,7 +201,9 @@ public class CommandManager {
 
   public void sendCommand(String body) throws ContinuityException {
     try {
-      prepareSession();
+      if(log.isDebugEnabled()) {
+        log.debug("Sending command: {}", body);
+      }
 
       ClientMessage message = session.createMessage(true);
       message.putStringProperty(ORIGIN_HEADER, getServer().getIdentity());

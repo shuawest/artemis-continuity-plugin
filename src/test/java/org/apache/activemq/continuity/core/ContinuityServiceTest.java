@@ -113,6 +113,7 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     when(continuityCtx.getConfig().getOutflowAcksSuffix()).thenReturn(".out.acks");
     when(continuityCtx.getConfig().getInflowMirrorSuffix()).thenReturn(".in.mirror");
     when(continuityCtx.getConfig().getInflowAcksSuffix()).thenReturn(".in.acks");
+    when(continuityCtx.getConfig().getLocalConnectorRef()).thenReturn("vm://1");
 
     ContinuityService svc = new ContinuityService(serverCtx.getServer(), continuityCtx.getConfig());
     svc.registerCommandManager(continuityCtx.getCommandManager());

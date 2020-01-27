@@ -99,7 +99,7 @@ public class AckDivert {
     try {
       prepareSession();
       
-      log.debug("Sessing message, body '{}', origin '{}'", body, getServer().getIdentity());
+      log.debug("Sending ack info body '{}', origin '{}'", body, getServer().getIdentity());
 
       ClientMessage message = session.createMessage(true);
       message.putStringProperty(ORIGIN_HEADER, getServer().getIdentity());

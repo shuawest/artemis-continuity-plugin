@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Date;
+import java.util.UUID;
 
 import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.api.core.SimpleString;
@@ -33,7 +34,6 @@ import org.apache.activemq.continuity.ContinuityTestBase;
 import org.apache.activemq.continuity.core.AckDivert;
 import org.apache.activemq.continuity.core.AckInfo;
 import org.apache.activemq.continuity.core.ContinuityFlow;
-import org.jgroups.util.UUID;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.Logger;
@@ -69,7 +69,7 @@ public class AckDivertPluginTest extends ContinuityTestBase {
     when(msgMock.getStringProperty(Message.HDR_DUPLICATE_DETECTION_ID)).thenReturn(expectedUuid);
 
     AckDivertPlugin plugin = new AckDivertPlugin(continuityCtx.getService());
-    plugin.afterDeliver(null, refMock);
+    plugin.messageAcknowledged(refMock, null, null);
 
     ArgumentCaptor<AckInfo> ackCaptor = ArgumentCaptor.forClass(AckInfo.class);
     verify(divertMock, times(1)).sendAck(ackCaptor.capture());

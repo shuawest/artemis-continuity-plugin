@@ -20,9 +20,9 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.UUID;
 
 import org.apache.activemq.continuity.ContinuityTestBase;
-import org.jgroups.util.UUID;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
