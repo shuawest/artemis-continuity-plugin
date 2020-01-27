@@ -1,6 +1,6 @@
 # Artemis Continuity Plugin v2
 
-### Ontology
+## Ontology
 
 .*Core Service Components*
 * ContinuityService
@@ -63,7 +63,7 @@
 * Only durabled non-temporary queues are setup for replication flows
 * Test swapover and failover across across two brokers 
 
-### TODO
+## TODO
 
 1. create image and automated deployment to push to multiple openshift sites
 2. load test 2 site single broker install (compare with single site without the plugin)
@@ -85,11 +85,11 @@
 17. create Continuity Plugin overview presentation
 18. evaluate adding synchronous replication model (custom divert that sends message and acks remotely, preventing delivery if 1 or more remotes are not available)
 
-### Artemis Enhancements
+## Artemis Enhancements
 
 1. Broker Startup Plugin hook - The plugin requires connection destinations within the broker. There is currently no plugin interface that signals the broker has started and is ready to accept incoming connnectiong. The plug currently finalizes its initialization on the first inbound connection, however it would be better if there was a plugin hook to signal that the broker is started. 
 
-### Risks
+## Risks
 
 1. Clients by default batch message acknowledgement, which prevents the acks from being captured and forwarded to the remote site. This may improve client performance, but cause the window of ack replication to be large, and stress the remote broker as batches of acks are received. This can be aided by having smaller batch sizes or using transactional consumers which acknowledge each message received. 
 2. Slow consumers may cause a build up of staged messages. As messages are acknowledged on the remote site the seek and removal time will be heavy for large staged queues. Using a message delivery delay and the duplicate id cache may be a good alternative. Load and soak testing is required to understand this risk better. 

@@ -8,7 +8,7 @@ The plugin reflects on the configured and dynamically created destinations in th
 
 A goal of the plugin will be to detect and measure the estimated RPO (Recovery Point Objective) and RTO (Recovery Time Objective) based on the message throughput, consumption speed, and client acknowledgement model. These metrics will then be surfaced to standardized monitoring tools to be compared against the required SLA for the application use case. 
 
-### Intent 
+## Intent 
 
 The intent of this plugin is to give more options for cross-site resilience. Adding continuity at the broker isolates each broker's resilience to each broker installation, and depend less on the infrastructure / cloud provider. This will:
 * allow application teams to 'shift left'
@@ -27,7 +27,7 @@ As messages are sent, received, and acknowledged in one site, both the messages 
 
 It is installed and configured in an artemis broker as a plugin. The plugin configuration identifies the remote site, the target addresses to be replicated, necessary authentication details, and replication strategy. Brokers establish a command connection to transfer configuration at startup or as updates occur at runtime.
 
-### Infrastructure Requirements
+## Infrastructure Requirements
 
 * Shared Nothing Broker Cluster Model
  1. Two relatively close data centers sites
@@ -39,6 +39,18 @@ It is installed and configured in an artemis broker as a plugin. The plugin conf
  2. Replciated block storage (replicated across racks)
  3. OpenShift if installing with the container based approach
 
- 
+## Orchestration Process
+
+Producers and Consumers can optionally already be started on the remote site no messages will be delivered to the target destinations until site is activated.
+
+.*Orchestrated Swapover*
+1. Stop producers and consumers on site1
+2. Wait mirror and ack outflow queues to be fully bridged to remote site
+3. Signal activation of target remote site
+
+.*Failover*
+1. When it is detected that site1 is down
+2. Signal activation of target remote site
+3. Recover journals and restart site1 to bridge missing messages and acks to the remote site
 
 
