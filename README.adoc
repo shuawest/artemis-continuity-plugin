@@ -41,7 +41,7 @@ It is installed and configured in an artemis broker as a plugin. The plugin conf
 
 ## Orchestration Process
 
-Producers and Consumers can optionally already be started on the remote site no messages will be delivered to the target destinations until site is activated.
+Producers and Consumers can optionally already be started on the remote site no messages will be delivered to the target destinations until site is activated. 
 
 .*Orchestrated Swapover*
 1. Stop producers and consumers on site1
@@ -53,4 +53,5 @@ Producers and Consumers can optionally already be started on the remote site no 
 2. Signal activation of target remote site
 3. Recover journals and restart site1 to bridge missing messages and acks to the remote site
 
+Alternatively, both sites can be kept active and the staging delay can be used as long as the delay is longer than the delta between the initial message produce, and acknowledgement recieve on the remote site side. This time delta average and maximum is measured by the plugin (and will be able to be monitored). 
 
