@@ -13,11 +13,11 @@ image:docs/202001ContinuityPlugin-diagram-v0.2-1.png[Continuity Plugin Diagram]
 ## Intent 
 
 The intent of this plugin is to give more options for cross-site resilience. Adding continuity at the broker isolates each broker's resilience to each broker installation, and depend less on the infrastructure / cloud provider. This will:
-* allow application teams to 'shift left'
-* reduce the dependency and goverance from the traditional bespoke infrastructure messaging teams
-* reduce the cost of messaging since it runs on commodity infrastructure
-* allow messaging brokers to be installed in isolation an an application component, instead of the traditionally heavily shared and managed installs
-* and allow messaging to be used by more use cases
+- allow application teams to 'shift left'
+- reduce the dependency and goverance from the traditional bespoke infrastructure messaging teams
+- reduce the cost of messaging since it runs on commodity infrastructure
+- allow messaging brokers to be installed in isolation an an application component, instead of the traditionally heavily shared and managed installs
+- and allow messaging to be used by more use cases
 
 Adding continuity does have impact on performance. However, an overwhelming majority of messaging use cases will benefit from the resilience and reduced application complexity. When a use case requires traditional bespoke installation for maximized performance, you should go traditional. 
 
