@@ -1,5 +1,7 @@
 # Artemis Continuity Plugin v2
 
+image:docs/202001ContinuityPlugin-internals-diagram-v0.2.png[Continuity Plugin Internals Diagram]
+
 ## Ontology
 
 .*Core Service Components*
@@ -93,3 +95,4 @@
 
 1. Clients by default batch message acknowledgement, which prevents the acks from being captured and forwarded to the remote site. This may improve client performance, but cause the window of ack replication to be large, and stress the remote broker as batches of acks are received. This can be aided by having smaller batch sizes or using transactional consumers which acknowledge each message received. 
 2. Slow consumers may cause a build up of staged messages. As messages are acknowledged on the remote site the seek and removal time will be heavy for large staged queues. Using a message delivery delay and the duplicate id cache may be a good alternative. Load and soak testing is required to understand this risk better. 
+
