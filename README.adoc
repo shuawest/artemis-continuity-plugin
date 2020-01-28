@@ -39,7 +39,7 @@ It is installed and configured in an artemis broker as a plugin. The plugin conf
 
 * Master:Slave Broker Cluster Model
  1.  Two relatively close data centers sites
- 2. Replciated block storage (replicated across racks)
+ 2. Replicated block storage (replicated across racks or availablility zones)
  3. OpenShift if installing with the container based approach
 
 ## Orchestration Process
