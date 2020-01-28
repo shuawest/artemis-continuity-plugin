@@ -8,6 +8,8 @@ The plugin reflects on the configured and dynamically created destinations in th
 
 A goal of the plugin will be to detect and measure the estimated RPO (Recovery Point Objective) and RTO (Recovery Time Objective) based on the message throughput, consumption speed, and client acknowledgement model. These metrics will then be surfaced to standardized monitoring tools to be compared against the required SLA for the application use case. 
 
+image:docs/202001ContinuityPlugin-diagram-v0.2-1.png[Continuity Plugin Diagram]
+
 ## Intent 
 
 The intent of this plugin is to give more options for cross-site resilience. Adding continuity at the broker isolates each broker's resilience to each broker installation, and depend less on the infrastructure / cloud provider. This will:
