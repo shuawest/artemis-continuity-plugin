@@ -40,13 +40,14 @@ public class ContinuityPluginTest extends ContinuityTestBase {
       put("local-invm-uri", "vm://2");
       put("local-username", "myuser");
       put("local-password", "mypass");
+      put("local-connector-ref", "local-connector");
       put("remote-connector-ref", "remote-connector");
       put("addresses", "async-sample1;async-sample2");
     }}); 
 
     serverCtx.getServer().getConfiguration().registerBrokerPlugin(plugin);
     serverCtx.getServer().start();
-    Thread.sleep(100L);
+    Thread.sleep(300L);
     
     // create a dummy connection to start the plugin
     MessageHandlerStub dummyHandler = new MessageHandlerStub();

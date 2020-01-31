@@ -82,6 +82,7 @@ public class ContinuityFlowTest extends ContinuityTestBase {
     when(continuityCtx.getConfig().getOutflowAcksSuffix()).thenReturn(".out.acks");
     when(continuityCtx.getConfig().getInflowMirrorSuffix()).thenReturn(".in.mirror");
     when(continuityCtx.getConfig().getInflowAcksSuffix()).thenReturn(".in.acks");
+    when(continuityCtx.getConfig().getLocalConnectorRef()).thenReturn("local-connector");
 
     String subjectAddressName = "async-sample1";
     String subjectQueueName = "async-sample1";
@@ -92,7 +93,7 @@ public class ContinuityFlowTest extends ContinuityTestBase {
 
     ContinuityFlow flow = new ContinuityFlow(continuityCtx.getService(), queueInfo);
     flow.initialize();
-    Thread.sleep(100L);
+    Thread.sleep(300L);
     
     verify(continuityCtx.getService(), times(1)).registerContinuityFlow(eq(subjectQueueName), eq(flow));
 

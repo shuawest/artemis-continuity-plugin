@@ -170,7 +170,7 @@ under the License.
       </addresses>
 
       <connectors>
-         <connector name="local-connector">tcp://localhost:61616</connector>
+         <connector name="local-connector">vm://1</connector>
          <connector name="remote-connector">tcp://localhost:61617</connector>
       </connectors>
     

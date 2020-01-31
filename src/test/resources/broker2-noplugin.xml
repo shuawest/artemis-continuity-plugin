@@ -122,7 +122,7 @@ under the License.
       </addresses>
 
       <connectors>
-         <connector name="local-connector">tcp://localhost:61617</connector>
+         <connector name="local-connector">vm://2</connector>
          <connector name="remote-connector">tcp://localhost:61616</connector>
       </connectors>
     

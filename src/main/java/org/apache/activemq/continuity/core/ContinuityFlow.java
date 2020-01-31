@@ -97,9 +97,21 @@ public class ContinuityFlow {
 
   public void startSubjectQueueDelivery() throws ContinuityException {
     try {
-      targetBridge.start();
+      startBridge(targetBridge);
     } catch (Exception e) {
       throw new ContinuityException("Unable to start subject queue bridge", e);
+    }
+  }
+
+  private void startBridge(Bridge bridge) throws ContinuityException {
+    try {
+      if(log.isDebugEnabled()) {
+        log.debug("Starting bridge from '{}' to '{}''", bridge.getQueue().getName().toString(), bridge.getForwardingAddress());
+      }
+
+      bridge.start();
+    } catch (Exception e) {
+      throw new ContinuityException("Unabled to start bridge", e);
     }
   }
 
@@ -132,14 +144,6 @@ public class ContinuityFlow {
 
     createMatchingQueue(queueInfo);
     this.targetBridge = createBridge(targetBridgeName, inflowMirrorName, subjectAddressName, getConfig().getLocalConnectorRef(), false);
-  }
-
-  private void startBridge(Bridge bridge) throws ContinuityException {
-    try {
-      bridge.start();
-    } catch (Exception e) {
-      throw new ContinuityException("Unabled to start bridge", e);
-    }
   }
 
   private void createAckDivert() throws ContinuityException {
