@@ -6,4 +6,5 @@ classpath
 .settings
 .sts4-cache
 data
+.DS_Store
 
