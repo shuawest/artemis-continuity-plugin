@@ -169,46 +169,46 @@ public class ContinuityFlowControlImpl extends AbstractControl implements Contin
 
     /* Volatile Configuration */
 
-    public String isAddDuplicatesToTarget() {
+    public Boolean getAddDuplicatesToTarget() {
         if (ContinuityAuditLogger.isEnabled() && flow != null && flow.getAckManager() != null) {
             ContinuityAuditLogger.isAddDuplicatesToTarget(flow);
         }
         clearIO();
         try {
             if(flow == null || flow.getAckManager() == null)
-                return "ack manager does not exist";
+                return null;
             else
-                return Boolean.toString(flow.getAckManager().isAddDuplicatesToTarget());
+                return flow.getAckManager().isAddDuplicatesToTarget();
         } finally {
             blockOnIO();
         }
     }
     
-    public String isRemoveMessageFromMirror() {
+    public Boolean getRemoveMessageFromMirror() {
         if (ContinuityAuditLogger.isEnabled() && flow != null && flow.getAckManager() != null) {
             ContinuityAuditLogger.isRemoveMessageFromMirror(flow);
         }
         clearIO();
         try {
             if(flow == null || flow.getAckManager() == null)
-                return "ack manager does not exist";
+                return null;
             else
-                return Boolean.toString(flow.getAckManager().isRemoveMessageFromMirror());
+                return flow.getAckManager().isRemoveMessageFromMirror();
         } finally {
             blockOnIO();
         }
     }
     
-    public String isDelayMessageOnInflow() {
+    public Boolean getDelayMessageOnInflow() {
         if (ContinuityAuditLogger.isEnabled() && flow != null && flow.getAckManager() != null) {
             ContinuityAuditLogger.isDelayMessageOnInflow(flow);
         }
         clearIO();
         try {
             if(flow == null || flow.getAckManager() == null)
-                return "ack manager does not exist";
+                return null;
             else
-                return Boolean.toString(flow.getAckManager().isDelayMessageOnInflow());
+                return flow.getAckManager().isDelayMessageOnInflow();
         } finally {
             blockOnIO();
         }
@@ -236,13 +236,13 @@ public class ContinuityFlowControlImpl extends AbstractControl implements Contin
         }
     }
 
-    public void setAddDuplicatesToTarget(boolean isAddDuplicatesToTarget) {
+    public void setAddDuplicatesToTarget(Boolean isAddDuplicatesToTarget) {
         if (ContinuityAuditLogger.isEnabled() && flow != null && flow.getAckManager() != null) {
             ContinuityAuditLogger.setAddDuplicatesToTarget(flow, isAddDuplicatesToTarget);
         }
         clearIO();
         try {
-            if(flow == null || flow.getAckManager() == null) {
+            if(flow != null && flow.getAckManager() != null) {
                 flow.getAckManager().setAddDuplicatesToTarget(isAddDuplicatesToTarget);
             }
         } finally {
@@ -250,13 +250,13 @@ public class ContinuityFlowControlImpl extends AbstractControl implements Contin
         }
     }
 
-    public void setRemoveMessageFromMirror(boolean isRemoveMessageFromMirror) {
+    public void setRemoveMessageFromMirror(Boolean isRemoveMessageFromMirror) {
         if (ContinuityAuditLogger.isEnabled() && flow != null && flow.getAckManager() != null) {
             ContinuityAuditLogger.setRemoveMessageFromMirror(flow, isRemoveMessageFromMirror);
         }
         clearIO();
         try {
-            if(flow == null || flow.getAckManager() == null) {
+            if(flow != null && flow.getAckManager() != null) {
                 flow.getAckManager().setRemoveMessageFromMirror(isRemoveMessageFromMirror);
             }
         } finally {
@@ -264,13 +264,13 @@ public class ContinuityFlowControlImpl extends AbstractControl implements Contin
         }
     }
 
-    public void setDelayMessageOnInflow(boolean isDelayMessageOnInflow) {
+    public void setDelayMessageOnInflow(Boolean isDelayMessageOnInflow) {
         if (ContinuityAuditLogger.isEnabled() && flow != null && flow.getAckManager() != null) {
             ContinuityAuditLogger.setDelayMessageOnInflow(flow, isDelayMessageOnInflow);
         }
         clearIO();
         try {
-            if(flow == null || flow.getAckManager() == null) {
+            if(flow != null && flow.getAckManager() != null) {
                 flow.getAckManager().setDelayMessageOnInflow(isDelayMessageOnInflow);
             }
         } finally {

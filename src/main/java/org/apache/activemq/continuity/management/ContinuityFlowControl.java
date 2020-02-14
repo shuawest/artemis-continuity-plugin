@@ -59,13 +59,13 @@ public interface ContinuityFlowControl {
     /* Volatile Configuration */
 
     @Attribute(desc = "Config: Add duplicate ids to the target queue")
-    String isAddDuplicatesToTarget();
+    Boolean getAddDuplicatesToTarget();
     
     @Attribute(desc = "Config: Remove messages from staging queue")
-    String isRemoveMessageFromMirror();
+    Boolean getRemoveMessageFromMirror();
     
     @Attribute(desc = "Config: Delay message on staging queue")
-    String isDelayMessageOnInflow();
+    Boolean getDelayMessageOnInflow();
 
      /* Static Configuration */
 
@@ -77,12 +77,12 @@ public interface ContinuityFlowControl {
                    @Parameter(name = "ackTime", desc = "Time of the acknowledgement  (affects statistic tracking)") Date ackTime) throws Exception;
 
     @Operation(desc = "Add duplicate ids to the target queue to prevent delivery", impact = MBeanOperationInfo.ACTION)
-    void setAddDuplicatesToTarget(@Parameter(name = "isAddDuplicatesToTarget", desc = "true or false") boolean isAddDuplicatesToTarget);
+    void setAddDuplicatesToTarget(@Parameter(name = "isAddDuplicatesToTarget", desc = "true or false") Boolean isAddDuplicatesToTarget);
 
     @Operation(desc = "Remove messages from staging queue", impact = MBeanOperationInfo.ACTION)
-    void setRemoveMessageFromMirror(@Parameter(name = "isRemoveMessageFromMirror", desc = "true or false") boolean isRemoveMessageFromMirror);
+    void setRemoveMessageFromMirror(@Parameter(name = "isRemoveMessageFromMirror", desc = "true or false") Boolean isRemoveMessageFromMirror);
 
     @Operation(desc = "Delay messages on staging queue", impact = MBeanOperationInfo.ACTION)
-    void setDelayMessageOnInflow(@Parameter(name = "isDelayMessageOnInflow", desc = "true or false") boolean isDelayMessageOnInflow);
+    void setDelayMessageOnInflow(@Parameter(name = "isDelayMessageOnInflow", desc = "true or false") Boolean isDelayMessageOnInflow);
 
 }

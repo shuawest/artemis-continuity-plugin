@@ -43,7 +43,7 @@ public class ContinuityControlImpl extends AbstractControl implements Continuity
     /* Status */
 
     @Override
-    public String isServiceInitialized() {
+    public String getServiceInitialized() {
         if (ContinuityAuditLogger.isEnabled() && service != null) {
             ContinuityAuditLogger.isServiceInitialized(service);
         }
@@ -59,7 +59,7 @@ public class ContinuityControlImpl extends AbstractControl implements Continuity
     }
 
     @Override
-    public String isServiceStarted() {
+    public String getServiceStarted() {
         if (ContinuityAuditLogger.isEnabled() && service != null) {
             ContinuityAuditLogger.isServiceStarted(service);
         }
@@ -75,7 +75,7 @@ public class ContinuityControlImpl extends AbstractControl implements Continuity
     }
 
     @Override 
-    public String isCommandManagerInitialized() {
+    public String getCommandManagerInitialized() {
         if (ContinuityAuditLogger.isEnabled() && service != null && service.getCommandManager() != null) {
             ContinuityAuditLogger.isCommandManagerInitialized(service.getCommandManager());
         }
@@ -91,7 +91,7 @@ public class ContinuityControlImpl extends AbstractControl implements Continuity
     }
 
     @Override
-    public String isCommandManagerStarted() {
+    public String getCommandManagerStarted() {
         if (ContinuityAuditLogger.isEnabled() && service != null && service.getCommandManager() != null) {
             ContinuityAuditLogger.isCommandManagerStarted(service.getCommandManager());
         }

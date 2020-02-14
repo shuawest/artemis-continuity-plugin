@@ -24,16 +24,16 @@ public interface ContinuityControl {
     /* Status */
 
     @Attribute(desc = "Status: whether the continuity service is initialized")
-    String isServiceInitialized();
+    String getServiceInitialized();
 
     @Attribute(desc = "Status: whether the continuity service listener, producer, bridge primitives are started")
-    String isServiceStarted();
+    String getServiceStarted();
 
     @Attribute(desc = "Status: whether the continuity command manager is initialized")
-    String isCommandManagerInitialized();
+    String getCommandManagerInitialized();
 
     @Attribute(desc = "Status: whether the continuity command manager is started")
-    String isCommandManagerStarted();
+    String getCommandManagerStarted();
 
     /* Statistics */
 
