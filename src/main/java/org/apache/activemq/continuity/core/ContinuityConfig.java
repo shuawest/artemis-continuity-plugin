@@ -42,8 +42,11 @@ public class ContinuityConfig {
   private String inflowMirrorSuffix;
   private String inflowAcksSuffix;
   private Long inflowStagingDelay;
+  private Long bridgeInterval;
+  private Double bridgeIntervalMultiplier;
 
   private String commandDestinationPrefix;
+  private Boolean isReorgManagementHierarchy;
   
   private String localConnectorRef;
   private String remoteConnectorRef;
@@ -60,7 +63,11 @@ public class ContinuityConfig {
     this.inflowMirrorSuffix = parseProperty(properties, "inflow-mirror-suffix", ".in.mirror");
     this.inflowAcksSuffix = parseProperty(properties, "inflow-acks-suffix", ".in.acks");
     this.inflowStagingDelay = parseLongProperty(properties, "inflow-staging-delay-ms", 60000L);
+    this.bridgeInterval = parseLongProperty(properties, "bridge-interval-ms", 100L);
+    this.bridgeIntervalMultiplier = parseDoubleProperty(properties, "bridge-interval-multiplier", 0.5);
+
     this.commandDestinationPrefix = parseProperty(properties, "command-destination-prefix", "artemis.continuity.commands");
+    this.isReorgManagementHierarchy = parseBooleanProperty(properties, "reorg-management-hierarchy", true);
     this.localConnectorRef = parseProperty(properties, "local-connector-ref");
     this.remoteConnectorRef = parseProperty(properties, "remote-connector-ref");
 
@@ -106,8 +113,20 @@ public class ContinuityConfig {
     return inflowStagingDelay;
   }
 
+  public Long getBridgeInterval() {
+    return bridgeInterval;
+  }
+
+  public Double getBridgeIntervalMultiplier() {
+    return bridgeIntervalMultiplier;
+  }
+
   public String getCommandDestinationPrefix() {
     return commandDestinationPrefix;
+  }
+
+  public Boolean isReorgManagmentHierarchy() {
+    return isReorgManagementHierarchy;
   }
 
   public String getLocalConnectorRef() {
@@ -134,7 +153,10 @@ public class ContinuityConfig {
       ", inMirrorSuffix=" + inflowMirrorSuffix +
       ", inAcksSuffix=" + inflowAcksSuffix +    
       ", inflowStagingDelay=" + inflowStagingDelay +
+      ", bridgeInterval=" + bridgeInterval +
+      ", bridgeIntervalMultiplier=" + bridgeIntervalMultiplier +
       ", commandDestinationPrefix=" + commandDestinationPrefix +
+      ", isReorgManagementHierarchy=" + isReorgManagementHierarchy +
       ", localConnectorRef=" + localConnectorRef + 
       ", remoteConnectorRef=" + remoteConnectorRef + 
       ", addresses=" + addresses + "]";
@@ -160,4 +182,27 @@ public class ContinuityConfig {
     Long longValue = (value == null)? null : Long.parseLong(value);
     return longValue;
   }
+
+  private static Double parseDoubleProperty(Map<String, String> properties, String name, double defaultValue) {
+    Double doubleValue = parseDoubleProperty(properties, name);
+    return (doubleValue != null) ? doubleValue : defaultValue;
+  }
+
+  private static Double parseDoubleProperty(Map<String, String> properties, String name) {
+    String value = properties.get(name);
+    Double doubleValue = (value == null)? null : Double.parseDouble(value);
+    return doubleValue;
+  }
+
+  private static Boolean parseBooleanProperty(Map<String, String> properties, String name, boolean defaultValue) {
+    Boolean boolValue = parseBooleanProperty(properties, name);
+    return (boolValue != null) ? boolValue : defaultValue;
+  }
+
+  private static Boolean parseBooleanProperty(Map<String, String> properties, String name) {
+    String value = properties.get(name);
+    Boolean boolValue = (value == null)? null : Boolean.parseBoolean(value);
+    return boolValue;
+  }
+
 }

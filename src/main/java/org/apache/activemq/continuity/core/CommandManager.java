@@ -28,6 +28,7 @@ import org.apache.activemq.artemis.core.config.BridgeConfiguration;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.ComponentConfigurationRoutingType;
 import org.apache.activemq.artemis.core.server.Queue;
+import org.apache.activemq.artemis.core.server.QueueQueryResult;
 import org.apache.activemq.artemis.core.server.cluster.Bridge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,6 @@ public class CommandManager {
   private boolean isInitialized = false;
   private boolean isStarted = false;
 
-  // TODO: move command session control to CommandHandler -> CommandReceiver
   private ClientSession session = null;
   private ServerLocator locator = null;
   private ClientSessionFactory factory = null;
@@ -110,7 +110,10 @@ public class CommandManager {
   }
 
   private Queue createCommandQueue(String addressName, String queueName) throws ContinuityException {
-    log.debug("Creating continuity command queue: address {}, queue {}", addressName, queueName);
+    if(log.isDebugEnabled()) {
+      log.debug("Creating continuity command queue: address {}, queue {}", addressName, queueName);
+    }
+  
     Queue queue = null;
     try {
       queue = getServer().createQueue(new SimpleString(addressName), // address
@@ -125,6 +128,19 @@ public class CommandManager {
       throw new ContinuityException("Failed to create continuity command destination", e);
     }
     return queue;
+  }
+
+  private boolean queueExists(final String queueName) throws ContinuityException {
+    try {
+      final QueueQueryResult queueSearch = getServer().queueQuery(SimpleString.toSimpleString(queueName));
+      log.debug("Checking if queue {} exists: {}", queueName, queueSearch.isExists());
+      return (queueSearch.isExists());
+
+    } catch (final Exception e) {
+      final String eMessage = String.format("Failed check if queue exists: %s", queueName);
+      log.error(eMessage, e);
+      throw new ContinuityException(eMessage, e);
+    }
   }
 
   private Bridge createCommandBridge(String bridgeName, String remoteUri, String fromQueueName, String toAddressName, final boolean start) throws ContinuityException {

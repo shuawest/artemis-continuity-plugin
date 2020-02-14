@@ -54,6 +54,11 @@ limitations under the License.
       <version>${artemis.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>artemis-commons</artifactId>
+      <version>${artemis.version}</version>
+   </dependency>
+    <dependency>
       <groupId>org.apache.johnzon</groupId>
       <artifactId>johnzon-core</artifactId>
       <version>${johnzon.version}</version>
@@ -63,6 +68,21 @@ limitations under the License.
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.jboss.logging</groupId>
+      <artifactId>jboss-logging</artifactId>
+      <version>3.4.0.Final-redhat-00001</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.logging</groupId>
+      <artifactId>jboss-logging-annotations</artifactId>
+      <version>2.2.0.Final</version>
+   </dependency>
+   <dependency>
+     <groupId>org.jboss.logging</groupId>
+     <artifactId>jboss-logging-processor</artifactId>
+     <version>2.2.0.Final</version>
+  </dependency>
 
     <!-- Test dependencies -->
     <dependency>
@@ -114,21 +134,15 @@ limitations under the License.
 
     <!-- Logging for tests -->
     <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>1.2.0.redhat-3</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.logging</groupId>
-      <artifactId>jboss-logging</artifactId>
-      <version>3.4.0.Final-redhat-00001</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.jboss.logmanager</groupId>
       <artifactId>jboss-logmanager</artifactId>
       <version>2.1.10.Final-redhat-00001</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.2.0.redhat-3</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -154,6 +168,17 @@ limitations under the License.
           <artifactId>maven-surefire-report-plugin</artifactId>
           <version>2.18.1</version>
        </plugin>
+       <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+              <compilerArgs>
+                  <arg>-Aorg.jboss.logging.tools.report.type=adoc</arg>
+                  <arg>-Aorg.jboss.logging.tools.report.path=${project.reporting.outputDirectory}/adoc</arg>
+                  <arg>-Aorg.jboss.logging.tools.report.title=Example Messages</arg>
+              </compilerArgs>
+          </configuration>
+      </plugin>
     </plugins>
  </build>
 </project>

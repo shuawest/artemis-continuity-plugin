@@ -40,20 +40,15 @@ public class ContinuityPlugin implements ActiveMQServerPlugin {
 
   @Override
   public void registered(ActiveMQServer server) {
-    try {
-      log.debug("Creating continuity service");
-      this.continuityService = new ContinuityService(server, continuityConfig);
-      continuityService.initialize();
+    log.debug("Creating continuity service");
+    this.continuityService = new ContinuityService(server, continuityConfig);
 
-      log.debug("Registering dependent plugins");
-      Configuration brokerConfig = server.getConfiguration();
-      brokerConfig.registerBrokerPlugin(new DestinationPlugin(continuityService));
-      brokerConfig.registerBrokerPlugin(new DuplicateIdPlugin(continuityService));
-      brokerConfig.registerBrokerPlugin(new InflowMirrorPlugin(continuityService));
-      brokerConfig.registerBrokerPlugin(new AckDivertPlugin(continuityService));
-    } catch (ContinuityException e) {
-      log.error("Failed to initialize continuity plugin", e);
-    }
+    log.debug("Registering dependent plugins");
+    Configuration brokerConfig = server.getConfiguration();
+    brokerConfig.registerBrokerPlugin(new DestinationPlugin(continuityService));
+    brokerConfig.registerBrokerPlugin(new DuplicateIdPlugin(continuityService));
+    brokerConfig.registerBrokerPlugin(new InflowMirrorPlugin(continuityService));
+    brokerConfig.registerBrokerPlugin(new AckDivertPlugin(continuityService));
   }
 
   @Override
@@ -65,7 +60,12 @@ public class ContinuityPlugin implements ActiveMQServerPlugin {
       if(log.isDebugEnabled()) {
         log.debug("Initializing continuity service, due to first connection from '{}'", connection.getRemoteAddress());
       }
+      continuityService.initialize();
       continuityService.start();
+
+      if(log.isInfoEnabled()) {
+        log.info("Continuity Plugin Started"); 
+      }
     }
   }
 

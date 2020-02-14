@@ -20,6 +20,7 @@ import java.util.Map;
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.Queue;
+import org.apache.activemq.continuity.management.ContinuityManagementService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +30,7 @@ public class ContinuityService {
 
   private final ActiveMQServer server;
   private final ContinuityConfig config;
+  private final ContinuityManagementService continuityManagementService; 
 
   private boolean isInitialized = false;
   private boolean isStarting = false;
@@ -40,6 +42,7 @@ public class ContinuityService {
   public ContinuityService(final ActiveMQServer server, final ContinuityConfig config) {
     this.server = server;
     this.config = config;
+    this.continuityManagementService = new ContinuityManagementService(server.getManagementService());
   }
 
   public boolean isSubjectAddress(String addressName) {
@@ -72,6 +75,7 @@ public class ContinuityService {
 
   public void initialize() throws ContinuityException {
     createCommandManager();
+    getContinuityManagementService().registerContinuityService(this);
     isInitialized = true;
   }
 
@@ -152,7 +156,7 @@ public class ContinuityService {
         
         createFlow(queueInfo);
         
-        if(commandManager.isStarted()) {
+        if(commandManager != null && commandManager.isStarted()) {
           ContinuityCommand cmd = new ContinuityCommand();
           cmd.setAction(ContinuityCommand.ACTION_ADD_QUEUE);
           cmd.setAddress(queueInfo.getAddressName());
@@ -164,7 +168,7 @@ public class ContinuityService {
   }
 
   public void handleRemoveQueue(Queue queue) throws ContinuityException {
-    if(commandManager.isStarted() && isSubjectQueue(queue)) {
+    if(commandManager != null && commandManager.isStarted() && isSubjectQueue(queue)) {
       QueueInfo queueInfo = extractQueueInfo(queue);
 
       ContinuityCommand cmd = new ContinuityCommand();
@@ -232,6 +236,10 @@ public class ContinuityService {
 
   public Collection<ContinuityFlow> getFlows() {
     return flows.values();
+  }
+
+  public ContinuityManagementService getContinuityManagementService() {
+    return continuityManagementService;
   }
 
 }
