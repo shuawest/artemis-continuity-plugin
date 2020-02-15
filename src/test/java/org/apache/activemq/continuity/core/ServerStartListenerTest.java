@@ -40,8 +40,7 @@ public class ServerStartListenerTest extends ContinuityTestBase {
     ActiveMQServerPlugin stubPlugin =  new ActiveMQServerPlugin() {
       @Override
       public void registered(ActiveMQServer server) {
-        NotificationListener startListener = new ServerStartListener(continuityCtx.getService());
-        serverCtx.getServer().getManagementService().addNotificationListener(startListener);
+        ServerStartListener.registerActivateCallback(server, continuityCtx.getService());
       }
     };
     Configuration brokerConfig = serverCtx.getServer().getConfiguration();
@@ -49,7 +48,8 @@ public class ServerStartListenerTest extends ContinuityTestBase {
 
     serverCtx.getServer().start();
 
-    verify(continuityCtx.getService(), times(1)).handleServerStart();
+    verify(continuityCtx.getService(), times(1)).initialize();
+    verify(continuityCtx.getService(), times(1)).start();
   }
 
 }

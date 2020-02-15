@@ -40,14 +40,12 @@ public class DestinationPlugin implements ActiveMQServerPlugin {
 
   @Override
   public void afterCreateQueue(Queue queue) throws ContinuityException {
-    log.debug("afterCreateQueue " + queue.getName().toString());
     continuityService.handleAddQueue(queue);
   }
 
   @Override
   public void afterDestroyQueue(Queue queue, SimpleString address, final SecurityAuth session, boolean checkConsumerCount,
                                   boolean removeConsumers, boolean autoDeleteAddress) throws ContinuityException {
-    log.debug("afterRemoveQueue " + queue.getName().toString());
     continuityService.handleRemoveQueue(queue); 
   }
 }

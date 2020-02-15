@@ -17,7 +17,6 @@ import java.text.ParseException;
 
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.MessageHandler;
-import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,16 +46,7 @@ public class CommandReceiver implements MessageHandler {
     } catch(ContinuityException e) {
       String msg = String.format("Unable to handle ContinuityCommand: %s", body);
       log.error(msg, e);
-      // TODO: send error to service to handle graceful failure of plugin
     }
-  }
-
-  private ContinuityConfig getConfig() {
-    return service.getConfig();
-  }
-
-  private ActiveMQServer getServer() {
-    return service.getServer();
   }
 
 }

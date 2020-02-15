@@ -75,25 +75,43 @@ public class AckInfo {
 
   public static String toJSON(AckInfo ack) {
     JsonObjectBuilder builder = JsonLoader.createObjectBuilder();
-    builder.add(MSG_SEND_TIME_FIELD, DATETIME_FORMAT.format(ack.getMessageSendTime()));
-    builder.add(ACK_TIME_FIELD, DATETIME_FORMAT.format(ack.getAckTime()));
-    builder.add(MSG_UUID_FIELD, ack.getMessageUuid());
-    builder.add(SRC_QUEUE_FIELD, ack.getSourceQueueName());
+
+    if(ack.getMessageSendTime() != null)
+      builder.add(MSG_SEND_TIME_FIELD, DATETIME_FORMAT.format(ack.getMessageSendTime()));
+      
+    if(ack.getAckTime() != null)
+      builder.add(ACK_TIME_FIELD, DATETIME_FORMAT.format(ack.getAckTime()));
+
+    if(ack.getMessageUuid() != null)
+      builder.add(MSG_UUID_FIELD, ack.getMessageUuid());
+
+    if(ack.getSourceQueueName() != null)
+      builder.add(SRC_QUEUE_FIELD, ack.getSourceQueueName());
+
     JsonObject jsonObject = builder.build();
     return jsonObject.toString();
   }
 
   public static AckInfo fromJSON(String json) throws ParseException {
-    JsonObject ackJsonObject = JsonUtil.readJsonObject(json);
-
-    Date msgSendTime = DATETIME_FORMAT.parse(ackJsonObject.getString(MSG_SEND_TIME_FIELD));
-    Date ackTime = DATETIME_FORMAT.parse(ackJsonObject.getString(ACK_TIME_FIELD));
+    JsonObject jsonObject = JsonUtil.readJsonObject(json);
 
     AckInfo ack = new AckInfo();
-    ack.setMessageSendTime(msgSendTime);
-    ack.setAckTime(ackTime);
-    ack.setMessageUuid(ackJsonObject.getString(MSG_UUID_FIELD));
-    ack.setSourceQueueName(ackJsonObject.getString(SRC_QUEUE_FIELD));
+
+    if(jsonObject.containsKey(MSG_SEND_TIME_FIELD)) {
+      Date msgSendTime = DATETIME_FORMAT.parse(jsonObject.getString(MSG_SEND_TIME_FIELD));
+      ack.setMessageSendTime(msgSendTime);
+    }
+
+    if(jsonObject.containsKey(ACK_TIME_FIELD)) {
+      Date ackTime = DATETIME_FORMAT.parse(jsonObject.getString(ACK_TIME_FIELD));
+      ack.setAckTime(ackTime);
+    }
+    
+    if(jsonObject.containsKey(MSG_UUID_FIELD)) 
+      ack.setMessageUuid(jsonObject.getString(MSG_UUID_FIELD));
+    
+    if(jsonObject.containsKey(SRC_QUEUE_FIELD)) 
+      ack.setSourceQueueName(jsonObject.getString(SRC_QUEUE_FIELD));
 
     return ack;
   }

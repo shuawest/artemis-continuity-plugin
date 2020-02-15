@@ -38,12 +38,12 @@ public class ContinuityMangementServiceTest extends ContinuityTestBase {
 
     ContinuityPlugin plugin = getContinuityPlugin(serverCtx);
     ContinuityService service = plugin.getService();
-    service.initialize();
-    service.start();
+    // service.initialize();
+    // service.start();
 
     ContinuityFlow flow = (ContinuityFlow) service.getFlows().toArray()[0];
 
-    ContinuityManagementService cms = service.getContinuityManagementService();
+    ContinuityManagementService cms = service.getManagement();
 
     String continuityPrefix = cms.getContinuityServicePrefix();
     String continuityFlowPrefix = cms.getContinuityFlowPrefix(service, flow);

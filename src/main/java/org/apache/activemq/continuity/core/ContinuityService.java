@@ -46,79 +46,115 @@ public class ContinuityService {
     this.mgmt = new ContinuityManagementService(server.getManagementService());
   }
 
-  public boolean isSubjectAddress(String addressName) {
-    return config.getAddresses().contains(addressName);
-  }
-  public boolean isSubjectQueue(String queueName) {
-    Queue queue = getServer().locateQueue(SimpleString.toSimpleString(queueName));
-    return isSubjectQueue(queue);
-  }
-  public boolean isSubjectQueue(Queue queue) {
-    if(queue == null) // nondurable queues don't exist
-      return false;
-
-    String addressName = queue.getAddress().toString();
-    return (isSubjectAddress(addressName) && queue.isDurable() && !queue.isTemporary());
-  }
-  public boolean isOutflowMirrorAddress(String addressName) {
-    return addressName.endsWith(config.getOutflowMirrorSuffix());
-  }
-  public boolean isOutflowAcksAddress(String addressName) {
-    return addressName.endsWith(config.getOutflowAcksSuffix());
-  }
-  public boolean isInflowMirrorAddress(String addressName) {
-    return addressName.endsWith(config.getInflowMirrorSuffix());
-  }
-  public boolean isInflowAcksAddress(String addressName) {
-    return addressName.endsWith(config.getInflowAcksSuffix());
-  }
-
-  public void handleServerStart() {
-    try {
-      if(log.isDebugEnabled()) {
-        log.debug("Continuity service detected server start");
-      }
-      initialize();
-      start();
-    } catch(ContinuityException e) {
-      log.error("Failed to start continuity service", e);
-    }
-  }
-
   public synchronized void initialize() throws ContinuityException {
-    if(isInitializing || isInitialized)
+    if(isInitialized || isInitializing)
       return;
 
     isInitializing = true;
-    
+
     if(log.isDebugEnabled()) {
       log.debug("Initializing continuity service");
     }
 
-    createCommandManager();
-    getContinuityManagementService().registerContinuityService(this);
+    CommandReceiver cmdReceiver = new CommandReceiver(this);
+    CommandManager cmdMgr = new CommandManager(this, cmdReceiver);
+    cmdMgr.initialize();
 
     isInitialized = true;
     isInitializing = false;
   }
 
-  private void createCommandManager() throws ContinuityException {
-    CommandReceiver cmdReceiver = new CommandReceiver(this);
-    CommandManager cmdMgr = new CommandManager(this, cmdReceiver);
-    cmdMgr.initialize();
+  public void start() throws ContinuityException {
+    commandManager.start();
+
+    for(ContinuityFlow flow : flows.values()) {
+      flow.start();
+    }
+
+    getManagement().registerContinuityService(this);
+
+    // Notify peer sites that this broker has started
+    ContinuityCommand cmdStarted = new ContinuityCommand();
+    cmdStarted.setAction(ContinuityCommand.ACTION_BROKER_CONNECT);
+    commandManager.sendCommand(cmdStarted);
+
+    isStarted = true;
+
+    if(log.isInfoEnabled()) {
+      log.info("Continuity Plugin Started");
+    }
   }
 
   public void registerCommandManager(CommandManager mgr) {
     this.commandManager = mgr;
   }
-  
-  public CommandManager getCommandManager() {
-    return this.commandManager;
+
+  public void stop() throws ContinuityException {
+    commandManager.stop();
+    for(ContinuityFlow flow : flows.values()) {
+      flow.stop();
+    }
+    isStarted = false;
   }
-  
+
+  public void handleAddQueue(Queue queue) throws ContinuityException {
+    if(isSubjectQueue(queue)) {
+      initialize();
+
+      QueueInfo queueInfo = extractQueueInfo(queue);
+
+      if(locateFlow(queueInfo.getQueueName()) == null) {
+        
+        createFlow(queueInfo);
+        
+        if(commandManager != null && commandManager.isStarted()) {
+          ContinuityCommand cmd = new ContinuityCommand();
+          cmd.setAction(ContinuityCommand.ACTION_ADD_QUEUE);
+          cmd.setAddress(queueInfo.getAddressName());
+          cmd.setQueue(queueInfo.getQueueName());
+          commandManager.sendCommand(cmd);
+        }
+      }
+    }
+  }
+
+  public void handleRemoveQueue(Queue queue) throws ContinuityException {
+    if(commandManager != null && commandManager.isStarted() && isSubjectQueue(queue)) {
+      QueueInfo queueInfo = extractQueueInfo(queue);
+
+      ContinuityCommand cmd = new ContinuityCommand();
+      cmd.setAction(ContinuityCommand.ACTION_REMOVE_QUEUE);
+      cmd.setAddress(queueInfo.getAddressName());
+      cmd.setQueue(queueInfo.getQueueName());
+      commandManager.sendCommand(cmd);
+    }
+  }
+ 
+  private ContinuityFlow createFlow(QueueInfo queueInfo) throws ContinuityException {
+    ContinuityFlow flow = new ContinuityFlow(this, queueInfo);
+    flow.initialize();
+    return flow;
+  }
+
+  public void registerContinuityFlow(String queueName, ContinuityFlow flow) throws ContinuityException {
+    flows.put(queueName, flow);
+  }
+
+  public ContinuityFlow locateFlow(String queueName) {
+    return flows.get(queueName);
+  }
+
+  private QueueInfo extractQueueInfo(Queue queue) {
+    QueueInfo queueInfo = new QueueInfo();
+    queueInfo.setAddressName(queue.getAddress().toString());
+    queueInfo.setQueueName(queue.getName().toString());
+    return queueInfo;
+  }
+
+
   public void handleIncomingCommand(ContinuityCommand command) throws ContinuityException {
     if(log.isDebugEnabled()) {
-      log.debug("Continuity service received command: {}", command);
+      log.debug("Received command: {}", command);
     }
 
     switch(command.getAction()) {
@@ -157,88 +193,7 @@ public class ContinuityService {
       flow.startSubjectQueueDelivery();
     }
   }
-  
-  private ContinuityFlow createFlow(QueueInfo queueInfo) throws ContinuityException {
-    ContinuityFlow flow = new ContinuityFlow(this, queueInfo);
-    flow.initialize();
-    return flow;
-  }
 
-  public void registerContinuityFlow(String queueName, ContinuityFlow flow) throws ContinuityException {
-    flows.put(queueName, flow);
-  }
-  public ContinuityFlow locateFlow(String queueName) {
-    return flows.get(queueName);
-  }
-
-  public void handleAddQueue(Queue queue) throws ContinuityException {
-    if(isSubjectQueue(queue)) {
-      QueueInfo queueInfo = extractQueueInfo(queue);
-
-      if(locateFlow(queueInfo.getQueueName()) == null) {
-        
-        createFlow(queueInfo);
-        
-        if(commandManager != null && commandManager.isStarted()) {
-          ContinuityCommand cmd = new ContinuityCommand();
-          cmd.setAction(ContinuityCommand.ACTION_ADD_QUEUE);
-          cmd.setAddress(queueInfo.getAddressName());
-          cmd.setQueue(queueInfo.getQueueName());
-          commandManager.sendCommand(cmd);
-        }
-      }
-    }
-  }
-
-  public void handleRemoveQueue(Queue queue) throws ContinuityException {
-    if(commandManager != null && commandManager.isStarted() && isSubjectQueue(queue)) {
-      QueueInfo queueInfo = extractQueueInfo(queue);
-
-      ContinuityCommand cmd = new ContinuityCommand();
-      cmd.setAction(ContinuityCommand.ACTION_REMOVE_QUEUE);
-      cmd.setAddress(queueInfo.getAddressName());
-      cmd.setQueue(queueInfo.getQueueName());
-      commandManager.sendCommand(cmd);
-    }
-  }
-
-  private QueueInfo extractQueueInfo(Queue queue) {
-    QueueInfo queueInfo = new QueueInfo();
-    queueInfo.setAddressName(queue.getAddress().toString());
-    queueInfo.setQueueName(queue.getName().toString());
-    return queueInfo;
-  }
-
-  public synchronized void start() throws ContinuityException {
-    if(isStarted || isStarting)
-      return;
-
-    isStarting = true;
-    
-    if(log.isDebugEnabled()) {
-      log.debug("Starting continuity service connections");
-    }
-
-    commandManager.start();
-    for(ContinuityFlow flow : flows.values()) {
-      flow.start();
-    }
-
-    ContinuityCommand cmdStarted = new ContinuityCommand();
-    cmdStarted.setAction(ContinuityCommand.ACTION_BROKER_CONNECT);
-    commandManager.sendCommand(cmdStarted);
-
-    isStarted = true;
-    isStarting = false;
-  }
-
-  public void stop() throws ContinuityException {
-    commandManager.stop();
-    for(ContinuityFlow flow : flows.values()) {
-      flow.stop();
-    }
-    isStarted = false;
-  }
 
   public ContinuityConfig getConfig() {
     return config;
@@ -250,21 +205,61 @@ public class ContinuityService {
   public boolean isInitializing() {
     return isInitializing;
   }
+
   public boolean isInitialized() {
     return isInitialized;
   }
+
   public boolean isStarting() {
     return isStarting;
   }
+
   public boolean isStarted() {
     return isStarted;
+  }
+
+  public boolean isSubjectAddress(String addressName) {
+    return config.getAddresses().contains(addressName);
+  }
+
+  public boolean isSubjectQueue(String queueName) {
+    Queue queue = getServer().locateQueue(SimpleString.toSimpleString(queueName));
+    return isSubjectQueue(queue);
+  }
+
+  public boolean isSubjectQueue(Queue queue) {
+    if(queue == null) // nondurable queues don't exist
+      return false;
+
+    String addressName = queue.getAddress().toString();
+    return (isSubjectAddress(addressName) && queue.isDurable() && !queue.isTemporary());
+  }
+
+  public boolean isOutflowMirrorAddress(String addressName) {
+    return addressName.endsWith(config.getOutflowMirrorSuffix());
+  }
+
+  public boolean isOutflowAcksAddress(String addressName) {
+    return addressName.endsWith(config.getOutflowAcksSuffix());
+  }
+
+  public boolean isInflowMirrorAddress(String addressName) {
+    return addressName.endsWith(config.getInflowMirrorSuffix());
+  }
+
+  public boolean isInflowAcksAddress(String addressName) {
+    return addressName.endsWith(config.getInflowAcksSuffix());
+  }
+
+  public CommandManager getCommandManager() {
+    return this.commandManager;
   }
 
   public Collection<ContinuityFlow> getFlows() {
     return flows.values();
   }
 
-  public ContinuityManagementService getContinuityManagementService() {
+  public ContinuityManagementService getManagement() {
     return mgmt;
   }
 

@@ -139,6 +139,8 @@ public class ContinuityManagementService {
             throw new ContinuityException(msg, e);
         }
     }
+
+    // Consider doing these moves in place within the service
     public void moveServicePrimitiveMBeans(ContinuityService service) throws ContinuityException {
         try {
             String target = getContinuityServicePrefix();
@@ -154,6 +156,7 @@ public class ContinuityManagementService {
         }
     }
 
+    // Consider doing these moves in place within the flow, instead they are created at different times
     public void moveFlowPrimitiveMBeans(ContinuityService service, ContinuityFlow flow) throws ContinuityException {
         try {
             String target = getContinuityFlowPrefix(service, flow);

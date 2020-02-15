@@ -25,9 +25,11 @@ public class QueueInfo {
 
   private static final String ADDRESS_NAME_FIELD = "addr-name";
   private static final String QUEUE_NAME_FIELD = "queue-name";
+  private static final String ROUTING_TYPE_FIELD = "routing-type";
 
   private String addressName;
   private String queueName;
+  private String routingType;
 
   public QueueInfo() { }
 
@@ -47,12 +49,26 @@ public class QueueInfo {
     this.queueName = name;
   }
 
+  public String getRoutingType() {
+    return routingType;
+  }
+
+  public void setRoutingType(String routingType) {
+    this.routingType = routingType;
+  }
+
   /** Marshalling **/
 
   public static String toJSON(QueueInfo qi) {
     JsonObjectBuilder builder = JsonLoader.createObjectBuilder();
-    builder.add(ADDRESS_NAME_FIELD, qi.getAddressName());
-    builder.add(QUEUE_NAME_FIELD, qi.getQueueName());
+
+    if(qi.getAddressName() != null)
+      builder.add(ADDRESS_NAME_FIELD, qi.getAddressName());
+    if(qi.getQueueName() != null)
+      builder.add(QUEUE_NAME_FIELD, qi.getQueueName());
+      if(qi.getRoutingType() != null)
+      builder.add(ROUTING_TYPE_FIELD, qi.getRoutingType());
+
     JsonObject jsonObject = builder.build();
     return jsonObject.toString();
   }
@@ -60,8 +76,15 @@ public class QueueInfo {
   public static QueueInfo fromJSON(String json) throws ParseException {
     JsonObject jsonObject = JsonUtil.readJsonObject(json);
     QueueInfo qi = new QueueInfo();
-    qi.setAddressName(jsonObject.getString(ADDRESS_NAME_FIELD));
-    qi.setQueueName(jsonObject.getString(QUEUE_NAME_FIELD));
+
+    if(jsonObject.containsKey(ADDRESS_NAME_FIELD))
+      qi.setAddressName(jsonObject.getString(ADDRESS_NAME_FIELD));
+    if(jsonObject.containsKey(QUEUE_NAME_FIELD))
+      qi.setQueueName(jsonObject.getString(QUEUE_NAME_FIELD));
+    if(jsonObject.containsKey(ROUTING_TYPE_FIELD))
+      qi.setRoutingType(jsonObject.getString(ROUTING_TYPE_FIELD));
+      
     return qi;
   }
+
 }

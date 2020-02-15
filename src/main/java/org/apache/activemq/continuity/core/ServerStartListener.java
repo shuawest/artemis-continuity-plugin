@@ -13,63 +13,57 @@
  */
 package org.apache.activemq.continuity.core;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.activemq.artemis.api.core.SimpleString;
-import org.apache.activemq.artemis.api.core.management.CoreNotificationType;
+import org.apache.activemq.artemis.core.server.ActivateCallback;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
-import org.apache.activemq.artemis.core.server.Queue;
-import org.apache.activemq.artemis.core.server.management.Notification;
-import org.apache.activemq.artemis.core.server.management.NotificationListener;
-import org.apache.activemq.artemis.utils.collections.TypedProperties;
-import org.apache.activemq.continuity.management.ContinuityManagementService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ServerStartListener implements NotificationListener {
+public class ServerStartListener implements ActivateCallback {
 
     private static final Logger log = LoggerFactory.getLogger(ServerStartListener.class);
 
     private final ContinuityService service;
 
+    public static void registerActivateCallback(ActiveMQServer server, ContinuityService service) {
+        ServerStartListener listener = new ServerStartListener(service);
+        server.registerActivateCallback(listener);
+    }
+
+    
     public ServerStartListener(final ContinuityService service) {
         this.service = service;
     }
 
     @Override
-    public void onNotification(Notification notification) {
-        // Look for the in-vm acceptor associated with the continuity plugin to initialize
-        if(notification.getType() == CoreNotificationType.ACCEPTOR_STARTED) {
-            if(log.isDebugEnabled()) {
-                log.debug("Recieved AcceptorStarted Notification: {}", notification);
-            }
-
-            String inVmAcceptorId = service.getConfig().getLocalInVmUri().substring(5);
-            String factory = getValueAsString(notification.getProperties(), "factory");
-            String id = getValueAsString(notification.getProperties(), "id");
-
-            if(factory != null && factory.endsWith("InVMAcceptorFactory") && id != null && id.equals(inVmAcceptorId)) {
-                if(log.isDebugEnabled()) {
-                    log.debug("Notification signaled started start: {}", notification);
-                }
-
-                service.handleServerStart();
-
-                // Remove this listener after the server is started
-                service.getServer().getManagementService().removeNotificationListener(this);
-            }
-      }
+    public void preActivate() {
+        if(log.isDebugEnabled()) {
+            log.debug("Server preActivate");
+        }
     }
 
-    private String getValueAsString(TypedProperties props, String key) {
-        SimpleString ssKey = SimpleString.toSimpleString(key);
-        if(!props.containsProperty(ssKey)) {
-            return null;
-        } else {
-            Object value = props.getProperty(ssKey);
-            return (value == null)? null : value.toString();
+    @Override
+    public void activated() { 
+        if(log.isDebugEnabled()) {
+            log.debug("Server activated");
+        }
+
+        try {
+            service.initialize();
+        } catch(ContinuityException e) {
+            log.error("Unable to initialize continuity service", e);
+        }
+    }
+
+    @Override
+    public void activationComplete() {
+        if(log.isDebugEnabled()) {
+            log.debug("Server activationComplete");
+        }
+
+        try {
+            service.start();
+        } catch(ContinuityException e) {
+            log.error("Unable to start continuity service", e);
         }
     }
 }

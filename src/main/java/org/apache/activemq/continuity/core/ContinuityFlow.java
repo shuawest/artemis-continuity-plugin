@@ -97,25 +97,43 @@ public class ContinuityFlow {
 
   public void initialize() throws ContinuityException {
     service.registerContinuityFlow(queueInfo.getQueueName(), this);
-    constructFlowPrimitives();
+    
+    createFlowQueue(outflowMirrorName, outflowMirrorName);
+    createDivert(outflowDivertName, subjectAddressName, outflowMirrorName);
+
+    createFlowQueue(outflowAcksName, outflowAcksName);
+    createAckDivert();
+
+    createFlowQueue(inflowMirrorName, inflowMirrorName);
+    createFlowQueue(inflowAcksName, inflowAcksName);
+    createAckManager();
+    createAckReceiver();
+
+    createMatchingQueue(queueInfo);
+
     isInitialized = true;
 
-    service.getContinuityManagementService().registerContinuityFlow(service, this);
   }
-
-
 
   public void start() throws ContinuityException {
     ackDivert.start();
     ackReceiver.start();
-    startBridge(outflowMirrorBridge);
-    startBridge(outflowAcksBridge);
+
+    this.outflowMirrorBridge = createBridge(outflowMirrorBridgeName, outflowMirrorName, inflowMirrorName, getConfig().getRemoteConnectorRef(), true);
+    this.outflowAcksBridge = createBridge(outflowAcksBridgeName, outflowAcksName, inflowAcksName, getConfig().getRemoteConnectorRef(), true);
+    this.targetBridge = createBridge(targetBridgeName, inflowMirrorName, subjectAddressName, getConfig().getLocalConnectorRef(), false);
+    //startBridge(outflowMirrorBridge);
+    //startBridge(outflowAcksBridge);
+    //stopBridge(targetBridge);
+
+    service.getManagement().registerContinuityFlow(service, this);
+
     isStarted = true;
   }
 
   public void startSubjectQueueDelivery() throws ContinuityException {
     try {
-      startBridge(targetBridge);
+      startBridge(targetBridge);      
     } catch (Exception e) {
       throw new ContinuityException("Unable to start subject queue bridge", e);
     }
@@ -133,36 +151,32 @@ public class ContinuityFlow {
     }
   }
 
+  private void stopBridge(Bridge bridge) throws ContinuityException {
+    try {
+      if(log.isDebugEnabled()) {
+        log.debug("Stopping bridge from '{}' to '{}''", bridge.getQueue().getName().toString(), bridge.getForwardingAddress());
+      }
+
+      bridge.stop();
+    } catch (Exception e) {
+      throw new ContinuityException("Unabled to start bridge", e);
+    }
+  }
+
   public void stop() throws ContinuityException {
     try {
-      outflowMirrorBridge.stop();
-      outflowAcksBridge.stop();
-      targetBridge.stop();
+      stopBridge(outflowMirrorBridge);
+      stopBridge(outflowAcksBridge);
+      stopBridge(targetBridge);
+      ackDivert.stop();
+      ackReceiver.stop();
     } catch (Exception e) {
       throw new ContinuityException("Unable to stop bridge", e);
     }
-    ackDivert.stop();
-    ackReceiver.stop();
+    
     isStarted = false;
   }
 
-  private void constructFlowPrimitives() throws ContinuityException {
-    createFlowQueue(outflowMirrorName, outflowMirrorName);
-    createDivert(outflowDivertName, subjectAddressName, outflowMirrorName);
-    this.outflowMirrorBridge = createBridge(outflowMirrorBridgeName, outflowMirrorName, inflowMirrorName, getConfig().getRemoteConnectorRef(), false);
-
-    createFlowQueue(outflowAcksName, outflowAcksName);
-    this.outflowAcksBridge = createBridge(outflowAcksBridgeName, outflowAcksName, inflowAcksName, getConfig().getRemoteConnectorRef(), false);
-    createAckDivert();
-
-    createFlowQueue(inflowMirrorName, inflowMirrorName);
-    createFlowQueue(inflowAcksName, inflowAcksName);
-    createAckManager();
-    createAckReceiver();
-
-    createMatchingQueue(queueInfo);
-    this.targetBridge = createBridge(targetBridgeName, inflowMirrorName, subjectAddressName, getConfig().getLocalConnectorRef(), false);
-  }
 
   private void createAckDivert() throws ContinuityException {
     this.ackDivert = new AckDivert(service, this);

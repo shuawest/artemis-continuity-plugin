@@ -68,40 +68,51 @@ public class CommandManager {
   }
 
   public void initialize() throws ContinuityException {
-    if (!isInitialized) {
-      service.registerCommandManager(this);
-      commandInQueue = createCommandQueue(commandInQueueName, commandInQueueName);
-      commandOutQueue = createCommandQueue(commandOutQueueName, commandOutQueueName);
-      commandOutBridge = createCommandBridge(commandOutBridgeName, getConfig().getRemoteConnectorRef(), commandOutQueueName, commandInQueueName, true);
-      isInitialized = true;
+    if (isInitialized) 
+      return;
 
-      if (log.isDebugEnabled()) {
-        log.debug("Finished initializing continuity command manager");
-      }
+    service.registerCommandManager(this);
+
+    commandInQueue = createCommandQueue(commandInQueueName, commandInQueueName);
+    commandOutQueue = createCommandQueue(commandOutQueueName, commandOutQueueName);
+
+    isInitialized = true;
+
+    if (log.isDebugEnabled()) {
+      log.debug("Finished initializing continuity command manager");
     }
   }
 
   public void start() throws ContinuityException {
-    if (!isStarted) {
-      prepareSession();
-      isStarted = true;
+    if(isStarted)
+      return; 
 
-      if (log.isDebugEnabled()) {
-        log.debug("Finished starting continuity command manager");
-      }
+    prepareSession();
+    
+    commandOutBridge = createCommandBridge(commandOutBridgeName, 
+                                           getConfig().getRemoteConnectorRef(), 
+                                           commandOutQueueName, 
+                                           commandInQueueName, 
+                                           true);
+
+    isStarted = true;
+
+    if (log.isDebugEnabled()) {
+      log.debug("Finished starting continuity command manager");
     }
   }
 
   public void stop() throws ContinuityException {
+    if(!isInitialized) 
+      return;
+
     try {
-      if(isInitialized) {
-        getServer().getActiveMQServerControl().destroyBridge(commandOutBridgeName);
-        consumer.close();
-        producer.close();
-        session.close();
-        factory.close();
-        locator.close();
-      }
+      getServer().getActiveMQServerControl().destroyBridge(commandOutBridgeName);
+      consumer.close();
+      producer.close();
+      session.close();
+      factory.close();
+      locator.close();
     } catch (final Exception e) {
       String eMessage = "Failed to stop command manager";
       log.error(eMessage, e);
@@ -135,7 +146,6 @@ public class CommandManager {
       final QueueQueryResult queueSearch = getServer().queueQuery(SimpleString.toSimpleString(queueName));
       log.debug("Checking if queue {} exists: {}", queueName, queueSearch.isExists());
       return (queueSearch.isExists());
-
     } catch (final Exception e) {
       final String eMessage = String.format("Failed check if queue exists: %s", queueName);
       log.error(eMessage, e);
@@ -168,7 +178,6 @@ public class CommandManager {
       if(!start) {
         bridge.stop();
       }
-
     } catch (Exception e) {
       String eMessage = String.format("Failed to create command bridge, from '%s' to '%s.%s'", fromQueueName, remoteUri, toAddressName);
       log.error(eMessage, e);
@@ -188,7 +197,9 @@ public class CommandManager {
         this.locator = ActiveMQClient.createServerLocator(getConfig().getLocalInVmUri());
         this.factory = locator.createSessionFactory();
         this.session = factory.createSession(getConfig().getLocalUsername(),
-            getConfig().getLocalPassword(), false, true, true, false, locator.getAckBatchSize());
+                                             getConfig().getLocalPassword(), 
+                                             false, true, true, false, 
+                                             locator.getAckBatchSize());
         session.start();
       }
 
@@ -202,7 +213,6 @@ public class CommandManager {
         this.consumer = session.createConsumer(commandInQueueName);
         consumer.setMessageHandler(commandReceiver);
       }
-
     } catch (Exception e) {
       String eMessage = "Failed to create session for continuity command queue";
       log.error(eMessage, e);
