@@ -30,8 +30,9 @@ public class ContinuityService {
 
   private final ActiveMQServer server;
   private final ContinuityConfig config;
-  private final ContinuityManagementService continuityManagementService; 
+  private final ContinuityManagementService mgmt; 
 
+  private boolean isInitializing = false;
   private boolean isInitialized = false;
   private boolean isStarting = false;
   private boolean isStarted = false;
@@ -42,7 +43,7 @@ public class ContinuityService {
   public ContinuityService(final ActiveMQServer server, final ContinuityConfig config) {
     this.server = server;
     this.config = config;
-    this.continuityManagementService = new ContinuityManagementService(server.getManagementService());
+    this.mgmt = new ContinuityManagementService(server.getManagementService());
   }
 
   public boolean isSubjectAddress(String addressName) {
@@ -72,11 +73,33 @@ public class ContinuityService {
     return addressName.endsWith(config.getInflowAcksSuffix());
   }
 
+  public void handleServerStart() {
+    try {
+      if(log.isDebugEnabled()) {
+        log.debug("Continuity service detected server start");
+      }
+      initialize();
+      start();
+    } catch(ContinuityException e) {
+      log.error("Failed to start continuity service", e);
+    }
+  }
 
-  public void initialize() throws ContinuityException {
+  public synchronized void initialize() throws ContinuityException {
+    if(isInitializing || isInitialized)
+      return;
+
+    isInitializing = true;
+    
+    if(log.isDebugEnabled()) {
+      log.debug("Initializing continuity service");
+    }
+
     createCommandManager();
     getContinuityManagementService().registerContinuityService(this);
+
     isInitialized = true;
+    isInitializing = false;
   }
 
   private void createCommandManager() throws ContinuityException {
@@ -224,6 +247,9 @@ public class ContinuityService {
     return server;
   }
 
+  public boolean isInitializing() {
+    return isInitializing;
+  }
   public boolean isInitialized() {
     return isInitialized;
   }
@@ -239,7 +265,7 @@ public class ContinuityService {
   }
 
   public ContinuityManagementService getContinuityManagementService() {
-    return continuityManagementService;
+    return mgmt;
   }
 
 }
