@@ -191,22 +191,6 @@ public class ContinuityControlImpl extends AbstractControl implements Continuity
             blockOnIO();
         }
     }
-    
-    @Override
-    public String[] getAddresses() {
-        if (ContinuityAuditLogger.isEnabled() && service != null && service.getConfig() != null) {
-            ContinuityAuditLogger.getAddresses(service.getConfig());
-        }
-        clearIO();
-        try {
-            if(service == null || service.getConfig() == null)
-                return new String[0];
-            else
-                return (String[])service.getConfig().getAddresses().toArray();
-        } finally {
-            blockOnIO();
-        }
-    }
 
     @Override
     public String getOutflowMirrorSuffix() {

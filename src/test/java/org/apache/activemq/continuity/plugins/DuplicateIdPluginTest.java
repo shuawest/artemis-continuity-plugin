@@ -21,20 +21,23 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.apache.activemq.continuity.ContinuityTestBase;
+import org.apache.activemq.continuity.core.ContinuityConfig;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DuplicateIdPluginTest extends ContinuityTestBase {
- 
+
   private static final Logger log = LoggerFactory.getLogger(DuplicateIdPluginTest.class);
 
   @Test
@@ -163,4 +166,64 @@ public class DuplicateIdPluginTest extends ContinuityTestBase {
     assertThat("message duplicate id bytes was null", receivedMessage.getDuplicateIDBytes(), notNullValue());
   }
   
+  @Test
+  public void matchAddressTest() {
+    ContinuityConfig config = new ContinuityConfig(new HashMap<String, String>() {{
+      put("outflow-mirror-suffix", ".out.mirror");
+      put("outflow-acks-suffix", ".out.acks");
+      put("inflow-mirror-suffix", ".in.mirror");
+      put("inflow-acks-suffix", ".in.acks");
+      put("command-destination-prefix", "continuity.cmd");
+    }});
+
+    Pattern pattern = Pattern.compile(".*(" + 
+      config.getOutflowMirrorSuffix() + "|" + 
+      config.getOutflowAcksSuffix() + "|" + 
+      config.getInflowMirrorSuffix() + "|" + 
+      config.getInflowAcksSuffix() + "|" + 
+      config.getCommandDestinationPrefix() + ").*");
+
+    assertThat(pattern.matcher("anycast://example1").matches(), equalTo(false));
+    assertThat(pattern.matcher("multicast://example1").matches(), equalTo(false));
+    assertThat(pattern.matcher("multicast://example1?arg=asdf").matches(), equalTo(false));
+    assertThat(pattern.matcher("anycast://example1::example1-durable").matches(), equalTo(false));
+    assertThat(pattern.matcher("queue.example1").matches(), equalTo(false));
+    assertThat(pattern.matcher("queue/example1").matches(), equalTo(false));
+    assertThat(pattern.matcher("example1/subelement").matches(), equalTo(false));
+    
+    assertThat(pattern.matcher("example1.out.mirror").matches(), equalTo(true));
+    assertThat(pattern.matcher("example1.out.acks").matches(), equalTo(true));
+    assertThat(pattern.matcher("example1.in.mirror").matches(), equalTo(true));
+    assertThat(pattern.matcher("example1.in.acks").matches(), equalTo(true));
+    assertThat(pattern.matcher("continuity.cmd.in").matches(), equalTo(true));
+    assertThat(pattern.matcher("continuity.cmd.out").matches(), equalTo(true));
+
+    assertThat(pattern.matcher("multicast://example1.out.mirror").matches(), equalTo(true));
+    assertThat(pattern.matcher("multicast://example1.out.acks").matches(), equalTo(true));
+    assertThat(pattern.matcher("multicast://example1.in.mirror").matches(), equalTo(true));
+    assertThat(pattern.matcher("multicast://example1.in.acks").matches(), equalTo(true));
+    assertThat(pattern.matcher("multicast://continuity.cmd.in").matches(), equalTo(true));
+    assertThat(pattern.matcher("multicast://continuity.cmd.out").matches(), equalTo(true));
+
+    assertThat(pattern.matcher("anycast://example1.out.mirror::asdf").matches(), equalTo(true));
+    assertThat(pattern.matcher("anycast://example1.out.acks::asdf").matches(), equalTo(true));
+    assertThat(pattern.matcher("anycast://example1.in.mirror::asdf").matches(), equalTo(true));
+    assertThat(pattern.matcher("anycast://example1.in.acks::asdf").matches(), equalTo(true));
+    assertThat(pattern.matcher("anycast://continuity.cmd.in::asdf").matches(), equalTo(true));
+    assertThat(pattern.matcher("anycast://continuity.cmd.out::asdf").matches(), equalTo(true));
+
+    assertThat(pattern.matcher("queue.example1.out.mirror").matches(), equalTo(true));
+    assertThat(pattern.matcher("queue.example1.out.acks").matches(), equalTo(true));
+    assertThat(pattern.matcher("queue.example1.in.mirror").matches(), equalTo(true));
+    assertThat(pattern.matcher("queue.example1.in.acks").matches(), equalTo(true));
+    assertThat(pattern.matcher("queue.continuity.cmd.in").matches(), equalTo(true));
+    assertThat(pattern.matcher("queue.continuity.cmd.out").matches(), equalTo(true));
+
+    assertThat(pattern.matcher("queue/example1.out.mirror").matches(), equalTo(true));
+    assertThat(pattern.matcher("queue/example1.out.acks").matches(), equalTo(true));
+    assertThat(pattern.matcher("queue/example1.in.mirror").matches(), equalTo(true));
+    assertThat(pattern.matcher("queue/example1.in.acks").matches(), equalTo(true));
+    assertThat(pattern.matcher("queue/continuity.cmd.in").matches(), equalTo(true));
+    assertThat(pattern.matcher("queue/continuity.cmd.out").matches(), equalTo(true));
+  }
 }

@@ -20,7 +20,7 @@ import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerPlugin;
 import org.apache.activemq.continuity.core.ContinuityConfig;
 import org.apache.activemq.continuity.core.ContinuityService;
-import org.apache.activemq.continuity.core.ServerStartListener;
+import org.apache.activemq.continuity.core.ServerListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +40,7 @@ public class ContinuityPlugin implements ActiveMQServerPlugin {
   public void registered(ActiveMQServer server) {
       log.debug("Creating continuity service");
       this.continuityService = new ContinuityService(server, continuityConfig);
-      ServerStartListener.registerActivateCallback(server, continuityService);
+      ServerListener.registerActivateCallback(server, continuityService);
 
       log.debug("Registering dependent plugins");
       Configuration brokerConfig = server.getConfiguration();

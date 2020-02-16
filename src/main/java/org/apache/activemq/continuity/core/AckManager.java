@@ -50,12 +50,21 @@ public class AckManager {
   }
 
   public void handleAck(AckInfo ack) throws ContinuityException {
+    if(ack.getMessageUuid() == null) {
+      if(log.isWarnEnabled()) {
+        log.warn("Message ack didn't have a duplicate id, skipping continuity handling (queue '{}', msg sent at '{}', msg acked at '{}')", ack.getSourceQueueName(), ack.getMessageSendTime(), ack.getAckTime());
+      }
+      return;
+    }
+
     if(isAddDuplicatesToTarget) {
       addDuplicateIdToTarget(ack.getMessageUuid());
     }
+
     if(isRemoveMessageFromMirror) {
-    removeMessageFromMirror(flow.getInflowMirrorName(), ack.getMessageUuid());
+      removeMessageFromMirror(flow.getInflowMirrorName(), ack.getMessageUuid());
     }
+
     updateAckStats(ack);
   }
 
@@ -73,8 +82,8 @@ public class AckManager {
     this.peakAckDuration = (peakAckDuration == null || peakAckDuration < ackDuration)? ackDuration : peakAckDuration;
     this.averageAckDuration = (averageAckDuration == null)? ackDuration : (ackDuration + averageAckDuration)/2;
 
-    if(log.isDebugEnabled()) {
-      log.debug("Updated ack stats averageAckDuration = {}, peakAckDuration = {}, ackDuration = {}", averageAckDuration, peakAckDuration, ackDuration);
+    if(log.isTraceEnabled()) {
+      log.trace("Updated ack stats averageAckDuration = {}, peakAckDuration = {}, ackDuration = {}", averageAckDuration, peakAckDuration, ackDuration);
     }
   }
 
@@ -84,11 +93,13 @@ public class AckManager {
       // Add message id to duplicate cache
       byte[] messageIdBytes = SimpleString.toSimpleString(duplicateId).getData();
 
-      if(log.isDebugEnabled())
-        log.debug("Adding duplicate ID to mirror id cache for '{}': {}", flow.getSubjectQueueName(), messageIdBytes);
+      if(log.isTraceEnabled()) {
+        log.trace("Adding duplicate ID to mirror id cache for '{}': {}", flow.getSubjectQueueName(), messageIdBytes);
+      }
 
       DuplicateIDCache idCache = getServer().getPostOffice().getDuplicateIDCache(SimpleString.toSimpleString(flow.getSubjectQueueName()));  
-      idCache.addToCache(messageIdBytes, null, true); // TODO: instant add - what impact does it have?
+      idCache.addToCache(messageIdBytes, null, true); 
+      // TODO: instant add - what impact does it have?
  
     } catch (Exception e) {
       String eMessage = String.format("Failed add duplicate id to '%s': %s '", flow.getSubjectQueueName(), duplicateId);
@@ -103,11 +114,12 @@ public class AckManager {
       // Print dup ID caches
       List<Pair<byte[], Long>> addrIds = getServer().getPostOffice().getDuplicateIDCache(SimpleString.toSimpleString(address)).getMap();
       
-      if(log.isDebugEnabled())
-        log.debug("Address Ids '{}': {}", address, addrIds);
+      if(log.isTraceEnabled()) {
+        log.trace("Address Ids '{}': {}", address, addrIds);
+      }
 
     } catch (Exception e) {
-      String eMessage = "Failed log duplicate id cache for '" + address;
+      String eMessage = "Failed to log duplicate id cache for '" + address;
       log.error(eMessage, e);
       throw new ContinuityException(eMessage, e);
     }
@@ -120,10 +132,11 @@ public class AckManager {
       String dupIdHeader = Message.HDR_DUPLICATE_DETECTION_ID.toString();
       Filter filter = FilterImpl.createFilter(String.format("%s = '%s'", dupIdHeader, duplicateId));
       Queue mirrorQueue = getServer().locateQueue(SimpleString.toSimpleString(queueName));
-      if(mirrorQueue != null)
+      if(mirrorQueue != null) {
         mirrorQueue.deleteMatchingReferences(filter);
-      else
+      } else {
         throw new ContinuityException(String.format("inflow mirror queue did not exist: %s", queueName));
+      }
     } catch (Exception e) {
       String eMessage = String.format("Failed remove duplicates from mirror '%s': %s '", queueName, duplicateId);
       log.error(eMessage, e);
@@ -132,25 +145,26 @@ public class AckManager {
   }
 
   public void delayMessageOnInflowMirror(final Message message) throws ContinuityException {
-    if(log.isDebugEnabled())
-      log.debug("Trying to delay message on queue '{}'", message.getAddress().toString());
+    if(log.isTraceEnabled())
+      log.trace("Trying to delay message on queue '{}'", message.getAddress().toString());
     
     try {
       // Backup original scheduled delivery time on message
       final Long origSchedDeliveryTime = message.getScheduledDeliveryTime();
       message.putLongProperty("continuity-original-sched-delivery-time", origSchedDeliveryTime);
+      // TODO: add handler to restore the delivery time
       
       final long messageTimestamp = message.getTimestamp();
       final long currentTime = System.currentTimeMillis();
       final long inflowStagingDelay = getConfig().getInflowStagingDelay();  
       final long scheduledDeliveryTime = (inflowStagingDelay + messageTimestamp);
 
-      if(log.isDebugEnabled()) {
-        log.debug("Evaluating message delay - current time '{}', message time '{}'", currentTime, messageTimestamp); 
+      if(log.isTraceEnabled()) {
+        log.trace("Evaluating message delay - current time '{}', message time '{}'", currentTime, messageTimestamp); 
       
         DateFormat datetimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZ"); 
         String scheduledDeliveryTimeAsDatetime = datetimeFormat.format(new Date(scheduledDeliveryTime)); 
-        log.debug("\nScheduled delivery time '{}', as datetime '{}'", scheduledDeliveryTime, scheduledDeliveryTimeAsDatetime); 
+        log.trace("\nScheduled delivery time '{}', as datetime '{}'", scheduledDeliveryTime, scheduledDeliveryTimeAsDatetime); 
       }
 
       message.setScheduledDeliveryTime(scheduledDeliveryTime);

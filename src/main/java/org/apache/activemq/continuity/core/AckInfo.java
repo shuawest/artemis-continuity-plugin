@@ -23,8 +23,11 @@ import javax.json.JsonObjectBuilder;
 
 import org.apache.activemq.artemis.api.core.JsonUtil;
 import org.apache.activemq.artemis.utils.JsonLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AckInfo {
+  private static final Logger log = LoggerFactory.getLogger(AckInfo.class);
 
   private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZ"); 
   private static final String ACK_TIME_FIELD = "ack-time";
@@ -89,10 +92,20 @@ public class AckInfo {
       builder.add(SRC_QUEUE_FIELD, ack.getSourceQueueName());
 
     JsonObject jsonObject = builder.build();
-    return jsonObject.toString();
+    String json = jsonObject.toString();
+
+    if(log.isTraceEnabled()) {
+      log.trace("Marshaling AckInfo to json: {}", json);
+    }
+
+    return json;
   }
 
   public static AckInfo fromJSON(String json) throws ParseException {
+    if(log.isTraceEnabled()) {
+      log.trace("Marshaling AckInfo from json: {}", json);
+    }
+
     JsonObject jsonObject = JsonUtil.readJsonObject(json);
 
     AckInfo ack = new AckInfo();

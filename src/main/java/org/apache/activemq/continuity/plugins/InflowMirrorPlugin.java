@@ -39,7 +39,6 @@ public class InflowMirrorPlugin implements ActiveMQServerMessagePlugin {
     log.debug("InflowMirrorPlugin registered");
   }
 
-  // TODO: determine if exception bubbled up without consequence
   @Override
   public void beforeSend(ServerSession session, Transaction tx, Message message, boolean direct, boolean noAutoCreateQueue) throws ContinuityException {
     String addressName = message.getAddress();
@@ -47,8 +46,8 @@ public class InflowMirrorPlugin implements ActiveMQServerMessagePlugin {
     if(continuityService.isInflowMirrorAddress(addressName)) {
       String subjectQueueName = addressName.replaceFirst(continuityService.getConfig().getInflowMirrorSuffix(), "") ;
       
-      if(log.isDebugEnabled())
-        log.debug("Locating flow with name {}", subjectQueueName);
+      if(log.isTraceEnabled())
+        log.trace("Locating flow with name {}", subjectQueueName);
 
       ContinuityFlow flow = continuityService.locateFlow(subjectQueueName);  
       flow.getAckManager().handleInflowMirrorMessage(message);  

@@ -19,16 +19,15 @@ import static org.mockito.Mockito.when;
 
 import org.apache.activemq.artemis.core.config.Configuration;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
-import org.apache.activemq.artemis.core.server.management.NotificationListener;
 import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerPlugin;
 import org.apache.activemq.continuity.ContinuityTestBase;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ServerStartListenerTest extends ContinuityTestBase {
+public class ServerListenerTest extends ContinuityTestBase {
 
-  private static final Logger log = LoggerFactory.getLogger(ServerStartListenerTest.class);
+  private static final Logger log = LoggerFactory.getLogger(ServerListenerTest.class);
 
   @Test
   public void startTest() throws Exception {
@@ -40,7 +39,7 @@ public class ServerStartListenerTest extends ContinuityTestBase {
     ActiveMQServerPlugin stubPlugin =  new ActiveMQServerPlugin() {
       @Override
       public void registered(ActiveMQServer server) {
-        ServerStartListener.registerActivateCallback(server, continuityCtx.getService());
+        ServerListener.registerActivateCallback(server, continuityCtx.getService());
       }
     };
     Configuration brokerConfig = serverCtx.getServer().getConfiguration();

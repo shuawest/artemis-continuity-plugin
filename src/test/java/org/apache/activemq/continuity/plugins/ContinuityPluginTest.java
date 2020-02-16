@@ -42,7 +42,6 @@ public class ContinuityPluginTest extends ContinuityTestBase {
       put("local-password", "mypass");
       put("local-connector-ref", "local-connector");
       put("remote-connector-ref", "remote-connector");
-      put("addresses", "async-sample1;async-sample2");
     }}); 
 
     serverCtx.getServer().getConfiguration().registerBrokerPlugin(plugin);
@@ -58,9 +57,6 @@ public class ContinuityPluginTest extends ContinuityTestBase {
     assertThat(plugin.getConfig().getLocalInVmUri(), equalTo("vm://2"));
     assertThat(plugin.getConfig().getLocalUsername(), equalTo("myuser"));
     assertThat(plugin.getConfig().getLocalPassword(), equalTo("mypass"));
-    assertThat(plugin.getConfig().getAddresses().size(), equalTo(2));
-    assertThat(plugin.getConfig().getAddresses().get(0), equalTo("async-sample1"));
-    assertThat(plugin.getConfig().getAddresses().get(1), equalTo("async-sample2"));
 
     assertThat(plugin.getService(), notNullValue());
     assertThat(plugin.getService().isInitialized(), equalTo(true));
@@ -70,7 +66,6 @@ public class ContinuityPluginTest extends ContinuityTestBase {
     assertThat(plugin.getService().getCommandManager().isStarted(), equalTo(true));
     assertThat(plugin.getService().getCommandManager().getCommandReceiver(), notNullValue());
 
-    assertThat(plugin.getService().getFlows().size(), equalTo(1));
     ContinuityFlow flow1 = plugin.getService().locateFlow("async-sample1");
     assertThat(flow1, notNullValue());
     assertThat(flow1.isInitialized(), equalTo(true));
@@ -97,13 +92,11 @@ public class ContinuityPluginTest extends ContinuityTestBase {
     assertThat(plugin1, notNullValue());
     assertThat(plugin2, notNullValue());
 
-    assertThat(plugin2.getService().getFlows().size(), equalTo(2));
     ContinuityFlow flow2a = plugin2.getService().locateFlow("example1-durable");
     ContinuityFlow flow2b = plugin2.getService().locateFlow("example2-durable");
     assertThat(flow2a, notNullValue());
     assertThat(flow2b, notNullValue());
 
-    assertThat(plugin1.getService().getFlows().size(), equalTo(2));
     ContinuityFlow flow1a = plugin1.getService().locateFlow("example1-durable");
     ContinuityFlow flow1b = plugin1.getService().locateFlow("example2-durable");
     assertThat(flow1a, notNullValue());

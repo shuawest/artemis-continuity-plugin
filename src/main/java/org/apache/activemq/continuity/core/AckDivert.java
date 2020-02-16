@@ -19,7 +19,6 @@ import org.apache.activemq.artemis.api.core.client.ClientProducer;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
-import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,10 +98,12 @@ public class AckDivert {
     try {
       prepareSession();
       
-      log.debug("Sending ack info body '{}', origin '{}'", body, getServer().getIdentity());
+      if(log.isTraceEnabled()) {
+        log.trace("Sending ack info body '{}', origin '{}'", body, getConfig().getSiteId());
+      }
 
       ClientMessage message = session.createMessage(true);
-      message.putStringProperty(ORIGIN_HEADER, getServer().getIdentity());
+      message.putStringProperty(ORIGIN_HEADER, getConfig().getSiteId());
       message.getBodyBuffer().writeString(body);
 
       producer.send(message);
@@ -116,10 +117,6 @@ public class AckDivert {
 
   private ContinuityConfig getConfig() {
     return service.getConfig();
-  }
-
-  private ActiveMQServer getServer() {
-    return service.getServer();
   }
 
   public Boolean isStarted() {

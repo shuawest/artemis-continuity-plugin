@@ -59,6 +59,7 @@ import org.apache.activemq.continuity.core.CommandManager;
 import org.apache.activemq.continuity.core.CommandReceiver;
 import org.apache.activemq.continuity.core.ContinuityConfig;
 import org.apache.activemq.continuity.core.ContinuityService;
+import org.apache.activemq.continuity.management.ContinuityManagementService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,6 +74,7 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     deploymentManager.addDeployable(fc);
     deploymentManager.readConfiguration();
 
+    //MBeanServerFactory.releaseMBeanServer(ManagementFactory.getPlatformMBeanServer());
     MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
     ActiveMQJAASSecurityManager securityManager = new ActiveMQJAASSecurityManager(InVMLoginModule.class.getName(),
@@ -91,8 +93,10 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     ContinuityConfig configMock = mock(ContinuityConfig.class);
     CommandManager commandManagerMock = mock(CommandManager.class);
     CommandReceiver commandRecieverMock = mock(CommandReceiver.class);
+    ContinuityManagementService managementMock = mock(ContinuityManagementService.class);
 
     when(serviceMock.getServer()).thenReturn(serverContext.getServer());
+    when(serviceMock.getManagement()).thenReturn(managementMock);
     when(serviceMock.getConfig()).thenReturn(configMock);
     when(configMock.getSiteId()).thenReturn(serverId);
     when(configMock.getCommandDestinationPrefix()).thenReturn("artemis.continuity.commands");

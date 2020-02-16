@@ -13,31 +13,17 @@
  */
 package org.apache.activemq.continuity.core;
 
-import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Set;
-
-import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
-import javax.management.Query;
-import javax.management.QueryExp;
 
 import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.api.core.SimpleString;
-import org.apache.activemq.artemis.api.core.management.ObjectNameBuilder;
-import org.apache.activemq.artemis.api.core.management.ResourceNames;
 import org.apache.activemq.artemis.core.config.BridgeConfiguration;
 import org.apache.activemq.artemis.core.config.DivertConfiguration;
 import org.apache.activemq.artemis.core.config.TransformerConfiguration;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.QueueQueryResult;
 import org.apache.activemq.artemis.core.server.cluster.Bridge;
-import org.apache.activemq.continuity.management.ContinuityFlowControl;
-import org.apache.activemq.continuity.management.ContinuityFlowControlImpl;
 import org.apache.activemq.continuity.plugins.OriginTransformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -14,8 +14,11 @@
 package org.apache.activemq.continuity.plugins;
 
 import java.util.UUID;
+
+import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
+import org.apache.activemq.artemis.core.server.RoutingContext;
 import org.apache.activemq.artemis.core.server.ServerSession;
 import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerMessagePlugin;
 import org.apache.activemq.artemis.core.transaction.Transaction;
@@ -41,19 +44,22 @@ public class DuplicateIdPlugin implements ActiveMQServerMessagePlugin {
 
   @Override
   public void beforeSend(ServerSession session, Transaction tx, Message message, boolean direct, boolean noAutoCreateQueue) throws ContinuityException {
-    String addressName = message.getAddress();
-    
-    // Ensure there is a duplicate id UUID on messages for addresses 
-    if(continuityService.isSubjectAddress(addressName)) {
+    if(log.isTraceEnabled()) {
+      log.trace("before send address:'{}', dupProp:'{}', id:'{}', correlId:'{}'", message.getAddress(), message.getDuplicateProperty(), message.getMessageID(), message.getCorrelationID());
+    }
+
+    // Ensure there is a duplicate id UUID on messages for subject addresses 
+    if(continuityService.isSubjectAddress(message.getAddress())) {
 
       // Only add duplicate id if it does not already have one
       if(message.getDuplicateIDBytes() == null) {
         String uuid = UUID.randomUUID().toString();
         message.putStringProperty(Message.HDR_DUPLICATE_DETECTION_ID, uuid);
-        message.reencode();
-        
-        if(log.isDebugEnabled()) 
-          log.debug("Set the {} header on message sent to '{}' to uuid '{}'", Message.HDR_DUPLICATE_DETECTION_ID, message.getAddress(), uuid);
+        message.reencode();  
+
+        if(log.isTraceEnabled()) {
+          log.trace("Applied duplicate id to message on address '{}': {}", message.getAddress(), uuid);
+        }
       }
     } 
   }

@@ -13,9 +13,6 @@
  */
 package org.apache.activemq.continuity.core;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -29,7 +26,7 @@ public class ContinuityConfig {
   private static final String DEFAULT_OUTFLOW_ACKS_SUFFIX = ".out.acks";
   private static final String DEFAULT_INFLOW_MIRROR_SUFFIX = ".in.mirror";
   private static final String DEFAULT_INFLOW_ACKS_SUFFIX = ".in.acks";
-  private static final String DEFAULT_CMD_DESTINATION_PREFIX = "artemis.continuity.commands";
+  private static final String DEFAULT_CMD_DESTINATION_PREFIX = "continuity.cmd";
 
   private String siteId; // site ID is annotated on messages to identify origin
   
@@ -51,28 +48,23 @@ public class ContinuityConfig {
   private String localConnectorRef;
   private String remoteConnectorRef;
 
-  private List<String> addresses;
-
   public ContinuityConfig(Map<String, String> properties) {
     this.siteId = parseProperty(properties, "site-id");
     this.localInVmUri = parseProperty(properties, "local-invm-uri");
     this.localUsername = parseProperty(properties, "local-username");
     this.localPassword = parseProperty(properties, "local-password");
-    this.outflowMirrorSuffix = parseProperty(properties, "outflow-mirror-suffix", ".out.mirror");
-    this.outflowAcksSuffix = parseProperty(properties, "outflow-acks-suffix", ".out.acks");
-    this.inflowMirrorSuffix = parseProperty(properties, "inflow-mirror-suffix", ".in.mirror");
-    this.inflowAcksSuffix = parseProperty(properties, "inflow-acks-suffix", ".in.acks");
+    this.outflowMirrorSuffix = parseProperty(properties, "outflow-mirror-suffix", DEFAULT_OUTFLOW_MIRROR_SUFFIX);
+    this.outflowAcksSuffix = parseProperty(properties, "outflow-acks-suffix", DEFAULT_OUTFLOW_ACKS_SUFFIX);
+    this.inflowMirrorSuffix = parseProperty(properties, "inflow-mirror-suffix", DEFAULT_INFLOW_MIRROR_SUFFIX);
+    this.inflowAcksSuffix = parseProperty(properties, "inflow-acks-suffix", DEFAULT_INFLOW_ACKS_SUFFIX);
     this.inflowStagingDelay = parseLongProperty(properties, "inflow-staging-delay-ms", 60000L);
     this.bridgeInterval = parseLongProperty(properties, "bridge-interval-ms", 100L);
     this.bridgeIntervalMultiplier = parseDoubleProperty(properties, "bridge-interval-multiplier", 0.5);
 
-    this.commandDestinationPrefix = parseProperty(properties, "command-destination-prefix", "artemis.continuity.commands");
-    this.isReorgManagementHierarchy = parseBooleanProperty(properties, "reorg-management-hierarchy", true);
+    this.commandDestinationPrefix = parseProperty(properties, "command-destination-prefix", DEFAULT_CMD_DESTINATION_PREFIX);
+    this.isReorgManagementHierarchy = parseBooleanProperty(properties, "reorg-management-hierarchy", false);
     this.localConnectorRef = parseProperty(properties, "local-connector-ref");
     this.remoteConnectorRef = parseProperty(properties, "remote-connector-ref");
-
-    String addressesString = parseProperty(properties, "addresses");
-    this.addresses = (addressesString != null)? Arrays.asList(addressesString.split(";")) : new ArrayList<String>();
 
     log.debug("Continuity config parsed: {}", this.toString());
   }
@@ -136,10 +128,6 @@ public class ContinuityConfig {
   public String getRemoteConnectorRef() {
     return remoteConnectorRef;
   }
-
-  public List<String> getAddresses() {
-    return addresses;
-  }
   
   @Override
   public String toString() {
@@ -158,8 +146,7 @@ public class ContinuityConfig {
       ", commandDestinationPrefix=" + commandDestinationPrefix +
       ", isReorgManagementHierarchy=" + isReorgManagementHierarchy +
       ", localConnectorRef=" + localConnectorRef + 
-      ", remoteConnectorRef=" + remoteConnectorRef + 
-      ", addresses=" + addresses + "]";
+      ", remoteConnectorRef=" + remoteConnectorRef + "]";
   }
 
 

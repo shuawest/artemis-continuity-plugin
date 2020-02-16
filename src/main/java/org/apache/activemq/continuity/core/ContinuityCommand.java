@@ -33,10 +33,12 @@ public class ContinuityCommand {
   private static final String ACTION_FIELD = "action";
   private static final String ADDRESS_FIELD = "addr";
   private static final String QUEUE_FIELD = "queue";
+  private static final String ROUTING_TYPE_FIELD = "routing";
 
   private String action;
   private String address; 
   private String queue;
+  private String routingType;
 
   public ContinuityCommand() { }
 
@@ -64,6 +66,14 @@ public class ContinuityCommand {
     this.queue = queue;
   }
 
+  public String getRoutingType() {
+    return routingType;
+  }
+
+  public void setRoutingType(String routingType) {
+    this.routingType = routingType;
+  }
+
   /** Marshalling **/
 
   public static String toJSON(ContinuityCommand cc) {
@@ -75,6 +85,8 @@ public class ContinuityCommand {
       builder.add(ADDRESS_FIELD, cc.getAddress());
     if(cc.getQueue() != null)
       builder.add(QUEUE_FIELD, cc.getQueue());
+    if(cc.getRoutingType() != null)
+      builder.add(ROUTING_TYPE_FIELD, cc.getRoutingType());
 
     JsonObject jsonObject = builder.build();
     return jsonObject.toString();
@@ -90,6 +102,8 @@ public class ContinuityCommand {
       cc.setAddress(jsonObject.getString(ADDRESS_FIELD));
     if(jsonObject.containsKey(QUEUE_FIELD))
       cc.setQueue(jsonObject.getString(QUEUE_FIELD));
+    if(jsonObject.containsKey(ROUTING_TYPE_FIELD))
+      cc.setRoutingType(jsonObject.getString(ROUTING_TYPE_FIELD));
 
     return cc;
   }

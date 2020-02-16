@@ -85,7 +85,7 @@ public class AckDivertTest extends ContinuityTestBase {
     assertThat("out acks queue has no message", outflowAcksQueue.browserIterator().hasNext(), equalTo(true));
     MessageReference msgRef = outflowAcksQueue.browserIterator().next();
     assertThat("message was null", msgRef, notNullValue());
-    assertThat("message origin header is wrong", msgRef.getMessage().getStringProperty(AckDivert.ORIGIN_HEADER), equalTo(serverCtx.getServer().getIdentity()));
+    assertThat("message origin header is wrong", msgRef.getMessage().getStringProperty(AckDivert.ORIGIN_HEADER), equalTo(continuityCtx.getConfig().getSiteId()));
     assertThat("message body is wrong", msgRef.getMessage().toCore().getBodyBuffer().readString(), equalTo("test message"));
     
     divert.stop();

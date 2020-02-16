@@ -18,19 +18,19 @@ import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ServerStartListener implements ActivateCallback {
+public class ServerListener implements ActivateCallback {
 
-    private static final Logger log = LoggerFactory.getLogger(ServerStartListener.class);
+    private static final Logger log = LoggerFactory.getLogger(ServerListener.class);
 
     private final ContinuityService service;
 
     public static void registerActivateCallback(ActiveMQServer server, ContinuityService service) {
-        ServerStartListener listener = new ServerStartListener(service);
+        ServerListener listener = new ServerListener(service);
         server.registerActivateCallback(listener);
     }
 
     
-    public ServerStartListener(final ContinuityService service) {
+    public ServerListener(final ContinuityService service) {
         this.service = service;
     }
 
@@ -64,6 +64,26 @@ public class ServerStartListener implements ActivateCallback {
             service.start();
         } catch(ContinuityException e) {
             log.error("Unable to start continuity service", e);
+        }
+    }
+
+    @Override
+    public void stop(ActiveMQServer server) {
+        if(log.isDebugEnabled()) {
+            log.debug("Server stop");
+        }
+
+        try {
+            service.stop();
+        } catch(ContinuityException e) {
+            log.error("Unable to start continuity service", e);
+        }
+    }
+ 
+    @Override
+    public void shutdown(ActiveMQServer server) {
+        if(log.isDebugEnabled()) {
+            log.debug("Server shutdown");
         }
     }
 }

@@ -43,9 +43,6 @@ public class OriginTransformer implements Transformer {
 
   @Override
   public Message transform(Message msg) {
-    if(log.isDebugEnabled())
-      log.debug(String.format("Setting the %s header to value [%s].", MESSAGE_ORIGIN_HEADER, messageOrigin));
-    
     msg.putStringProperty(MESSAGE_ORIGIN_HEADER, messageOrigin);
     return msg;
   }

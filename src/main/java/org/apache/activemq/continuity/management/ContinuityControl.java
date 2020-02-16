@@ -55,9 +55,6 @@ public interface ContinuityControl {
     
     @Attribute(desc = "Config: Bridge reconnect backoff multiplier applied to the all continuity bridges")
     String getBridgeIntervalMultiplier();
-    
-    @Attribute(desc = "Config: Name of addresses subject to continuity")
-    String[] getAddresses();
 
     @Attribute(desc = "Config: Suffix added to the generated outflow mirror queues")   
     String getOutflowMirrorSuffix();

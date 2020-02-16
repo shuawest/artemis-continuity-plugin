@@ -16,6 +16,7 @@ package org.apache.activemq.continuity.core;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
@@ -56,9 +57,11 @@ public class ContinuityService {
       log.debug("Initializing continuity service");
     }
 
-    CommandReceiver cmdReceiver = new CommandReceiver(this);
-    CommandManager cmdMgr = new CommandManager(this, cmdReceiver);
-    cmdMgr.initialize();
+    if(this.commandManager == null) {
+      CommandReceiver cmdReceiver = new CommandReceiver(this);
+      CommandManager cmdMgr = new CommandManager(this, cmdReceiver);
+      cmdMgr.initialize();
+    }
 
     isInitialized = true;
     isInitializing = false;
@@ -218,8 +221,21 @@ public class ContinuityService {
     return isStarted;
   }
 
+  private static Pattern continuityAddressPattern;
+
   public boolean isSubjectAddress(String addressName) {
-    return config.getAddresses().contains(addressName);
+    if(continuityAddressPattern == null) {
+      continuityAddressPattern = Pattern.compile(".*(" + 
+        config.getOutflowMirrorSuffix() + "|" + 
+        config.getOutflowAcksSuffix() + "|" + 
+        config.getInflowMirrorSuffix() + "|" + 
+        config.getInflowAcksSuffix() + "|" + 
+        config.getCommandDestinationPrefix() + ").*");
+    }
+
+    boolean isContinuityAddress = continuityAddressPattern.matcher(addressName).matches();
+
+    return !isContinuityAddress;
   }
 
   public boolean isSubjectQueue(String queueName) {

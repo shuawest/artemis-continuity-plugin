@@ -22,8 +22,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
-
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.continuity.ContinuityTestBase;
@@ -41,7 +39,6 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
-    when(continuityCtx.getConfig().getAddresses()).thenReturn(Arrays.asList("example1","example2"));
     when(continuityCtx.getConfig().getOutflowMirrorSuffix()).thenReturn(".out.mirror");
     when(continuityCtx.getConfig().getOutflowAcksSuffix()).thenReturn(".out.acks");
     when(continuityCtx.getConfig().getInflowMirrorSuffix()).thenReturn(".in.mirror");
@@ -55,11 +52,9 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     assertThat("ContinuitySevice isSubjectAddress", svc.isSubjectAddress("example1"), equalTo(true));
     assertThat("ContinuitySevice isSubjectAddress", svc.isSubjectAddress("example2"), equalTo(true));
     assertThat("ContinuitySevice isSubjectAddress", svc.isSubjectAddress("example2.out.mirror"), equalTo(false));
-    assertThat("ContinuitySevice isSubjectAddress", svc.isSubjectAddress("asdf"), equalTo(false));
 
     assertThat("ContinuitySevice isSubjectQueue", svc.isSubjectQueue("example1-durable"), equalTo(true));
     assertThat("ContinuitySevice isSubjectQueue", svc.isSubjectQueue("example1-nondurable"), equalTo(false));
-    assertThat("ContinuitySevice isSubjectQueue", svc.isSubjectQueue("asdf"), equalTo(false));
 
     assertThat("ContinuitySevice isOutflowMirrorAddress", svc.isOutflowMirrorAddress("example1.out.mirror"), equalTo(true));
     assertThat("ContinuitySevice isOutflowMirrorAddress", svc.isOutflowMirrorAddress("example1.out.mirror.asdf"), equalTo(false));
@@ -89,7 +84,6 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
-    when(continuityCtx.getConfig().getAddresses()).thenReturn(Arrays.asList("async-sample1"));
     when(continuityCtx.getConfig().getOutflowMirrorSuffix()).thenReturn(".out.mirror");
     when(continuityCtx.getConfig().getOutflowAcksSuffix()).thenReturn(".out.acks");
     when(continuityCtx.getConfig().getInflowMirrorSuffix()).thenReturn(".in.mirror");
@@ -108,7 +102,6 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     serverCtx.getServer().start();
 
     when(continuityCtx.getCommandManager().isStarted()).thenReturn(true);
-    when(continuityCtx.getConfig().getAddresses()).thenReturn(Arrays.asList("async-sample1"));
     when(continuityCtx.getConfig().getOutflowMirrorSuffix()).thenReturn(".out.mirror");
     when(continuityCtx.getConfig().getOutflowAcksSuffix()).thenReturn(".out.acks");
     when(continuityCtx.getConfig().getInflowMirrorSuffix()).thenReturn(".in.mirror");

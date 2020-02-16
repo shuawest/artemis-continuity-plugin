@@ -96,8 +96,8 @@ public class AckReceiver implements MessageHandler {
   }
 
   public void onMessage(ClientMessage message) {
-    if (log.isDebugEnabled()) {
-      log.debug("Received ack on '{}' ({}): {}", flow.getInflowAcksName(), getConfig().getSiteId(), message);// message.getBodyBuffer().readString());
+    if (log.isTraceEnabled()) {
+      log.trace("Received ack on '{}' ({}): {}", flow.getInflowAcksName(), getConfig().getSiteId(), message);
     }
 
     String ackBody = message.getBodyBuffer().readString();
@@ -120,10 +120,6 @@ public class AckReceiver implements MessageHandler {
 
   private ContinuityConfig getConfig() {
     return service.getConfig();
-  }
-
-  private ActiveMQServer getServer() {
-    return service.getServer();
   }
 
   public boolean isStarted() {

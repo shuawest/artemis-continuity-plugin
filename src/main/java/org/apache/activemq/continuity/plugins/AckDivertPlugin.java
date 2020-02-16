@@ -57,6 +57,10 @@ public class AckDivertPlugin implements ActiveMQServerMessagePlugin {
 
       String dupId = ref.getMessage().getStringProperty(Message.HDR_DUPLICATE_DETECTION_ID);
       
+      if(log.isDebugEnabled()) {
+        log.debug("Capturing ack - dupId '{}', msgSent '{}', msgAcked '{}'", dupId, msgTimestamp, ackTime);
+      }
+
       AckInfo ack = new AckInfo();
       ack.setMessageSendTime(msgTimestamp);
       ack.setAckTime(ackTime);
