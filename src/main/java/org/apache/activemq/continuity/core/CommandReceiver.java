@@ -15,6 +15,7 @@ package org.apache.activemq.continuity.core;
 
 import java.text.ParseException;
 
+import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.slf4j.Logger;
@@ -40,11 +41,15 @@ public class CommandReceiver implements MessageHandler {
     try {
       ContinuityCommand command = ContinuityCommand.fromJSON(body);
       service.handleIncomingCommand(command);
+      message.acknowledge(); 
+    } catch(ContinuityException e) {
+      String msg = String.format("Unable to handle ContinuityCommand: %s", body);
+      log.error(msg, e);
     } catch (ParseException e) {
       String msg = String.format("Unable to parse ContinuityCommand: %s", body);
       log.error(msg, e);
-    } catch(ContinuityException e) {
-      String msg = String.format("Unable to handle ContinuityCommand: %s", body);
+    } catch (ActiveMQException e) {
+      String msg = String.format("Unable to ackknowledge ContinuityCommand message: %s", body);
       log.error(msg, e);
     }
   }

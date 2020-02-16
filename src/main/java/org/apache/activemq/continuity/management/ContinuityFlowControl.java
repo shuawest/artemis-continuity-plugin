@@ -25,6 +25,12 @@ public interface ContinuityFlowControl {
 
     /* Facts */
 
+    @Attribute(desc = "Status: whether the continuity flow is initialized")
+    String getFlowInitialized();
+
+    @Attribute(desc = "Status: whether the continuity flow is started")
+    String getFlowStarted();
+
     @Attribute(desc = "Config: Name of the subject/target address for the continuity flow")
     String getSubjectAddressName();
 

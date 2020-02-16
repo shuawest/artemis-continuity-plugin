@@ -39,6 +39,7 @@ public class ContinuityFlow {
 
   private final String subjectAddressName;
   private final String subjectQueueName;
+  private final String subjectQueueRoutingType;
 
   private final String outflowMirrorName;
   private final String outflowDivertName;
@@ -69,6 +70,7 @@ public class ContinuityFlow {
 
     this.subjectAddressName = queueInfo.getAddressName();
     this.subjectQueueName = queueInfo.getQueueName();
+    this.subjectQueueRoutingType = queueInfo.getRoutingType();
 
     this.outflowMirrorName = subjectQueueName + getConfig().getOutflowMirrorSuffix();
     this.outflowDivertName = outflowMirrorName + ".divert";
@@ -108,10 +110,9 @@ public class ContinuityFlow {
 
     this.outflowMirrorBridge = createBridge(outflowMirrorBridgeName, outflowMirrorName, inflowMirrorName, getConfig().getRemoteConnectorRef(), true);
     this.outflowAcksBridge = createBridge(outflowAcksBridgeName, outflowAcksName, inflowAcksName, getConfig().getRemoteConnectorRef(), true);
-    this.targetBridge = createBridge(targetBridgeName, inflowMirrorName, subjectAddressName, getConfig().getLocalConnectorRef(), false);
-    //startBridge(outflowMirrorBridge);
-    //startBridge(outflowAcksBridge);
-    //stopBridge(targetBridge);
+    
+    boolean isActivated = service.isActivated();
+    this.targetBridge = createBridge(targetBridgeName, inflowMirrorName, subjectAddressName, getConfig().getLocalConnectorRef(), isActivated);
 
     service.getManagement().registerContinuityFlow(service, this);
 
@@ -120,9 +121,23 @@ public class ContinuityFlow {
 
   public void startSubjectQueueDelivery() throws ContinuityException {
     try {
-      startBridge(targetBridge);      
+      if(isInitialized && isStarted) {
+        startBridge(targetBridge);      
+      }
+
     } catch (Exception e) {
       throw new ContinuityException("Unable to start subject queue bridge", e);
+    }
+  }
+
+  public void stopSubjectQueueDelivery() throws ContinuityException {
+    try {
+      if(isInitialized && isStarted) {
+        stopBridge(targetBridge);      
+      }
+
+    } catch (Exception e) {
+      throw new ContinuityException("Unable to stop subject queue bridge", e);
     }
   }
 
@@ -132,7 +147,12 @@ public class ContinuityFlow {
         log.debug("Starting bridge from '{}' to '{}''", bridge.getQueue().getName().toString(), bridge.getForwardingAddress());
       }
 
-      bridge.start();
+      if(bridge == null) {
+        log.warn("Unable to start bridge for flow '{}', it doesn't exist", this.getSubjectQueueName());
+      } else {
+        bridge.start();
+      }
+
     } catch (Exception e) {
       throw new ContinuityException("Unabled to start bridge", e);
     }
@@ -144,7 +164,12 @@ public class ContinuityFlow {
         log.debug("Stopping bridge from '{}' to '{}''", bridge.getQueue().getName().toString(), bridge.getForwardingAddress());
       }
 
-      bridge.stop();
+      if(bridge == null) {
+        log.warn("Unable to stop bridge for flow '{}', it doesn't exist", this.getSubjectQueueName());
+      } else {
+        bridge.stop();
+      }
+      
     } catch (Exception e) {
       throw new ContinuityException("Unabled to start bridge", e);
     }
@@ -196,12 +221,13 @@ public class ContinuityFlow {
   private void createMatchingQueue(final QueueInfo queueInfo) throws ContinuityException {
     final String addressName = queueInfo.getAddressName();
     final String queueName = queueInfo.getQueueName();
+    final String routingType = queueInfo.getRoutingType();
 
     // TOOO: update to match queue settings
     try {
       if(!queueExists(queueName)) {
         getServer().createQueue(SimpleString.toSimpleString(addressName), 
-          RoutingType.MULTICAST,
+          RoutingType.valueOf(routingType),
           SimpleString.toSimpleString(queueName), 
           SimpleString.toSimpleString(getConfig().getLocalUsername()), 
           null, true, false);
@@ -316,6 +342,9 @@ public class ContinuityFlow {
   }
   public String getSubjectQueueName() {
     return subjectQueueName;
+  }
+  public String getSubjectQueueRoutingType() {
+    return subjectQueueRoutingType;
   }
 
   public String getOutflowDivertName() {

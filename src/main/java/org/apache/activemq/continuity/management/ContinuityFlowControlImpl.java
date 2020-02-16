@@ -55,6 +55,31 @@ public class ContinuityFlowControlImpl extends AbstractControl implements Contin
 
     /* Facts */
 
+    public String getFlowInitialized() {
+        if (ContinuityAuditLogger.isEnabled() && flow != null) {
+            ContinuityAuditLogger.getFlowInitialized(flow);
+        }
+        clearIO();
+        try {
+            return Boolean.toString(flow.isInitialized());
+        } finally {
+            blockOnIO();
+        }
+    }
+
+    public String getFlowStarted() {
+        if (ContinuityAuditLogger.isEnabled() && flow != null) {
+            ContinuityAuditLogger.getFlowStarted(flow);
+        }
+        clearIO();
+        try {
+            return Boolean.toString(flow.isStarted());
+        } finally {
+            blockOnIO();
+        }
+    }
+
+
     public String getSubjectAddressName() {
         if (ContinuityAuditLogger.isEnabled() && flow != null) {
             ContinuityAuditLogger.getSubjectAddressName(flow);

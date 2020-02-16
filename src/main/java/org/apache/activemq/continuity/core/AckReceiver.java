@@ -96,8 +96,8 @@ public class AckReceiver implements MessageHandler {
   }
 
   public void onMessage(ClientMessage message) {
-    if (log.isTraceEnabled()) {
-      log.trace("Received ack on '{}' ({}): {}", flow.getInflowAcksName(), getConfig().getSiteId(), message);
+    if (log.isDebugEnabled()) {
+      log.debug("Receiving ack on '{}' ({}): {}", flow.getInflowAcksName(), getConfig().getSiteId(), message);
     }
 
     String ackBody = message.getBodyBuffer().readString();
@@ -106,6 +106,10 @@ public class AckReceiver implements MessageHandler {
       AckInfo ack = AckInfo.fromJSON(ackBody);
       flow.getAckManager().handleAck(ack);
       message.acknowledge();
+
+      if (log.isDebugEnabled()) {
+        log.debug("Handled ack on '{}' ({}): {}", flow.getInflowAcksName(), getConfig().getSiteId(), message);
+      }
     } catch(ParseException e) {
       String eMessage = String.format("Unable to parse incoming ack: %s", ackBody);
       log.error(eMessage, e);

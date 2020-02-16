@@ -13,17 +13,13 @@
  */
 package org.apache.activemq.continuity.plugins;
 
-import java.util.Date;
-
 import org.apache.activemq.artemis.api.core.ActiveMQException;
-import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.MessageReference;
 import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.artemis.core.server.ServerConsumer;
 import org.apache.activemq.artemis.core.server.impl.AckReason;
 import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerMessagePlugin;
-import org.apache.activemq.continuity.core.AckInfo;
 import org.apache.activemq.continuity.core.AckInterceptor;
 import org.apache.activemq.continuity.core.ContinuityService;
 import org.slf4j.Logger;

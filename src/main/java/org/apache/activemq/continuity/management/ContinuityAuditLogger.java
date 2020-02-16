@@ -306,6 +306,22 @@ public interface ContinuityAuditLogger extends BasicLogger {
 
     /* Flow */
 
+    static void getFlowInitialized(Object source) {
+        LOGGER.getFlowInitialized(getCaller(), source);
+    }
+
+    @LogMessage(level = Logger.Level.INFO)
+    @Message(id = 221117, value = "User {0} is getting flow isInitialized on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
+    void getFlowInitialized(String user, Object source, Object... args);
+
+    static void getFlowStarted(Object source) {
+        LOGGER.getFlowStarted(getCaller(), source);
+    }
+
+    @LogMessage(level = Logger.Level.INFO)
+    @Message(id = 221118, value = "User {0} is getting flow isStarted on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
+    void getFlowStarted(String user, Object source, Object... args);
+
     static void getSubjectAddressName(Object source) {
         LOGGER.getSubjectAddressName(getCaller(), source);
     }

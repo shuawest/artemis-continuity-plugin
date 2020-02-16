@@ -13,7 +13,6 @@
  */
 package org.apache.activemq.continuity.plugins;
 
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -26,14 +25,11 @@ import java.util.UUID;
 
 import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.api.core.SimpleString;
-import org.apache.activemq.artemis.api.core.client.ClientMessage;
-import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.apache.activemq.artemis.core.server.MessageReference;
 import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.artemis.core.server.impl.AckReason;
 import org.apache.activemq.continuity.ContinuityTestBase;
 import org.apache.activemq.continuity.core.AckInterceptor;
-import org.apache.activemq.continuity.core.AckInfo;
 import org.apache.activemq.continuity.core.ContinuityFlow;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -58,7 +54,6 @@ public class AckInterceptorPluginTest extends ContinuityTestBase {
 
     String expectedQueueName = "async-sample1";
     String expectedUuid = UUID.randomUUID().toString();
-    Date preAckTime = new Date(System.currentTimeMillis());
 
     when(flowMock.getAckInterceptor()).thenReturn(interceptorMock);
     when(continuityCtx.getService().locateFlow(expectedQueueName)).thenReturn(flowMock);

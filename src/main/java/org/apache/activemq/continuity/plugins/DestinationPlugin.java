@@ -13,6 +13,7 @@
  */
 package org.apache.activemq.continuity.plugins;
 
+import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.security.SecurityAuth;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
@@ -39,13 +40,21 @@ public class DestinationPlugin implements ActiveMQServerPlugin {
   }
 
   @Override
-  public void afterCreateQueue(Queue queue) throws ContinuityException {
-    continuityService.handleAddQueue(queue);
+  public void afterCreateQueue(Queue queue) throws ActiveMQException {
+    try {
+      continuityService.handleAddQueue(queue);
+    } catch(ContinuityException e) {
+      log.error("Unable to handle queue creation", e);
+    }
   }
 
   @Override
   public void afterDestroyQueue(Queue queue, SimpleString address, final SecurityAuth session, boolean checkConsumerCount,
-                                  boolean removeConsumers, boolean autoDeleteAddress) throws ContinuityException {
-    continuityService.handleRemoveQueue(queue); 
+                                  boolean removeConsumers, boolean autoDeleteAddress) throws ActiveMQException {    
+    try {
+      continuityService.handleRemoveQueue(queue); 
+    } catch(ContinuityException e) {
+      log.error("Unable to handle queue removal", e);
+    }
   }
 }

@@ -33,6 +33,7 @@ public class ContinuityService {
   private final ContinuityConfig config;
   private final ContinuityManagementService mgmt; 
 
+  private boolean isActivated = false;
   private boolean isInitializing = false;
   private boolean isInitialized = false;
   private boolean isStarting = false;
@@ -108,13 +109,15 @@ public class ContinuityService {
 
       if(locateFlow(queueInfo.getQueueName()) == null) {
         
-        createFlow(queueInfo);
+        ContinuityFlow flow = createFlow(queueInfo);
+        flow.start();
         
         if(commandManager != null && commandManager.isStarted()) {
           ContinuityCommand cmd = new ContinuityCommand();
           cmd.setAction(ContinuityCommand.ACTION_ADD_QUEUE);
           cmd.setAddress(queueInfo.getAddressName());
           cmd.setQueue(queueInfo.getQueueName());
+          cmd.setRoutingType(queueInfo.getRoutingType());
           commandManager.sendCommand(cmd);
         }
       }
@@ -151,6 +154,7 @@ public class ContinuityService {
     QueueInfo queueInfo = new QueueInfo();
     queueInfo.setAddressName(queue.getAddress().toString());
     queueInfo.setQueueName(queue.getName().toString());
+    queueInfo.setRoutingType(queue.getRoutingType().toString());
     return queueInfo;
   }
 
@@ -171,6 +175,7 @@ public class ContinuityService {
           cmd.setAction(ContinuityCommand.ACTION_ADD_QUEUE);
           cmd.setAddress(flow.getSubjectAddressName());
           cmd.setQueue(flow.getSubjectQueueName());
+          cmd.setRoutingType(flow.getSubjectQueueRoutingType());
           commandManager.sendCommand(cmd);
         }
         break; 
@@ -179,6 +184,7 @@ public class ContinuityService {
         QueueInfo queueInfo = new QueueInfo();
         queueInfo.setAddressName(command.getAddress());
         queueInfo.setQueueName(command.getQueue());
+        queueInfo.setRoutingType(command.getRoutingType());
         if(locateFlow(queueInfo.getQueueName()) == null) {
           ContinuityFlow flow = createFlow(queueInfo);
           flow.start();
@@ -192,11 +198,18 @@ public class ContinuityService {
   }
 
   public void activateSite() throws ContinuityException {
+    isActivated = true;
     for(ContinuityFlow flow : flows.values()) {
       flow.startSubjectQueueDelivery();
     }
   }
 
+  public void deactivateSite() throws ContinuityException {
+    isActivated = false;
+    for(ContinuityFlow flow : flows.values()) {
+      flow.stopSubjectQueueDelivery();
+    }
+  }
 
   public ContinuityConfig getConfig() {
     return config;
@@ -219,6 +232,10 @@ public class ContinuityService {
 
   public boolean isStarted() {
     return isStarted;
+  }
+
+  public boolean isActivated() {
+    return isActivated;
   }
 
   private static Pattern continuityAddressPattern;
