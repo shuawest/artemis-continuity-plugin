@@ -58,10 +58,11 @@ public class ContinuityFlow {
   private Bridge outflowAcksBridge;
   private Bridge targetBridge;
 
-  private AckDivert ackDivert;
+  private AckInterceptor ackInterceptor;
   private AckReceiver ackReceiver;
   private AckManager ackManager;
 
+  // TODO: fix to start flow on dynamic creation
   public ContinuityFlow(final ContinuityService service, final QueueInfo queueInfo) {
     this.service = service;
     this.queueInfo = queueInfo;
@@ -88,7 +89,7 @@ public class ContinuityFlow {
     createDivert(outflowDivertName, subjectAddressName, outflowMirrorName);
 
     createFlowQueue(outflowAcksName, outflowAcksName);
-    createAckDivert();
+    createAckInterceptor();
 
     createFlowQueue(inflowMirrorName, inflowMirrorName);
     createFlowQueue(inflowAcksName, inflowAcksName);
@@ -102,7 +103,7 @@ public class ContinuityFlow {
   }
 
   public void start() throws ContinuityException {
-    ackDivert.start();
+    ackInterceptor.start();
     ackReceiver.start();
 
     this.outflowMirrorBridge = createBridge(outflowMirrorBridgeName, outflowMirrorName, inflowMirrorName, getConfig().getRemoteConnectorRef(), true);
@@ -154,7 +155,7 @@ public class ContinuityFlow {
       stopBridge(outflowMirrorBridge);
       stopBridge(outflowAcksBridge);
       stopBridge(targetBridge);
-      ackDivert.stop();
+      ackInterceptor.stop();
       ackReceiver.stop();
     } catch (Exception e) {
       throw new ContinuityException("Unable to stop bridge", e);
@@ -164,8 +165,8 @@ public class ContinuityFlow {
   }
 
 
-  private void createAckDivert() throws ContinuityException {
-    this.ackDivert = new AckDivert(service, this);
+  private void createAckInterceptor() throws ContinuityException {
+    this.ackInterceptor = new AckInterceptor(service, this);
   }
   
   private void createAckReceiver() throws ContinuityException {
@@ -298,8 +299,8 @@ public class ContinuityFlow {
     return isStarted;
   }
 
-  public AckDivert getAckDivert() {
-    return ackDivert;
+  public AckInterceptor getAckInterceptor() {
+    return ackInterceptor;
   }
   public AckReceiver getAckReceiver() {
     return ackReceiver;

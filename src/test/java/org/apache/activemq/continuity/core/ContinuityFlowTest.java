@@ -107,7 +107,7 @@ public class ContinuityFlowTest extends ContinuityTestBase {
     verifyQueueExists(serverCtx, flow.getInflowAcksName(), RoutingType.MULTICAST);
     verifyBridgeExistsInState(serverCtx, flow.getTargetBridgeName(), flow.getInflowMirrorName(), flow.getSubjectAddressName(), false);
 
-    assertThat("AckDivert", flow.getAckDivert(), notNullValue());
+    assertThat("AckInterceptor", flow.getAckInterceptor(), notNullValue());
     assertThat("AckManager", flow.getAckManager(), notNullValue());
     assertThat("AckReceiver", flow.getAckReceiver(), notNullValue());
   }

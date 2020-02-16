@@ -31,7 +31,7 @@ import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.apache.activemq.artemis.core.server.MessageReference;
 import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.continuity.ContinuityTestBase;
-import org.apache.activemq.continuity.core.AckDivert;
+import org.apache.activemq.continuity.core.AckInterceptor;
 import org.apache.activemq.continuity.core.AckInfo;
 import org.apache.activemq.continuity.core.ContinuityFlow;
 import org.junit.Test;
@@ -39,16 +39,16 @@ import org.mockito.ArgumentCaptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AckDivertPluginTest extends ContinuityTestBase {
+public class AckInterceptorPluginTest extends ContinuityTestBase {
  
-  private static final Logger log = LoggerFactory.getLogger(AckDivertPluginTest.class);
+  private static final Logger log = LoggerFactory.getLogger(AckInterceptorPluginTest.class);
 
   @Test
   public void mockedMessageTest() throws Exception { 
     ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
  
-    AckDivert divertMock = mock(AckDivert.class);
+    AckInterceptor interceptorMock = mock(AckInterceptor.class);
     ContinuityFlow flowMock = mock(ContinuityFlow.class);
     Queue queueMock = mock(Queue.class);
     MessageReference refMock = mock(MessageReference.class);
@@ -58,7 +58,7 @@ public class AckDivertPluginTest extends ContinuityTestBase {
     String expectedUuid = UUID.randomUUID().toString();
     Date preAckTime = new Date(System.currentTimeMillis());
 
-    when(flowMock.getAckDivert()).thenReturn(divertMock);
+    when(flowMock.getAckInterceptor()).thenReturn(interceptorMock);
     when(continuityCtx.getService().locateFlow(expectedQueueName)).thenReturn(flowMock);
     when(continuityCtx.getService().isSubjectQueue(any(Queue.class))).thenReturn(true);
     when(queueMock.isDurable()).thenReturn(true);
@@ -68,11 +68,11 @@ public class AckDivertPluginTest extends ContinuityTestBase {
     when(refMock.getMessage()).thenReturn(msgMock);
     when(msgMock.getStringProperty(Message.HDR_DUPLICATE_DETECTION_ID)).thenReturn(expectedUuid);
 
-    AckDivertPlugin plugin = new AckDivertPlugin(continuityCtx.getService());
+    AckInterceptorPlugin plugin = new AckInterceptorPlugin(continuityCtx.getService());
     plugin.messageAcknowledged(refMock, null, null);
 
     ArgumentCaptor<AckInfo> ackCaptor = ArgumentCaptor.forClass(AckInfo.class);
-    verify(divertMock, times(1)).sendAck(ackCaptor.capture());
+    verify(interceptorMock, times(1)).sendAck(ackCaptor.capture());
     AckInfo actualAck = ackCaptor.getValue();
     
     assertThat("ack was null", actualAck, notNullValue());
@@ -89,10 +89,10 @@ public class AckDivertPluginTest extends ContinuityTestBase {
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
     
-    AckDivertPlugin plugin = new AckDivertPlugin(continuityCtx.getService());
+    AckInterceptorPlugin plugin = new AckInterceptorPlugin(continuityCtx.getService());
     serverCtx.getServer().getConfiguration().registerBrokerPlugin(plugin);
  
-    AckDivert divertMock = mock(AckDivert.class);
+    AckInterceptor interceptorMock = mock(AckInterceptor.class);
     ContinuityFlow flowMock = mock(ContinuityFlow.class);
     MessageHandler handlerMock = mock(MessageHandler.class);
 
@@ -102,7 +102,7 @@ public class AckDivertPluginTest extends ContinuityTestBase {
     String expectedMessage = "test message";
     Date preAckTime = new Date(System.currentTimeMillis());
 
-    when(flowMock.getAckDivert()).thenReturn(divertMock);
+    when(flowMock.getAckInterceptor()).thenReturn(interceptorMock);
     when(continuityCtx.getService().locateFlow(expectedQueueName)).thenReturn(flowMock);
     when(continuityCtx.getService().isSubjectQueue(any(Queue.class))).thenReturn(true);
 
@@ -115,7 +115,7 @@ public class AckDivertPluginTest extends ContinuityTestBase {
     assertThat("message was not received", receivedMessage.getBodyBuffer().readString(), equalTo(expectedMessage));
 
     ArgumentCaptor<AckInfo> ackCaptor = ArgumentCaptor.forClass(AckInfo.class);
-    verify(divertMock).sendAck(ackCaptor.capture());
+    verify(interceptorMock).sendAck(ackCaptor.capture());
     AckInfo actualAck = ackCaptor.getValue();
     
     assertThat("ack was null", actualAck, notNullValue());
@@ -132,13 +132,13 @@ public class AckDivertPluginTest extends ContinuityTestBase {
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
     
-    AckDivertPlugin plugin = new AckDivertPlugin(continuityCtx.getService());
+    AckInterceptorPlugin plugin = new AckInterceptorPlugin(continuityCtx.getService());
     serverCtx.getServer().getConfiguration().registerBrokerPlugin(plugin);
 
     DuplicateIdPlugin dupIdPlugin = new DuplicateIdPlugin(continuityCtx.getService());
     serverCtx.getServer().getConfiguration().registerBrokerPlugin(dupIdPlugin);
  
-    AckDivert divertMock = mock(AckDivert.class);
+    AckInterceptor interceptorMock = mock(AckInterceptor.class);
     ContinuityFlow flowMock = mock(ContinuityFlow.class);
     MessageHandler handlerMock = mock(MessageHandler.class);
 
@@ -149,7 +149,7 @@ public class AckDivertPluginTest extends ContinuityTestBase {
 
     when(continuityCtx.getService().isSubjectAddress(addressName)).thenReturn(true);
     
-    when(flowMock.getAckDivert()).thenReturn(divertMock);
+    when(flowMock.getAckInterceptor()).thenReturn(interceptorMock);
     when(continuityCtx.getService().locateFlow(expectedQueueName)).thenReturn(flowMock);
     when(continuityCtx.getService().isSubjectQueue(any(Queue.class))).thenReturn(true);
 
@@ -162,7 +162,7 @@ public class AckDivertPluginTest extends ContinuityTestBase {
     assertThat("message was not received", receivedMessage.getBodyBuffer().readString(), equalTo(expectedMessage));
 
     ArgumentCaptor<AckInfo> ackCaptor = ArgumentCaptor.forClass(AckInfo.class);
-    verify(divertMock).sendAck(ackCaptor.capture());
+    verify(interceptorMock).sendAck(ackCaptor.capture());
     AckInfo actualAck = ackCaptor.getValue();
     
     assertThat("ack was null", actualAck, notNullValue());

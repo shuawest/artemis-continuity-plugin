@@ -26,13 +26,14 @@ import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
 import org.apache.activemq.artemis.core.config.BridgeConfiguration;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
-import org.apache.activemq.artemis.core.server.ComponentConfigurationRoutingType;
 import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.artemis.core.server.QueueQueryResult;
 import org.apache.activemq.artemis.core.server.cluster.Bridge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO: split out command producer so session is created on demand to send sets of commands 
+//       to avoid "AMQ212051: Invalid concurrent session usage. Sessions are not supposed to be used by more than one thread concurrently."
 public class CommandManager {
 
   private static final Logger log = LoggerFactory.getLogger(CommandManager.class);

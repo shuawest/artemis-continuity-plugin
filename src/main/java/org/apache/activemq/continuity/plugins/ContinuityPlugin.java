@@ -47,7 +47,7 @@ public class ContinuityPlugin implements ActiveMQServerPlugin {
       brokerConfig.registerBrokerPlugin(new DestinationPlugin(continuityService));
       brokerConfig.registerBrokerPlugin(new DuplicateIdPlugin(continuityService));
       brokerConfig.registerBrokerPlugin(new InflowMirrorPlugin(continuityService));
-      brokerConfig.registerBrokerPlugin(new AckDivertPlugin(continuityService));
+      brokerConfig.registerBrokerPlugin(new AckInterceptorPlugin(continuityService));
   }
 
   public ContinuityService getService() {

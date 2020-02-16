@@ -69,8 +69,8 @@ public class ContinuityPluginTest extends ContinuityTestBase {
     ContinuityFlow flow1 = plugin.getService().locateFlow("async-sample1");
     assertThat(flow1, notNullValue());
     assertThat(flow1.isInitialized(), equalTo(true));
-    assertThat(flow1.getAckDivert(), notNullValue());
-    assertThat(flow1.getAckDivert().isStarted(), equalTo(true));
+    assertThat(flow1.getAckInterceptor(), notNullValue());
+    assertThat(flow1.getAckInterceptor().isStarted(), equalTo(true));
     assertThat(flow1.getAckReceiver(), notNullValue());
     assertThat(flow1.getAckReceiver().isStarted(), equalTo(true));
     assertThat(flow1.getAckManager(), notNullValue());

@@ -13,18 +13,25 @@
  */
 package org.apache.activemq.continuity.core;
 
+import java.util.Date;
+
+import org.apache.activemq.artemis.api.core.ActiveMQException;
+import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientProducer;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
+import org.apache.activemq.artemis.core.server.MessageReference;
+import org.apache.activemq.artemis.core.server.Queue;
+import org.apache.activemq.artemis.core.server.impl.AckReason;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AckDivert {
+public class AckInterceptor {
 
-  private static final Logger log = LoggerFactory.getLogger(AckDivert.class);
+  private static final Logger log = LoggerFactory.getLogger(AckInterceptor.class);
 
   public static final String ORIGIN_HEADER = "CONTINUITY_ORIGIN";
 
@@ -37,7 +44,7 @@ public class AckDivert {
   private ClientSessionFactory factory = null; 
   private ClientProducer producer = null;
 
-  public AckDivert(final ContinuityService service, final ContinuityFlow flow) {
+  public AckInterceptor(final ContinuityService service, final ContinuityFlow flow) {
     this.service = service;
     this.flow = flow;
   }
@@ -45,7 +52,7 @@ public class AckDivert {
   public void start() throws ContinuityException {
     prepareSession();
     isStarted = true;
-    log.debug("Finished initializing ack divert for {}", flow.getSubjectQueueName());
+    log.debug("Finished initializing ack interceptor for {}", flow.getSubjectQueueName());
   }
 
   public void stop() throws ContinuityException {
@@ -86,6 +93,34 @@ public class AckDivert {
       String eMessage = "Failed to create session for ack divert to " + flow.getOutflowAcksName();
       log.error(eMessage, e);
       throw new ContinuityException(eMessage, e);
+    }
+  }
+
+  public void handleMessageAcknowledgement(MessageReference ref, AckReason reason) throws ContinuityException {
+    Queue sourceQueue = ref.getQueue();
+    String queueName = sourceQueue.getName().toString();
+
+    try {
+      Date msgTimestamp = new Date(ref.getMessage().getTimestamp());
+      Date ackTime = new Date(System.currentTimeMillis());
+
+      String dupId = ref.getMessage().getStringProperty(Message.HDR_DUPLICATE_DETECTION_ID);
+      
+      if(log.isTraceEnabled()) {
+        log.trace("Capturing ack - dupId '{}', msgSent '{}', msgAcked '{}'", dupId, msgTimestamp, ackTime);
+      }
+
+      AckInfo ack = new AckInfo();
+      ack.setMessageSendTime(msgTimestamp);
+      ack.setAckTime(ackTime);
+      ack.setMessageUuid(dupId);
+      ack.setSourceQueueName(queueName);
+
+      sendAck(ack);
+    } catch(Exception e) {
+      String msg = String.format("Unable to handle ack for message on queue '{}'", queueName);
+      log.error(msg, e);
+      throw new ContinuityException(msg, e); 
     }
   }
 

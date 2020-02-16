@@ -23,25 +23,25 @@ import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.artemis.core.server.ServerConsumer;
 import org.apache.activemq.artemis.core.server.impl.AckReason;
 import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerMessagePlugin;
-import org.apache.activemq.continuity.core.AckDivert;
 import org.apache.activemq.continuity.core.AckInfo;
+import org.apache.activemq.continuity.core.AckInterceptor;
 import org.apache.activemq.continuity.core.ContinuityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class AckDivertPlugin implements ActiveMQServerMessagePlugin {
+public class AckInterceptorPlugin implements ActiveMQServerMessagePlugin {
 
-  private static final Logger log = LoggerFactory.getLogger(AckDivertPlugin.class);
+  private static final Logger log = LoggerFactory.getLogger(AckInterceptorPlugin.class);
 
   private final ContinuityService continuityService; 
 
-  public AckDivertPlugin(final ContinuityService continuityService) {
+  public AckInterceptorPlugin(final ContinuityService continuityService) {
     this.continuityService = continuityService;
   } 
 
   public void registered(ActiveMQServer server) {
-    log.debug("AckDivertPlugin registered");
+    log.debug("AckInterceptorPlugin registered");
   }
 
   @Override
@@ -50,24 +50,8 @@ public class AckDivertPlugin implements ActiveMQServerMessagePlugin {
     String queueName = sourceQueue.getName().toString();
 
     if(continuityService.isSubjectQueue(sourceQueue)) {
-      AckDivert ackDivert = continuityService.locateFlow(queueName).getAckDivert();
-
-      Date msgTimestamp = new Date(ref.getMessage().getTimestamp());
-      Date ackTime = new Date(System.currentTimeMillis());
-
-      String dupId = ref.getMessage().getStringProperty(Message.HDR_DUPLICATE_DETECTION_ID);
-      
-      if(log.isDebugEnabled()) {
-        log.debug("Capturing ack - dupId '{}', msgSent '{}', msgAcked '{}'", dupId, msgTimestamp, ackTime);
-      }
-
-      AckInfo ack = new AckInfo();
-      ack.setMessageSendTime(msgTimestamp);
-      ack.setAckTime(ackTime);
-      ack.setMessageUuid(dupId);
-      ack.setSourceQueueName(queueName);
-
-      ackDivert.sendAck(ack);
+      AckInterceptor ackInterceptor = continuityService.locateFlow(queueName).getAckInterceptor();
+      ackInterceptor.handleMessageAcknowledgement(ref, reason);
     }
   }
 

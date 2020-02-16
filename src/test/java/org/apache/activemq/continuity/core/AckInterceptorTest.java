@@ -29,9 +29,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AckDivertTest extends ContinuityTestBase {
+public class AckInterceptorTest extends ContinuityTestBase {
  
-  private static final Logger log = LoggerFactory.getLogger(AckDivertTest.class);
+  private static final Logger log = LoggerFactory.getLogger(AckInterceptorTest.class);
 
   @Test
   public void initializeTest() throws Exception {
@@ -49,16 +49,16 @@ public class AckDivertTest extends ContinuityTestBase {
 
     int connectionCount = serverCtx.getServer().getConnectionCount();
 
-    AckDivert divert = new AckDivert(continuityCtx.getService(), flow);
-    divert.start();
+    AckInterceptor ackInterceptor = new AckInterceptor(continuityCtx.getService(), flow);
+    ackInterceptor.start();
 
-    assertThat("divert not started", divert.isStarted(), equalTo(true));
+    assertThat("interceptor not started", ackInterceptor.isStarted(), equalTo(true));
     
     Queue outflowAcksQueue = serverCtx.getServer().locateQueue(SimpleString.toSimpleString(outflowAcksName));
-    assertThat("cannot find outflow acks queue after divert", outflowAcksQueue, notNullValue());
-    assertThat("unexpected ack connection count queue after divert", serverCtx.getServer().getConnectionCount(), equalTo(connectionCount+1));
+    assertThat("cannot find outflow acks queue after interceptor", outflowAcksQueue, notNullValue());
+    assertThat("unexpected ack connection count queue after interceptor", serverCtx.getServer().getConnectionCount(), equalTo(connectionCount+1));
 
-    divert.stop();
+    ackInterceptor.stop();
   }
 
   @Test
@@ -75,20 +75,20 @@ public class AckDivertTest extends ContinuityTestBase {
     when(flow.getSubjectQueueName()).thenReturn(subjectAddressName);
     when(flow.getOutflowAcksName()).thenReturn(outflowAcksName);
 
-    AckDivert divert = new AckDivert(continuityCtx.getService(), flow);
-    divert.start();
+    AckInterceptor ackInterceptor = new AckInterceptor(continuityCtx.getService(), flow);
+    ackInterceptor.start();
 
-    divert.sendAck("test message");
+    ackInterceptor.sendAck("test message");
     Thread.sleep(10);
     
     Queue outflowAcksQueue = serverCtx.getServer().locateQueue(SimpleString.toSimpleString(outflowAcksName));
     assertThat("out acks queue has no message", outflowAcksQueue.browserIterator().hasNext(), equalTo(true));
     MessageReference msgRef = outflowAcksQueue.browserIterator().next();
     assertThat("message was null", msgRef, notNullValue());
-    assertThat("message origin header is wrong", msgRef.getMessage().getStringProperty(AckDivert.ORIGIN_HEADER), equalTo(continuityCtx.getConfig().getSiteId()));
+    assertThat("message origin header is wrong", msgRef.getMessage().getStringProperty(AckInterceptor.ORIGIN_HEADER), equalTo(continuityCtx.getConfig().getSiteId()));
     assertThat("message body is wrong", msgRef.getMessage().toCore().getBodyBuffer().readString(), equalTo("test message"));
     
-    divert.stop();
+    ackInterceptor.stop();
   }
 
   @Test
@@ -105,8 +105,8 @@ public class AckDivertTest extends ContinuityTestBase {
     when(flow.getSubjectQueueName()).thenReturn(subjectAddressName);
     when(flow.getOutflowAcksName()).thenReturn(outflowAcksName);
 
-    AckDivert divert = new AckDivert(continuityCtx.getService(), flow);
-    divert.start();
+    AckInterceptor ackInterceptor = new AckInterceptor(continuityCtx.getService(), flow);
+    ackInterceptor.start();
 
     AckInfo ack = new AckInfo();
     ack.setMessageSendTime(new Date(System.currentTimeMillis() - 1000));
@@ -114,7 +114,7 @@ public class AckDivertTest extends ContinuityTestBase {
     ack.setMessageUuid(UUID.randomUUID().toString());
     ack.setSourceQueueName("async-sample1");
 
-    divert.sendAck(ack);
+    ackInterceptor.sendAck(ack);
     Thread.sleep(10);
     
     Queue outflowAcksQueue = serverCtx.getServer().locateQueue(SimpleString.toSimpleString(outflowAcksName));
@@ -132,7 +132,7 @@ public class AckDivertTest extends ContinuityTestBase {
     assertThat("ack info uuid did not be unmarshalled from json", receivedAck.getMessageUuid(), equalTo(ack.getMessageUuid()));
     assertThat("ack info source queue name did not be unmarshalled from json", receivedAck.getSourceQueueName(), equalTo(ack.getSourceQueueName()));
     
-    divert.stop();
+    ackInterceptor.stop();
   }
 
 }
