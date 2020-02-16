@@ -215,7 +215,11 @@ public class ContinuityFlow {
   private boolean queueExists(final String queueName) throws ContinuityException {
     try {
       final QueueQueryResult queueSearch = getServer().queueQuery(SimpleString.toSimpleString(queueName));
-      log.debug("Checking if queue {} exists: {}", queueName, queueSearch.isExists());
+      
+      if(log.isTraceEnabled()) {
+        log.trace("Checking if queue {} exists: {}", queueName, queueSearch.isExists());
+      }
+      
       return (queueSearch.isExists());
 
     } catch (final Exception e) {
@@ -256,8 +260,8 @@ public class ContinuityFlow {
           .setQueueName(fromQueue)
           .setForwardingAddress(toAddress)
           .setHA(true)
-          .setRetryInterval(100L)
-          .setRetryIntervalMultiplier(0.5)
+          .setRetryInterval(getConfig().getBridgeInterval())
+          .setRetryIntervalMultiplier(getConfig().getBridgeIntervalMultiplier())
           .setInitialConnectAttempts(-1)
           .setReconnectAttempts(-1)
           .setUseDuplicateDetection(true)

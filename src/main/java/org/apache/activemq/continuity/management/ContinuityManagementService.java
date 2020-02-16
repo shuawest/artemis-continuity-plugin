@@ -27,6 +27,9 @@ import org.apache.activemq.continuity.core.ContinuityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO: Move the management handling to inline in service and flow
+//       currently dynamically added queues don't get rearranged
+// TODO: fix AuditLogger issue with no call def error continuing to come up
 public class ContinuityManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(ContinuityManagementService.class);

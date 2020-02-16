@@ -161,14 +161,12 @@ public class CommandManager {
         .setQueueName(fromQueueName)
         .setForwardingAddress(toAddressName)
         .setHA(true)
-        .setRetryInterval(100L)
-        .setRetryIntervalMultiplier(0.5)
+        .setRetryInterval(getConfig().getBridgeInterval())
+        .setRetryIntervalMultiplier(getConfig().getBridgeIntervalMultiplier())
         .setInitialConnectAttempts(-1)
         .setReconnectAttempts(-1)
-        .setRoutingType(ComponentConfigurationRoutingType.MULTICAST)
         .setUseDuplicateDetection(true)
         .setConfirmationWindowSize(10000000)
-        .setFilterString(String.format("%s = '%s'", ORIGIN_HEADER, getServer().getIdentity()))
         .setStaticConnectors(Arrays.asList(getConfig().getRemoteConnectorRef()));
 
       getServer().deployBridge(bridgeConfig);
