@@ -1,6 +1,6 @@
 # Artemis Continuity Plugin v2
 
-image:docs/202001ContinuityPlugin-internals-diagram-v0.2.png[Continuity Plugin Internals Diagram]
+image:docs/202001ContinuityPlugin-internals-diagram-v0.2-2.png[Continuity Plugin Internals Diagram]
 
 ## Ontology
 
@@ -32,7 +32,7 @@ image:docs/202001ContinuityPlugin-internals-diagram-v0.2.png[Continuity Plugin I
 * AckReceiver
   - Manages session for each ack inflow queue
   - Delegates ack handling to the appropriate AckManager for the flow
-* AckDivert
+* AckInterceptor
   - Manages session to the outflow ack destination
   - Sends ack info on the outflow ack destination
 
@@ -47,7 +47,7 @@ image:docs/202001ContinuityPlugin-internals-diagram-v0.2.png[Continuity Plugin I
   - Updates by appropriate flow
 * DuplicateIdPlugin
   - Ensures there is a duplicate ID on each incoming message on subject queues
-* AckDivertPlugin
+* AckInterceptorPlugin
   - Captures acknowledgements to be sent to the remote site by appropriate flow
     
 .*Domain Models*

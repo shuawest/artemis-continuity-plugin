@@ -1,6 +1,6 @@
 
 ### Lucidchart Diagrams
-* link:https://www.lucidchart.com/invitations/accept/ce40678a-21e4-4794-8760-db75c96304e9[202001ContinuityPlugin-internals-diagram-v0.2]
+* link:https://www.lucidchart.com/invitations/accept/ce40678a-21e4-4794-8760-db75c96304e9[202001ContinuityPlugin-internals-diagram-v0.2-2]
 * link:https://www.lucidchart.com/invitations/accept/5da1ae08-f44b-4f22-8a05-f216e4b27c16[202001ContinuityPlugin-diagram-v0.2-1]
 * link:https://www.lucidchart.com/invitations/accept/067b636e-a171-46d4-9d29-4c24d087efe3[lucidchart diagram folder]
 
