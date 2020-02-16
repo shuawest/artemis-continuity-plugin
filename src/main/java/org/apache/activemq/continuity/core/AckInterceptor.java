@@ -65,7 +65,7 @@ public class AckInterceptor {
         isStarted = false;
       }
     } catch (final Exception e) {
-      String eMessage = "Failed to stop ack divert";
+      String eMessage = "Failed to stop ack interceptor";
       log.error(eMessage, e);
       throw new ContinuityException(eMessage, e);
     }
@@ -81,16 +81,16 @@ public class AckInterceptor {
         
         session.start();
 
-        log.debug("Created session for ack divert {}", flow.getSubjectQueueName());
+        log.debug("Created session for ack interceptor {}", flow.getSubjectQueueName());
       }
 
       if(producer == null || producer.isClosed()) {
         this.producer = session.createProducer(flow.getOutflowAcksName());
-        log.debug("Created producer for ack divert '{}' to '{}'", flow.getSubjectQueueName(), flow.getOutflowAcksName());
+        log.debug("Created producer for ack interceptor '{}' to '{}'", flow.getSubjectQueueName(), flow.getOutflowAcksName());
       }
 
     } catch (Exception e) {
-      String eMessage = "Failed to create session for ack divert to " + flow.getOutflowAcksName();
+      String eMessage = "Failed to create session for ack interceptor to " + flow.getOutflowAcksName();
       log.error(eMessage, e);
       throw new ContinuityException(eMessage, e);
     }
@@ -118,7 +118,7 @@ public class AckInterceptor {
 
       sendAck(ack);
     } catch(Exception e) {
-      String msg = String.format("Unable to handle ack for message on queue '{}'", queueName);
+      String msg = String.format("Unable to handle ack for message on queue '%s'", queueName);
       log.error(msg, e);
       throw new ContinuityException(msg, e); 
     }
