@@ -86,10 +86,12 @@ public class ContinuityFlowTest extends ContinuityTestBase {
 
     String subjectAddressName = "async-sample1";
     String subjectQueueName = "async-sample1";
+    String subjectRoutingType = RoutingType.ANYCAST.toString();
 
     QueueInfo queueInfo = new QueueInfo();
     queueInfo.setAddressName(subjectAddressName);
     queueInfo.setQueueName(subjectQueueName);
+    queueInfo.setRoutingType(subjectRoutingType);
 
     ContinuityFlow flow = new ContinuityFlow(continuityCtx.getService(), queueInfo);
     flow.initialize();
@@ -103,8 +105,8 @@ public class ContinuityFlowTest extends ContinuityTestBase {
     verifyBridgeExistsInState(serverCtx, flow.getOutflowMirrorBridgeName(), flow.getOutflowMirrorName(), flow.getInflowMirrorName(), true);
     verifyQueueExists(serverCtx, flow.getOutflowAcksName(), RoutingType.MULTICAST);
     verifyBridgeExistsInState(serverCtx, flow.getOutflowAcksBridgeName(), flow.getOutflowAcksName(), flow.getInflowAcksName(), true);
-    verifyQueueExists(serverCtx, flow.getInflowMirrorName(), RoutingType.MULTICAST);
-    verifyQueueExists(serverCtx, flow.getInflowAcksName(), RoutingType.MULTICAST);
+    verifyQueueExists(serverCtx, flow.getInflowMirrorName(), RoutingType.ANYCAST);
+    verifyQueueExists(serverCtx, flow.getInflowAcksName(), RoutingType.ANYCAST);
     verifyBridgeExistsInState(serverCtx, flow.getTargetBridgeName(), flow.getInflowMirrorName(), flow.getSubjectAddressName(), false);
 
     assertThat("AckInterceptor", flow.getAckInterceptor(), notNullValue());

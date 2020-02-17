@@ -164,7 +164,7 @@ public class AckManagerTest extends ContinuityTestBase {
     ack1.setMessageUuid(UUID.randomUUID().toString());
     ackManager.handleAck(ack1);
     assertThat("peak ack duration wrong on ack1", ackManager.getPeakAckDuration(), equalTo(5000L));
-    assertThat("average ack duration wrong on ack1", ackManager.getAverageAckDuration(), equalTo(5000L));
+    assertThat("average ack duration wrong on ack1", ackManager.getAverageAckDuration(), equalTo(5000.0));
 
     AckInfo ack2 = new AckInfo();
     ack2.setMessageSendTime(new Date(currentTime - 3000L));
@@ -172,7 +172,7 @@ public class AckManagerTest extends ContinuityTestBase {
     ack2.setMessageUuid(UUID.randomUUID().toString());
     ackManager.handleAck(ack2);
     assertThat("peak ack duration wrong on ack2", ackManager.getPeakAckDuration(), equalTo(5000L));
-    assertThat("average ack duration wrong ack2", ackManager.getAverageAckDuration(), equalTo(4000L));
+    assertThat("average ack duration wrong ack2", ackManager.getAverageAckDuration(), equalTo(4000.0));
 
     AckInfo ack3 = new AckInfo();
     ack3.setMessageSendTime(new Date(currentTime - 8000L));
@@ -180,6 +180,6 @@ public class AckManagerTest extends ContinuityTestBase {
     ack3.setMessageUuid(UUID.randomUUID().toString());
     ackManager.handleAck(ack3);
     assertThat("peak ack duration wrong on ack3", ackManager.getPeakAckDuration(), equalTo(8000L));
-    assertThat("average ack duration wrong ack3", ackManager.getAverageAckDuration(), equalTo(6000L));
+    assertThat("average ack duration wrong ack3", ackManager.getAverageAckDuration(), equalTo(6000.0));
   }
 }

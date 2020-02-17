@@ -13,6 +13,8 @@
  */
 package org.apache.activemq.continuity.management;
 
+import static org.hamcrest.Matchers.equalTo;
+
 import java.lang.management.ManagementFactory;
 
 import javax.management.MBeanServer;
@@ -23,7 +25,6 @@ import org.apache.activemq.continuity.ContinuityTestBase;
 import org.apache.activemq.continuity.core.ContinuityFlow;
 import org.apache.activemq.continuity.core.ContinuityService;
 import org.apache.activemq.continuity.plugins.ContinuityPlugin;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,22 +33,6 @@ public class ContinuityMangementServiceTest extends ContinuityTestBase {
 
   private static final Logger log = LoggerFactory.getLogger(ContinuityMangementServiceTest.class);
 
-  @Test
-  public void formatStats() {
-    Double msAvg = Double.valueOf("177157.150390625");
-    Double secAvg = msAvg / 1000;
-    Double minAvg = secAvg / 60;    
-    String avgFormat = String.format("%.2f ms (%.2f secs, or %.3f mins)", msAvg, secAvg, minAvg);
-    log.debug("Average: {}", avgFormat);
-
-    Long msPeak = Long.valueOf("177222");
-    Double secPeak = msPeak.doubleValue() / 1000;
-    Double minPeak = secPeak / 60;    
-    String peakFormat = String.format("%d ms (%.2f secs, or %.3f mins)", msPeak, secPeak, minPeak);
-    log.debug("Peak: {}", peakFormat);
-  }
-
-  @Ignore
   @Test
   public void managementRegisterTest() throws Exception {
     ServerContext serverCtx = createServerContext("broker1-with-plugin.xml", "test-broker1", "myuser", "mypass");
@@ -86,6 +71,23 @@ public class ContinuityMangementServiceTest extends ContinuityTestBase {
     assertTrue(isRegistered("%s,subsubcomponent=diverts,divert=\"%s\"", 
                                 continuityFlowPrefix, 
                                 flow.getOutflowDivertName()));                                 
+  }
+
+  @Test
+  public void formatStatsTest() {
+    Double msAvg = Double.valueOf("177157.150390625");
+    Double secAvg = msAvg / 1000;
+    Double minAvg = secAvg / 60;    
+    String avgFormat = String.format("%.2f ms (%.3f secs, or %.3f mins)", msAvg, secAvg, minAvg);
+    log.debug("Average: {}", avgFormat);
+    assertThat(avgFormat, equalTo("177157.15 ms (177.157 secs, or 2.953 mins)"));
+
+    Long msPeak = Long.valueOf("177222");
+    Double secPeak = msPeak.doubleValue() / 1000;
+    Double minPeak = secPeak / 60;    
+    String peakFormat = String.format("%d ms (%.3f secs, or %.3f mins)", msPeak, secPeak, minPeak);
+    log.debug("Peak: {}", peakFormat);
+    assertThat(peakFormat, equalTo("177222 ms (177.222 secs, or 2.954 mins)"));
   }
 
   private boolean isRegistered(String pattern, Object... args) throws Exception {

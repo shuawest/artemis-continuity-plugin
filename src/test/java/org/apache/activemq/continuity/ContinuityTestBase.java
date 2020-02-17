@@ -103,7 +103,7 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     when(configMock.getLocalInVmUri()).thenReturn("vm://" + inVmAcceptorId);
     when(configMock.getLocalUsername()).thenReturn("myuser");
     when(configMock.getLocalPassword()).thenReturn("mypass");
-    // when(configMock.getLocalConnectorRef()).thenReturn("local-connector");
+    when(configMock.getLocalConnectorRef()).thenReturn("local-connector");
     when(configMock.getRemoteConnectorRef()).thenReturn("remote-connector");
 
     ContinuityContext continuityCtx = new ContinuityContext();

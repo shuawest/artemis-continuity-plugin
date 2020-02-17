@@ -62,7 +62,7 @@ public class ContinuityConfig {
     this.bridgeIntervalMultiplier = parseDoubleProperty(properties, "bridge-interval-multiplier", 0.5);
 
     this.commandDestinationPrefix = parseProperty(properties, "command-destination-prefix", DEFAULT_CMD_DESTINATION_PREFIX);
-    this.isReorgManagementHierarchy = parseBooleanProperty(properties, "reorg-management-hierarchy", false);
+    this.isReorgManagementHierarchy = parseBooleanProperty(properties, "reorg-management-hierarchy", true);
     this.localConnectorRef = parseProperty(properties, "local-connector-ref");
     this.remoteConnectorRef = parseProperty(properties, "remote-connector-ref");
 
