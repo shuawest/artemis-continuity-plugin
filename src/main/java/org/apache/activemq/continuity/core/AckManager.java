@@ -41,7 +41,7 @@ public class AckManager {
   private boolean isRemoveMessageFromMirror = true;
   private boolean isDelayMessageOnInflow = true;
 
-  private Long averageAckDuration = null;
+  private Double averageAckDuration = null;
   private Long peakAckDuration = null;
 
   public AckManager(final ContinuityService service, final ContinuityFlow flow) {
@@ -190,7 +190,7 @@ public class AckManager {
 
   /* Ack stats */ 
 
-  public Long getAverageAckDuration() {
+  public Double getAverageAckDuration() {
     return averageAckDuration;
   }
 

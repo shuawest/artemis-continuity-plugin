@@ -264,6 +264,14 @@ public interface ContinuityAuditLogger extends BasicLogger {
     @Message(id = 221021, value = "User {0} is activating site with continuity service on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
     void activateSite(String user, Object source, Object... args);
 
+    static void deactivateSite(Object source) {
+        LOGGER.deactivateSite(getCaller(), source);
+    }
+
+    @LogMessage(level = Logger.Level.INFO)
+    @Message(id = 221029, value = "User {0} is deactivating site with continuity service on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
+    void deactivateSite(String user, Object source, Object... args);
+
     static void initializeCommandManager(Object source) {
         LOGGER.initializeCommandManager(getCaller(), source);
     }
@@ -393,6 +401,22 @@ public interface ContinuityAuditLogger extends BasicLogger {
     @LogMessage(level = Logger.Level.INFO)
     @Message(id = 221109, value = "User {0} is getting targetBridgeName on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
     void getTargetBridgeName(String user, Object source, Object... args);
+
+    static void getAverageAckDuration(Object source) {
+        LOGGER.getAverageAckDuration(getCaller(), source);
+    }
+
+    @LogMessage(level = Logger.Level.INFO)
+    @Message(id = 221119, value = "User {0} is getting averageAckDuration on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
+    void getAverageAckDuration(String user, Object source, Object... args);
+
+    static void getPeakAckDuration(Object source) {
+        LOGGER.getPeakAckDuration(getCaller(), source);
+    }
+
+    @LogMessage(level = Logger.Level.INFO)
+    @Message(id = 221120, value = "User {0} is getting peakAckDuration on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
+    void getPeakAckDuration(String user, Object source, Object... args);
 
     static void isAddDuplicatesToTarget(Object source) {
         LOGGER.isAddDuplicatesToTarget(getCaller(), source);

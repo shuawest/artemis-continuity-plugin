@@ -365,6 +365,20 @@ public class ContinuityControlImpl extends AbstractControl implements Continuity
     }
 
     @Override
+    public void deactivateSite() throws Exception {
+        if (ContinuityAuditLogger.isEnabled() && service != null) {
+           ContinuityAuditLogger.deactivateSite(service);
+        }
+        clearIO();
+        try {
+            if(service != null)
+               service.deactivateSite();
+        } finally {
+           blockOnIO();
+        }
+    }
+
+    @Override
     public void initializeCommandManager() throws Exception {
         if (ContinuityAuditLogger.isEnabled() && service != null && service.getCommandManager() != null) {
            ContinuityAuditLogger.initializeCommandManager(service.getCommandManager());

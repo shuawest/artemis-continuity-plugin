@@ -22,6 +22,7 @@ import org.apache.activemq.artemis.core.config.BridgeConfiguration;
 import org.apache.activemq.artemis.core.config.DivertConfiguration;
 import org.apache.activemq.artemis.core.config.TransformerConfiguration;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
+import org.apache.activemq.artemis.core.server.ComponentConfigurationRoutingType;
 import org.apache.activemq.artemis.core.server.QueueQueryResult;
 import org.apache.activemq.artemis.core.server.cluster.Bridge;
 import org.apache.activemq.continuity.plugins.OriginTransformer;
@@ -260,15 +261,18 @@ public class ContinuityFlow {
     try {
       final TransformerConfiguration originTransformer = new TransformerConfiguration(OriginTransformer.class.getName());
       originTransformer.setProperties(new HashMap<String, String>() {{
-        put("messageOrigin", getConfig().getSiteId());
+        put(OriginTransformer.ORIGIN_CONFIG, getConfig().getSiteId());
       }});
+
+      String originFilterExp = String.format("%s <> '%s' OR %s IS NULL", OriginTransformer.ORIGIN_HEADER_NAME, getConfig().getSiteId(), OriginTransformer.ORIGIN_HEADER_NAME);
 
       final DivertConfiguration divert = new DivertConfiguration()
         .setName(divertName)
         .setAddress(sourceAddress)
         .setForwardingAddress(targetAddress)
-        .setFilterString("ARTEMIS_MESSAGE_ORIGIN = '" + getConfig().getSiteId() + "' OR ARTEMIS_MESSAGE_ORIGIN IS NULL")
-        .setExclusive(false).setTransformerConfiguration(originTransformer);
+        .setFilterString(originFilterExp)
+        .setExclusive(false)
+        .setTransformerConfiguration(originTransformer);
 
       getServer().deployDivert(divert);
 
@@ -282,6 +286,7 @@ public class ContinuityFlow {
   private Bridge createBridge(final String bridgeName, final String fromQueue, final String toAddress, final String connectorRef, final boolean start) throws ContinuityException {
     Bridge bridge = null;
     try {
+
       final BridgeConfiguration bridgeConfig = new BridgeConfiguration()
           .setName(bridgeName)
           .setQueueName(fromQueue)
@@ -291,7 +296,8 @@ public class ContinuityFlow {
           .setRetryIntervalMultiplier(getConfig().getBridgeIntervalMultiplier())
           .setInitialConnectAttempts(-1)
           .setReconnectAttempts(-1)
-          .setUseDuplicateDetection(true)
+          //.setUseDuplicateDetection(true)
+          //.setRoutingType(ComponentConfigurationRoutingType.STRIP)
           .setConfirmationWindowSize(10000000)
           .setStaticConnectors(Arrays.asList(connectorRef)); 
 

@@ -231,7 +231,7 @@ public class CommandManager {
       }
 
       ClientMessage message = session.createMessage(true);
-      message.putStringProperty(ORIGIN_HEADER, getServer().getIdentity());
+      message.putStringProperty(ORIGIN_HEADER, getConfig().getSiteId());
       message.getBodyBuffer().writeString(body);
 
       producer.send(message);

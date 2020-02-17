@@ -79,9 +79,9 @@ public class CommandManagerTest extends ContinuityTestBase {
     manager1.sendCommand("test message from primary");
     Thread.sleep(200L);
 
-    verifyMessage(continuityCtx2, "test message from primary", serverCtx1.getServer().getIdentity(), 
+    verifyMessage(continuityCtx2, "test message from primary", continuityCtx1.getConfig().getSiteId(), 
         1, "Failed to receive command on backup from primary");
-    verifyMessage(continuityCtx1, "test message from primary", serverCtx1.getServer().getIdentity(), 
+    verifyMessage(continuityCtx1, "test message from primary", continuityCtx1.getConfig().getSiteId(), 
         0, "should not received on primary from primary message from primary");
       
     manager1.stop();
@@ -110,9 +110,9 @@ public class CommandManagerTest extends ContinuityTestBase {
     manager2.sendCommand("test message from backup");
     Thread.sleep(200L);
 
-    verifyMessage(continuityCtx1, "test message from backup", serverCtx2.getServer().getIdentity(), 
+    verifyMessage(continuityCtx1, "test message from backup", continuityCtx1.getConfig().getSiteId(), 
         1, "Failed to receive command on primary from backup");
-    verifyMessage(continuityCtx2, "test message from backup", serverCtx2.getServer().getIdentity(), 
+    verifyMessage(continuityCtx2, "test message from backup", continuityCtx1.getConfig().getSiteId(), 
         0, "should not receive on backup from backup");
       
     manager1.stop();

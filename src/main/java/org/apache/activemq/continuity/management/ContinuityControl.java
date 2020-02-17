@@ -91,6 +91,9 @@ public interface ContinuityControl {
     @Operation(desc = "Activate the site to start message delivery to target queues", impact = MBeanOperationInfo.ACTION)
     void activateSite() throws Exception;
 
+    @Operation(desc = "Deactivate the site to stop message delivery to target queues", impact = MBeanOperationInfo.ACTION)
+    void deactivateSite() throws Exception;
+
     @Operation(desc = "Initialize the continuity command manager", impact = MBeanOperationInfo.ACTION)
     void initializeCommandManager() throws Exception;
 

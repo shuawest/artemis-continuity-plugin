@@ -24,7 +24,8 @@ public class OriginTransformer implements Transformer {
 
   private static final Logger log = LoggerFactory.getLogger(OriginTransformer.class);
 
-  private static final String MESSAGE_ORIGIN_HEADER = "ARTEMIS_MESSAGE_ORIGIN";
+  public static final String ORIGIN_HEADER_NAME = "_CTY_ORIGIN";
+  public static final String ORIGIN_CONFIG = "origin";
 
   private String messageOrigin;
 
@@ -38,12 +39,12 @@ public class OriginTransformer implements Transformer {
 
   @Override
   public void init(Map<String, String> properties) {
-    this.setMessageOrigin(properties.get("messageOrigin"));
+    this.setMessageOrigin(properties.get(ORIGIN_CONFIG));
   }
 
   @Override
   public Message transform(Message msg) {
-    msg.putStringProperty(MESSAGE_ORIGIN_HEADER, messageOrigin);
+    msg.putStringProperty(ORIGIN_HEADER_NAME, messageOrigin);
     return msg;
   }
 }

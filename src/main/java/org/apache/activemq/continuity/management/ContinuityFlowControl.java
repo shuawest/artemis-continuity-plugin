@@ -62,6 +62,12 @@ public interface ContinuityFlowControl {
 
     /* Statistics */
 
+    @Attribute(desc = "Stat: Average time between the message send and acknowledgement")
+    Double getAverageAckDuration();
+
+    @Attribute(desc = "Stat: Peak time between the message send and acknowledgement")
+    Long getPeakAckDuration();
+
     /* Volatile Configuration */
 
     @Attribute(desc = "Config: Add duplicate ids to the target queue")

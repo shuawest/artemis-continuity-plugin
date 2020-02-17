@@ -192,6 +192,36 @@ public class ContinuityFlowControlImpl extends AbstractControl implements Contin
 
     /* Statistics */
 
+    public Double getAverageAckDuration() {
+        if (ContinuityAuditLogger.isEnabled() && flow != null && flow.getAckManager() != null) {
+            ContinuityAuditLogger.getAverageAckDuration(flow);
+        }
+        clearIO();
+        try {
+            if(flow == null || flow.getAckManager() == null)
+                return null;
+            else
+                return flow.getAckManager().getAverageAckDuration();
+        } finally {
+            blockOnIO();
+        }
+    }
+
+    public Long getPeakAckDuration() {
+        if (ContinuityAuditLogger.isEnabled() && flow != null && flow.getAckManager() != null) {
+            ContinuityAuditLogger.getPeakAckDuration(flow);
+        }
+        clearIO();
+        try {
+            if(flow == null || flow.getAckManager() == null)
+                return null;
+            else
+                return flow.getAckManager().getPeakAckDuration();
+        } finally {
+            blockOnIO();
+        }
+    }
+
     /* Volatile Configuration */
 
     public Boolean getAddDuplicatesToTarget() {
