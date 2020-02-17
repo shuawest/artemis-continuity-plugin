@@ -32,6 +32,21 @@ public class ContinuityMangementServiceTest extends ContinuityTestBase {
 
   private static final Logger log = LoggerFactory.getLogger(ContinuityMangementServiceTest.class);
 
+  @Test
+  public void formatStats() {
+    Double msAvg = Double.valueOf("177157.150390625");
+    Double secAvg = msAvg / 1000;
+    Double minAvg = secAvg / 60;    
+    String avgFormat = String.format("%.2f ms (%.2f secs, or %.3f mins)", msAvg, secAvg, minAvg);
+    log.debug("Average: {}", avgFormat);
+
+    Long msPeak = Long.valueOf("177222");
+    Double secPeak = msPeak.doubleValue() / 1000;
+    Double minPeak = secPeak / 60;    
+    String peakFormat = String.format("%d ms (%.2f secs, or %.3f mins)", msPeak, secPeak, minPeak);
+    log.debug("Peak: {}", peakFormat);
+  }
+
   @Ignore
   @Test
   public void managementRegisterTest() throws Exception {
@@ -59,7 +74,7 @@ public class ContinuityMangementServiceTest extends ContinuityTestBase {
                                 continuityFlowPrefix, 
                                 flow.getInflowAcksName()));
 
-    assertTrue(isRegistered("%s,subsubcomponent=addresses,address=\"%s\",subsubsubcomponent=queues,routing-type=\"multicast\",queue=\"%s\"", 
+    assertTrue(isRegistered("%s,subsubcomponent=addresses,address=\"%s\",subsubsubcomponent=queues,routing-type=\"anycast\",queue=\"%s\"", 
                                 continuityFlowPrefix, 
                                 flow.getInflowMirrorName(),
                                 flow.getInflowMirrorName()));   

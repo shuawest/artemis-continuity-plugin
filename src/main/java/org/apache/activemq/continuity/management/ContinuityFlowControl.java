@@ -63,10 +63,10 @@ public interface ContinuityFlowControl {
     /* Statistics */
 
     @Attribute(desc = "Stat: Average time between the message send and acknowledgement")
-    Double getAverageAckDuration();
+    String getAverageAckDuration();
 
     @Attribute(desc = "Stat: Peak time between the message send and acknowledgement")
-    Long getPeakAckDuration();
+    String getPeakAckDuration();
 
     /* Volatile Configuration */
 

@@ -192,31 +192,39 @@ public class ContinuityFlowControlImpl extends AbstractControl implements Contin
 
     /* Statistics */
 
-    public Double getAverageAckDuration() {
+    public String getAverageAckDuration() {
         if (ContinuityAuditLogger.isEnabled() && flow != null && flow.getAckManager() != null) {
             ContinuityAuditLogger.getAverageAckDuration(flow);
         }
         clearIO();
         try {
-            if(flow == null || flow.getAckManager() == null)
-                return null;
-            else
-                return flow.getAckManager().getAverageAckDuration();
+            if(flow == null || flow.getAckManager() == null || flow.getAckManager().getAverageAckDuration() == null) {
+                return "";
+            } else {
+                Double msAvg = flow.getAckManager().getAverageAckDuration();
+                Double secAvg = msAvg / 1000;
+                Double minAvg = secAvg / 60;    
+                return String.format("%.2f ms (%.3f secs / %.3f mins)", msAvg, secAvg, minAvg);
+            }
         } finally {
             blockOnIO();
         }
     }
 
-    public Long getPeakAckDuration() {
+    public String getPeakAckDuration() {
         if (ContinuityAuditLogger.isEnabled() && flow != null && flow.getAckManager() != null) {
             ContinuityAuditLogger.getPeakAckDuration(flow);
         }
         clearIO();
         try {
-            if(flow == null || flow.getAckManager() == null)
-                return null;
-            else
-                return flow.getAckManager().getPeakAckDuration();
+            if(flow == null || flow.getAckManager() == null || flow.getAckManager().getPeakAckDuration() == null) {
+                return "";
+            } else {
+                Long msPeak = flow.getAckManager().getPeakAckDuration();
+                Double secPeak = msPeak.doubleValue() / 1000;
+                Double minPeak = secPeak / 60;    
+                return String.format("%d ms (%.3f secs / %.3f mins)", msPeak, secPeak, minPeak);
+            }
         } finally {
             blockOnIO();
         }
