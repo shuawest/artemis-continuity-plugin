@@ -204,26 +204,45 @@ public class ContinuityFlowControlImpl extends AbstractControl implements Contin
                 Double msAvg = flow.getAckManager().getAverageAckDuration();
                 Double secAvg = msAvg / 1000;
                 Double minAvg = secAvg / 60;    
-                return String.format("%.2f ms (%.3f secs / %.3f mins)", msAvg, secAvg, minAvg);
+                return String.format("%.6f ms (%.3f secs / %.2f mins)", msAvg, secAvg, minAvg);
             }
         } finally {
             blockOnIO();
         }
     }
 
-    public String getPeakAckDuration() {
+    public String getMaxAckDuration() {
         if (ContinuityAuditLogger.isEnabled() && flow != null && flow.getAckManager() != null) {
-            ContinuityAuditLogger.getPeakAckDuration(flow);
+            ContinuityAuditLogger.getMaxAckDuration(flow);
         }
         clearIO();
         try {
-            if(flow == null || flow.getAckManager() == null || flow.getAckManager().getPeakAckDuration() == null) {
+            if(flow == null || flow.getAckManager() == null || flow.getAckManager().getMaxAckDuration() == null) {
                 return "";
             } else {
-                Long msPeak = flow.getAckManager().getPeakAckDuration();
-                Double secPeak = msPeak.doubleValue() / 1000;
-                Double minPeak = secPeak / 60;    
-                return String.format("%d ms (%.3f secs / %.3f mins)", msPeak, secPeak, minPeak);
+                Long msMax = flow.getAckManager().getMaxAckDuration();
+                Double secMax = msMax.doubleValue() / 1000;
+                Double minMax = secMax / 60;    
+                return String.format("%d ms (%.3f secs / %.2f mins)", msMax, secMax, minMax);
+            }
+        } finally {
+            blockOnIO();
+        }
+    }
+
+    public String getMinAckDuration() {
+        if (ContinuityAuditLogger.isEnabled() && flow != null && flow.getAckManager() != null) {
+            ContinuityAuditLogger.getMinAckDuration(flow);
+        }
+        clearIO();
+        try {
+            if(flow == null || flow.getAckManager() == null || flow.getAckManager().getMinAckDuration() == null) {
+                return "";
+            } else {
+                Long msMin = flow.getAckManager().getMinAckDuration();
+                Double secMin = msMin.doubleValue() / 1000;
+                Double minMin = secMin / 60;    
+                return String.format("%d ms (%.3f secs / %.2f mins)", msMin, secMin, minMin);
             }
         } finally {
             blockOnIO();

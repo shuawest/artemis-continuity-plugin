@@ -65,8 +65,11 @@ public interface ContinuityFlowControl {
     @Attribute(desc = "Stat: Average time between the message send and acknowledgement")
     String getAverageAckDuration();
 
-    @Attribute(desc = "Stat: Peak time between the message send and acknowledgement")
-    String getPeakAckDuration();
+    @Attribute(desc = "Stat: Max time between the message send and acknowledgement")
+    String getMaxAckDuration();
+
+    @Attribute(desc = "Stat: Min time between the message send and acknowledgement")
+    String getMinAckDuration();
 
     /* Volatile Configuration */
 

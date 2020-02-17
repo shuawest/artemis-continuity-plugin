@@ -410,13 +410,22 @@ public interface ContinuityAuditLogger extends BasicLogger {
     @Message(id = 221119, value = "User {0} is getting averageAckDuration on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
     void getAverageAckDuration(String user, Object source, Object... args);
 
-    static void getPeakAckDuration(Object source) {
-        LOGGER.getPeakAckDuration(getCaller(), source);
+    static void getMaxAckDuration(Object source) {
+        LOGGER.getMaxAckDuration(getCaller(), source);
     }
 
     @LogMessage(level = Logger.Level.INFO)
-    @Message(id = 221120, value = "User {0} is getting peakAckDuration on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
-    void getPeakAckDuration(String user, Object source, Object... args);
+    @Message(id = 221120, value = "User {0} is getting maxAckDuration on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
+    void getMaxAckDuration(String user, Object source, Object... args);
+
+    static void getMinAckDuration(Object source) {
+        LOGGER.getMinAckDuration(getCaller(), source);
+    }
+
+    @LogMessage(level = Logger.Level.INFO)
+    @Message(id = 221121, value = "User {0} is getting minAckDuration on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
+    void getMinAckDuration(String user, Object source, Object... args);
+
 
     static void isAddDuplicatesToTarget(Object source) {
         LOGGER.isAddDuplicatesToTarget(getCaller(), source);

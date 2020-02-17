@@ -42,7 +42,8 @@ public class AckManager {
   private boolean isDelayMessageOnInflow = true;
 
   private Double averageAckDuration = null;
-  private Long peakAckDuration = null;
+  private Long minAckDuration = null;
+  private Long maxAckDuration = null;
 
   public AckManager(final ContinuityService service, final ContinuityFlow flow) {
     this.service = service;
@@ -79,11 +80,12 @@ public class AckManager {
   private void updateAckStats(AckInfo ack) {
     long ackDuration = ack.getAckTime().getTime() - ack.getMessageSendTime().getTime();
 
-    this.peakAckDuration = (peakAckDuration == null || peakAckDuration < ackDuration)? ackDuration : peakAckDuration;
+    this.maxAckDuration = (maxAckDuration == null || maxAckDuration < ackDuration)? ackDuration : maxAckDuration;
+    this.minAckDuration = (minAckDuration == null || minAckDuration > ackDuration)? ackDuration : minAckDuration;
     this.averageAckDuration = (averageAckDuration == null)? ackDuration : (ackDuration + averageAckDuration)/2;
 
     if(log.isTraceEnabled()) {
-      log.trace("Updated ack stats averageAckDuration = {}, peakAckDuration = {}, ackDuration = {}", averageAckDuration, peakAckDuration, ackDuration);
+      log.trace("Updated ack stats averageAckDuration = {}, maxAckDuration = {}, minAckDuration = {}, ackDuration = {}", averageAckDuration, maxAckDuration, minAckDuration, ackDuration);
     }
   }
 
@@ -194,8 +196,12 @@ public class AckManager {
     return averageAckDuration;
   }
 
-  public Long getPeakAckDuration() {
-    return peakAckDuration;
+  public Long getMinAckDuration() {
+    return minAckDuration;
+  }
+
+  public Long getMaxAckDuration() {
+    return maxAckDuration;
   }
 
   /* Manager control */
