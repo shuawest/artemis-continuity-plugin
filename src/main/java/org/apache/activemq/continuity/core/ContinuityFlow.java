@@ -88,14 +88,14 @@ public class ContinuityFlow {
   public void initialize() throws ContinuityException {
     service.registerContinuityFlow(queueInfo.getQueueName(), this);
     
-    createFlowQueue(outflowMirrorName, outflowMirrorName);
+    createFlowQueue(outflowMirrorName, outflowMirrorName, RoutingType.MULTICAST);
     createDivert(outflowDivertName, subjectAddressName, outflowMirrorName);
 
-    createFlowQueue(outflowAcksName, outflowAcksName);
+    createFlowQueue(outflowAcksName, outflowAcksName, RoutingType.MULTICAST);
     createAckInterceptor();
 
-    createFlowQueue(inflowMirrorName, inflowMirrorName);
-    createFlowQueue(inflowAcksName, inflowAcksName);
+    createFlowQueue(inflowMirrorName, inflowMirrorName, RoutingType.ANYCAST);
+    createFlowQueue(inflowAcksName, inflowAcksName, RoutingType.ANYCAST);
     createAckManager();
     createAckReceiver();
 
@@ -109,11 +109,11 @@ public class ContinuityFlow {
     ackInterceptor.start();
     ackReceiver.start();
 
-    this.outflowMirrorBridge = createBridge(outflowMirrorBridgeName, outflowMirrorName, inflowMirrorName, getConfig().getRemoteConnectorRef(), true);
-    this.outflowAcksBridge = createBridge(outflowAcksBridgeName, outflowAcksName, inflowAcksName, getConfig().getRemoteConnectorRef(), true);
+    this.outflowMirrorBridge = createBridge(outflowMirrorBridgeName, outflowMirrorName, inflowMirrorName, RoutingType.ANYCAST, getConfig().getRemoteConnectorRef(), true);
+    this.outflowAcksBridge = createBridge(outflowAcksBridgeName, outflowAcksName, inflowAcksName, RoutingType.ANYCAST, getConfig().getRemoteConnectorRef(), true);
     
     boolean isActivated = service.isActivated();
-    this.targetBridge = createBridge(targetBridgeName, inflowMirrorName, subjectAddressName, getConfig().getLocalConnectorRef(), isActivated);
+    this.targetBridge = createBridge(targetBridgeName, inflowMirrorName, subjectAddressName, RoutingType.valueOf(subjectQueueRoutingType), getConfig().getLocalConnectorRef(), isActivated);
 
     service.getManagement().registerContinuityFlow(service, this);
 
@@ -203,11 +203,11 @@ public class ContinuityFlow {
     this.ackManager = new AckManager(service, this);
   }
 
-  private void createFlowQueue(final String addressName, final String queueName) throws ContinuityException {
+  private void createFlowQueue(final String addressName, final String queueName, final RoutingType routingType) throws ContinuityException {
     try {
       if(!queueExists(queueName)) {
         getServer().createQueue(SimpleString.toSimpleString(addressName), 
-          RoutingType.MULTICAST,
+          routingType,
           SimpleString.toSimpleString(queueName), 
           SimpleString.toSimpleString(getConfig().getLocalUsername()), 
           null, true, false);
@@ -283,10 +283,19 @@ public class ContinuityFlow {
     }
   }
 
-  private Bridge createBridge(final String bridgeName, final String fromQueue, final String toAddress, final String connectorRef, final boolean start) throws ContinuityException {
+  private Bridge createBridge(final String bridgeName, final String fromQueue, final String toAddress, final RoutingType targetRoutingType, final String connectorRef, final boolean start) throws ContinuityException {
     Bridge bridge = null;
     try {
+      ComponentConfigurationRoutingType bridgeRoutingType;
+      if(targetRoutingType == RoutingType.ANYCAST)
+        bridgeRoutingType = ComponentConfigurationRoutingType.ANYCAST;
+      else
+        bridgeRoutingType = ComponentConfigurationRoutingType.MULTICAST; 
 
+      // TODO: determine why messages sent over amqp arent bridged
+      //  - not related to dup detection
+      //  - not related to address string format
+      //  - do note that messages sent to multicast without consumer connected are dropped, but are diverted to mirror
       final BridgeConfiguration bridgeConfig = new BridgeConfiguration()
           .setName(bridgeName)
           .setQueueName(fromQueue)
@@ -297,7 +306,7 @@ public class ContinuityFlow {
           .setInitialConnectAttempts(-1)
           .setReconnectAttempts(-1)
           //.setUseDuplicateDetection(true)
-          //.setRoutingType(ComponentConfigurationRoutingType.STRIP)
+          .setRoutingType(bridgeRoutingType)
           .setConfirmationWindowSize(10000000)
           .setStaticConnectors(Arrays.asList(connectorRef)); 
 

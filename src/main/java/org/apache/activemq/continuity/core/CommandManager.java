@@ -26,6 +26,7 @@ import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
 import org.apache.activemq.artemis.core.config.BridgeConfiguration;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
+import org.apache.activemq.artemis.core.server.ComponentConfigurationRoutingType;
 import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.artemis.core.server.QueueQueryResult;
 import org.apache.activemq.artemis.core.server.cluster.Bridge;
@@ -74,8 +75,8 @@ public class CommandManager {
 
     service.registerCommandManager(this);
 
-    commandInQueue = createCommandQueue(commandInQueueName, commandInQueueName);
-    commandOutQueue = createCommandQueue(commandOutQueueName, commandOutQueueName);
+    commandInQueue = createCommandQueue(commandInQueueName, commandInQueueName, RoutingType.ANYCAST);
+    commandOutQueue = createCommandQueue(commandOutQueueName, commandOutQueueName, RoutingType.MULTICAST);
 
     isInitialized = true;
 
@@ -121,7 +122,7 @@ public class CommandManager {
     }
   }
 
-  private Queue createCommandQueue(String addressName, String queueName) throws ContinuityException {
+  private Queue createCommandQueue(String addressName, String queueName, RoutingType routingType) throws ContinuityException {
     if(log.isDebugEnabled()) {
       log.debug("Creating continuity command queue: address {}, queue {}", addressName, queueName);
     }
@@ -129,7 +130,7 @@ public class CommandManager {
     Queue queue = null;
     try {
       queue = getServer().createQueue(new SimpleString(addressName), // address
-                                      RoutingType.MULTICAST, // routing type
+                                      routingType, // routing type
                                       new SimpleString(queueName), // queue name
                                       null, // filter
                                       true, // durable
@@ -166,6 +167,7 @@ public class CommandManager {
         .setRetryIntervalMultiplier(getConfig().getBridgeIntervalMultiplier())
         .setInitialConnectAttempts(-1)
         .setReconnectAttempts(-1)
+        .setRoutingType(ComponentConfigurationRoutingType.ANYCAST)
         .setUseDuplicateDetection(true)
         .setConfirmationWindowSize(10000000)
         .setStaticConnectors(Arrays.asList(getConfig().getRemoteConnectorRef()));

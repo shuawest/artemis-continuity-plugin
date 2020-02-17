@@ -149,8 +149,8 @@ public class ContinuityManagementService {
             String target = getContinuityServicePrefix();
             moveAddressControl(target, "", service.getCommandManager().getCommandInQueueName());
             moveAddressControl(target, "", service.getCommandManager().getCommandOutQueueName());
-            moveQueueControl(target, "", service.getCommandManager().getCommandInQueueName());
-            moveQueueControl(target, "", service.getCommandManager().getCommandOutQueueName());
+            moveQueueControl(target, "", service.getCommandManager().getCommandInQueueName(), "anycast");
+            moveQueueControl(target, "", service.getCommandManager().getCommandOutQueueName(), "multicast");
             moveBridgeControl(target, "", service.getCommandManager().getCommandOutBridgeName());
         } catch (Exception e) {
             String msg = "Unable to change name of continuity service primitives in management hierarchy";
@@ -167,10 +167,10 @@ public class ContinuityManagementService {
             moveAddressControl(target, "sub", flow.getInflowMirrorName());
             moveAddressControl(target, "sub", flow.getOutflowAcksName());
             moveAddressControl(target, "sub", flow.getOutflowMirrorName());
-            moveQueueControl(target, "sub", flow.getInflowAcksName());
-            moveQueueControl(target, "sub", flow.getInflowMirrorName());
-            moveQueueControl(target, "sub", flow.getOutflowAcksName());
-            moveQueueControl(target, "sub", flow.getOutflowMirrorName());
+            moveQueueControl(target, "sub", flow.getInflowAcksName(), "anycast");
+            moveQueueControl(target, "sub", flow.getInflowMirrorName(), "anycast");
+            moveQueueControl(target, "sub", flow.getOutflowAcksName(), "multicast");
+            moveQueueControl(target, "sub", flow.getOutflowMirrorName(), "multicast");
             moveDivertControl(target, "sub", flow.getSubjectAddressName(), flow.getOutflowDivertName());
             moveBridgeControl(target, "sub", flow.getOutflowAcksBridgeName());
             moveBridgeControl(target, "sub", flow.getOutflowMirrorBridgeName());
@@ -203,9 +203,9 @@ public class ContinuityManagementService {
         renameObject(resourceName, originalName, newName);
     }
 
-    public void moveQueueControl(String target, String subLevel, String addressQueueName) throws Exception {
-        String originalName = String.format("%s,component=addresses,address=\"%s\",subcomponent=queues,routing-type=\"multicast\",queue=\"%s\"", getBrokerPrefix(), addressQueueName, addressQueueName);
-        String newName = String.format("%s,%ssubcomponent=addresses,address=\"%s\",%ssubsubcomponent=queues,routing-type=\"multicast\",queue=\"%s\"", target, subLevel, addressQueueName, subLevel, addressQueueName);
+    public void moveQueueControl(String target, String subLevel, String addressQueueName, String routingType) throws Exception {
+        String originalName = String.format("%s,component=addresses,address=\"%s\",subcomponent=queues,routing-type=\"%s\",queue=\"%s\"", getBrokerPrefix(), addressQueueName, routingType, addressQueueName);
+        String newName = String.format("%s,%ssubcomponent=addresses,address=\"%s\",%ssubsubcomponent=queues,routing-type=\"%s\",queue=\"%s\"", target, subLevel, addressQueueName, subLevel, routingType, addressQueueName);
         String resourceName = ResourceNames.QUEUE + addressQueueName;
         renameObject(resourceName, originalName, newName);
     }

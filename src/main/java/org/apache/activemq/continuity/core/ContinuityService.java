@@ -110,7 +110,9 @@ public class ContinuityService {
       if(locateFlow(queueInfo.getQueueName()) == null) {
         
         ContinuityFlow flow = createFlow(queueInfo);
-        flow.start();
+        if(isStarted) {
+          flow.start();
+        }
         
         if(commandManager != null && commandManager.isStarted()) {
           ContinuityCommand cmd = new ContinuityCommand();
