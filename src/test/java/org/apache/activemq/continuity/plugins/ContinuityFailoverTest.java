@@ -234,7 +234,7 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
   private void activateSite(String url) throws Exception {
     ContinuityCommand cmdActivate = new ContinuityCommand();
     cmdActivate.setAction(ContinuityCommand.ACTION_ACTIVATE_SITE);
-    produceMessage("vm://2", "myuser", "mypass", "artemis.continuity.commands.in", ContinuityCommand.toJSON(cmdActivate));
+    produceMessage("vm://2", "myuser", "mypass",  "continuity.cmd.in", ContinuityCommand.toJSON(cmdActivate));
   }
 
 }
