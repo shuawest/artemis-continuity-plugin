@@ -29,8 +29,6 @@ import org.apache.activemq.continuity.plugins.OriginTransformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO: look into creating a custom bridge to target queue, instead of full address
-// TODO: refactor to have bridges on remote side, but consider 3+ site model
 public class ContinuityFlow {
 
   private static final Logger log = LoggerFactory.getLogger(ContinuityFlow.class);
@@ -64,7 +62,6 @@ public class ContinuityFlow {
   private AckReceiver ackReceiver;
   private AckManager ackManager;
 
-  // TODO: fix to start flow on dynamic creation
   public ContinuityFlow(final ContinuityService service, final QueueInfo queueInfo) {
     this.service = service;
     this.queueInfo = queueInfo;
@@ -103,6 +100,9 @@ public class ContinuityFlow {
 
     isInitialized = true;
 
+    if(log.isInfoEnabled()) {
+      log.info("Initialized new flow '{}'", subjectQueueName);
+    }
   }
 
   public void start() throws ContinuityException {
@@ -118,6 +118,10 @@ public class ContinuityFlow {
     service.getManagement().registerContinuityFlow(service, this);
 
     isStarted = true;
+
+    if(log.isInfoEnabled()) {
+      log.info("Started flow '{}'", subjectQueueName);
+    }
   }
 
   public void startSubjectQueueDelivery() throws ContinuityException {
@@ -293,10 +297,6 @@ public class ContinuityFlow {
       else
         bridgeRoutingType = ComponentConfigurationRoutingType.MULTICAST; 
 
-      // TODO: determine why messages sent over amqp arent bridged
-      //  - not related to dup detection
-      //  - not related to address string format
-      //  - do note that messages sent to multicast without consumer connected are dropped, but are diverted to mirror
       final BridgeConfiguration bridgeConfig = new BridgeConfiguration()
           .setName(bridgeName)
           .setQueueName(fromQueue)
@@ -306,7 +306,6 @@ public class ContinuityFlow {
           .setRetryIntervalMultiplier(getConfig().getBridgeIntervalMultiplier())
           .setInitialConnectAttempts(-1)
           .setReconnectAttempts(-1)
-          //.setUseDuplicateDetection(true)
           .setRoutingType(bridgeRoutingType)
           .setConfirmationWindowSize(10000000)
           .setStaticConnectors(Arrays.asList(connectorRef)); 
