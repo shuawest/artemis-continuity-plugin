@@ -38,7 +38,7 @@ public class AckInterceptorTest extends ContinuityTestBase {
 
   @Test
   public void initializeTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "AckInterceptorTest.initializeTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
     
@@ -66,7 +66,7 @@ public class AckInterceptorTest extends ContinuityTestBase {
 
   @Test
   public void sendAckBodyTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "AckInterceptorTest.sendAckBodyTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
@@ -92,11 +92,12 @@ public class AckInterceptorTest extends ContinuityTestBase {
     assertThat("message body is wrong", msgRef.getMessage().toCore().getBodyBuffer().readString(), equalTo("test message"));
     
     ackInterceptor.stop();
+    serverCtx.getServer().asyncStop(()->{});
   }
 
   @Test
   public void sendAckInfoTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "AckInterceptorTest.sendAckInfoTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
@@ -136,11 +137,12 @@ public class AckInterceptorTest extends ContinuityTestBase {
     assertThat("ack info source queue name did not be unmarshalled from json", receivedAck.getSourceQueueName(), equalTo(ack.getSourceQueueName()));
     
     ackInterceptor.stop();
+    serverCtx.getServer().asyncStop(()->{});
   }
 
   @Test
   public void handleMessageAckTest() throws Exception { 
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "AckInterceptorTest.handleMessageAckTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
@@ -190,11 +192,14 @@ public class AckInterceptorTest extends ContinuityTestBase {
     assertThat("ack time was not before ack was captured", preAckTime.before(actualAck.getAckTime()), equalTo(true));
     assertThat("uuid did not match", actualAck.getMessageUuid(), equalTo(expectedUuid));
     assertThat("source queue name did not match", actualAck.getSourceQueueName(), equalTo(expectedQueueName));
+
+    ackInterceptor.stop();
+    serverCtx.getServer().asyncStop(()->{});
   }
 
   // @Test
   // public void messageCaptureTest() throws Exception {
-  //   ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+  //   ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "AckInterceptorTest.messageCaptureTest", "myuser", "mypass");
   //   ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
   //   serverCtx.getServer().start();
     
@@ -233,6 +238,8 @@ public class AckInterceptorTest extends ContinuityTestBase {
   //   assertThat("ack time was not before ack was captured", preAckTime.before(actualAck.getAckTime()), equalTo(true));
   //   assertThat("uuid did not match", actualAck.getMessageUuid(), equalTo(expectedUuid));
   //   assertThat("source queue name did not match", actualAck.getSourceQueueName(), equalTo(expectedQueueName));
+
+  //   serverCtx.getServer().asyncStop(()->{});
   // }
   
  

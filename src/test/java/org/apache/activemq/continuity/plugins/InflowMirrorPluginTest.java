@@ -37,7 +37,7 @@ public class InflowMirrorPluginTest extends ContinuityTestBase {
 
   @Test
   public void mockedMessageTest() throws Exception { 
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "InflowMirrorPluginTest.mockedMessageTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
  
     String expectedSubjectQueueName = "async-sample1.mock";
@@ -66,7 +66,7 @@ public class InflowMirrorPluginTest extends ContinuityTestBase {
 
   @Test
   public void mockedMessageNonTargetAddressTest() throws Exception { 
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "InflowMirrorPluginTest.mockedMessageNonTargetAddressTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
  
     String expectedSubjectQueueName = "async-sample1.mock";
@@ -91,7 +91,7 @@ public class InflowMirrorPluginTest extends ContinuityTestBase {
 
   @Test
   public void actualMessageTest() throws Exception { 
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "InflowMirrorPluginTest.actualMessageTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
@@ -118,6 +118,8 @@ public class InflowMirrorPluginTest extends ContinuityTestBase {
     Message actualMsg = msgCaptor.getValue();
     String actualMsgBody = actualMsg.toCore().getBodyBuffer().readString();
     assertThat("message was not passed to ackManager with expected value", actualMsgBody, equalTo(expectedMessage));
+
+    serverCtx.getServer().asyncStop(()->{});
   }
   
 }

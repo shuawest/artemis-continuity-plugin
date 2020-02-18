@@ -20,7 +20,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Date;
 import java.util.UUID;
 
 import org.apache.activemq.artemis.api.core.Message;
@@ -42,7 +41,7 @@ public class AckInterceptorPluginTest extends ContinuityTestBase {
 
   @Test
   public void mockedMessageTest() throws Exception { 
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "AckInterceptorPluginTest.mockedMessageTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
  
     AckInterceptor interceptorMock = mock(AckInterceptor.class);
@@ -78,70 +77,4 @@ public class AckInterceptorPluginTest extends ContinuityTestBase {
     assertThat("msgRef was null", actualReason, notNullValue());
   }
 
-  // @Test
-  // public void messageCaptureWithDuplicateIdPluginTest() throws Exception {
-  //   ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
-  //   ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
-  //   serverCtx.getServer().start();
-    
-  //   AckInterceptorPlugin plugin = new AckInterceptorPlugin(continuityCtx.getService());
-  //   serverCtx.getServer().getConfiguration().registerBrokerPlugin(plugin);
-
-  //   DuplicateIdPlugin dupIdPlugin = new DuplicateIdPlugin(continuityCtx.getService());
-  //   serverCtx.getServer().getConfiguration().registerBrokerPlugin(dupIdPlugin);
- 
-  //   ContinuityFlow flowMock = mock(ContinuityFlow.class);
-  //   MessageHandler handlerMock = mock(MessageHandler.class);
-  //   Queue queueMock = mock(Queue.class);
-  //   MessageReference refMock = mock(MessageReference.class);
-  //   Message msgMock = mock(Message.class);
-
-  //   AckInterceptor ackInterceptor = new AckInterceptor(continuityCtx.getService(), flowMock);
-  //   when(flowMock.getAckInterceptor()).thenReturn(ackInterceptor);
-  //   ackInterceptor.start();
-
-  //   String addressName = "async-sample1";
-  //   String outflowAcksName = "async-sample1.out.acks.mock";
-  //   String expectedQueueName = "async-sample1";
-  //   String expectedMessage = "test message";
-  //   String expectedUuid = UUID.randomUUID().toString();
-  //   Date preAckTime = new Date(System.currentTimeMillis());
-
-  //   when(continuityCtx.getService().isSubjectAddress(addressName)).thenReturn(true); 
-  //   when(flowMock.getAckInterceptor()).thenReturn(ackInterceptor);
-  //   when(flowMock.getSubjectAddressName()).thenReturn(addressName);
-  //   when(flowMock.getSubjectQueueName()).thenReturn(addressName);
-  //   when(flowMock.getOutflowAcksName()).thenReturn(outflowAcksName);
-  //   when(continuityCtx.getService().locateFlow(expectedQueueName)).thenReturn(flowMock);
-  //   when(continuityCtx.getService().isSubjectQueue(any(Queue.class))).thenReturn(true);
-
-  //   when(continuityCtx.getService().locateFlow(expectedQueueName)).thenReturn(flowMock);
-  //   when(continuityCtx.getService().isSubjectQueue(any(Queue.class))).thenReturn(true);
-  //   when(queueMock.isDurable()).thenReturn(true);
-  //   when(queueMock.isTemporary()).thenReturn(false);
-  //   when(queueMock.getName()).thenReturn(SimpleString.toSimpleString(expectedQueueName));
-  //   when(refMock.getQueue()).thenReturn(queueMock);
-  //   when(refMock.getMessage()).thenReturn(msgMock);
-  //   when(msgMock.getStringProperty(Message.HDR_DUPLICATE_DETECTION_ID)).thenReturn(expectedUuid);
-
-  //   // Send a message - expecting the message will still be sent, and the ack details will be captured by the ack-divert
-  //   produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, addressName, expectedQueueName, handlerMock, expectedMessage, null);
- 
-  //   Queue outflowAcksQueue = serverCtx.getServer().locateQueue(SimpleString.toSimpleString(outflowAcksName));
-  //   assertThat("out acks queue has no message", outflowAcksQueue.browserIterator().hasNext(), equalTo(true));
-    
-  //   MessageReference msgRef = outflowAcksQueue.browserIterator().next();
-  //   assertThat("ack info message was null", msgRef, notNullValue());
-    
-  //   String receivedBody = msgRef.getMessage().toCore().getBodyBuffer().readString();
-  //   assertThat("ack info body is null", receivedBody, notNullValue());
-
-  //   AckInfo actualAck = AckInfo.fromJSON(receivedBody);  
-  //   assertThat("ack was null", actualAck, notNullValue());
-  //   assertThat("msg send time was null", actualAck.getMessageSendTime(), notNullValue());
-  //   assertThat("ack time was null", actualAck.getAckTime(), notNullValue());
-  //   assertThat("ack time was not before ack was captured", preAckTime.before(actualAck.getAckTime()), equalTo(true));
-  //   assertThat("uuid was null but expected duplicate id plugin to add", actualAck.getMessageUuid(), notNullValue());
-  //   assertThat("source queue name did not match", actualAck.getSourceQueueName(), equalTo(expectedQueueName));
-  // }
 }

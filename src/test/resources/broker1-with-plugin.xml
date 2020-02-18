@@ -137,7 +137,8 @@ under the License.
             <property key="local-password" value="mypass" />
             <property key="local-connector-ref" value="local-connector" />
             <property key="remote-connector-ref" value="remote-connector" />
-            <property key="inflow-staging-delay-ms" value="2000" />            
+            <property key="inflow-staging-delay-ms" value="2000" />  
+            <property key="reorg-management-hierarchy" value="true" />          
          </broker-plugin> 
       </broker-plugins>
 

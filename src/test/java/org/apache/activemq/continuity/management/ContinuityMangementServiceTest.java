@@ -35,7 +35,7 @@ public class ContinuityMangementServiceTest extends ContinuityTestBase {
 
   @Test
   public void managementRegisterTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-with-plugin.xml", "test-broker1", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-with-plugin.xml", "ContinuityMangementServiceTest.managementRegisterTest", "myuser", "mypass");
     serverCtx.getServer().start();
     Thread.sleep(2000L);
 
@@ -70,7 +70,10 @@ public class ContinuityMangementServiceTest extends ContinuityTestBase {
 
     assertTrue(isRegistered("%s,subsubcomponent=diverts,divert=\"%s\"", 
                                 continuityFlowPrefix, 
-                                flow.getOutflowDivertName()));                                 
+                                flow.getOutflowDivertName()));     
+                        
+    service.stop();
+    serverCtx.getServer().asyncStop(()->{});
   }
 
   @Test

@@ -37,7 +37,7 @@ public class AckManagerTest extends ContinuityTestBase {
 
   @Test
   public void messageRemovedFromMirrorTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "AckManagerTest.messageRemovedFromMirrorTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
@@ -66,7 +66,7 @@ public class AckManagerTest extends ContinuityTestBase {
 
   @Test
   public void duplicateIdCacheTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "AckManagerTest.duplicateIdCacheTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
@@ -96,7 +96,7 @@ public class AckManagerTest extends ContinuityTestBase {
 
   @Test
   public void delayMessageOnInflowWithPluginTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "AckManagerTest.delayMessageOnInflowWithPluginTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
@@ -148,7 +148,7 @@ public class AckManagerTest extends ContinuityTestBase {
 
   @Test
   public void ackStatsTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "AckManagerTest.ackStatsTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
 
     ContinuityFlow flowMock = mock(ContinuityFlow.class);

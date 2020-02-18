@@ -31,7 +31,7 @@ public class ServerListenerTest extends ContinuityTestBase {
 
   @Test
   public void startTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "ServerListenerTest.startTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     
     when(continuityCtx.getConfig().getLocalInVmUri()).thenReturn("vm://1");
@@ -49,6 +49,8 @@ public class ServerListenerTest extends ContinuityTestBase {
 
     verify(continuityCtx.getService(), times(1)).initialize();
     verify(continuityCtx.getService(), times(1)).start();
+    
+    serverCtx.getServer().asyncStop(()->{});
   }
 
 }

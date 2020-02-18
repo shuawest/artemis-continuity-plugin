@@ -37,7 +37,7 @@ public class AckReceiverTest extends ContinuityTestBase {
 
   @Test
   public void initializeTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "AckReceiverTest.initializeTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
     
@@ -60,11 +60,12 @@ public class AckReceiverTest extends ContinuityTestBase {
     assertThat("unexpected ack connection count queue after divert", serverCtx.getServer().getConnectionCount(), equalTo(connectionCount+1));
 
     ackReceiver.stop();
+    serverCtx.getServer().asyncStop(()->{});
   }
 
   @Test
   public void receiveAckTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "AckReceiverTest.receiveAckTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
    
@@ -98,6 +99,9 @@ public class AckReceiverTest extends ContinuityTestBase {
     assertThat("ack time did not match", actualAck.getAckTime(), equalTo(expectedAck.getAckTime()));
     assertThat("uuid did not match", actualAck.getMessageUuid(), equalTo(expectedAck.getMessageUuid()));
     assertThat("source queue name did not match", actualAck.getSourceQueueName(), equalTo(expectedAck.getSourceQueueName()));
+
+    ackReceiver.stop();
+    serverCtx.getServer().asyncStop(()->{});
   }
   
 }

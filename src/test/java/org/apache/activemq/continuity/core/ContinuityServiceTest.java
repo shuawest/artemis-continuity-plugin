@@ -35,7 +35,7 @@ public class ContinuityServiceTest extends ContinuityTestBase {
 
   @Test
   public void constructorTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "ContinuityServiceTest.constructorTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
@@ -76,11 +76,13 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     svc.registerContinuityFlow("example1", flowMock);
     assertThat(svc.locateFlow("example1"), equalTo(flowMock));
     assertThat(svc.locateFlow("asdf"), nullValue());
+
+    serverCtx.getServer().asyncStop(()->{});
   }
 
   @Test
   public void initializeTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "ContinuityServiceTest.initializeTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
@@ -93,11 +95,13 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     svc.initialize();
 
     assertThat(svc.getCommandManager(), notNullValue());
+
+    serverCtx.getServer().asyncStop(()->{});
   }
 
   @Test
   public void handleAddQueueTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "ContinuityServiceTest.handleAddQueueTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
@@ -117,6 +121,8 @@ public class ContinuityServiceTest extends ContinuityTestBase {
 
     assertThat(svc.locateFlow("async-sample1"), notNullValue());
     verify(continuityCtx.getCommandManager(), times(1)).sendCommand(any(ContinuityCommand.class));
+
+    serverCtx.getServer().asyncStop(()->{});
   }
 
 }

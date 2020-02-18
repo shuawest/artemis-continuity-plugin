@@ -43,8 +43,8 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
   
   @Test
   public void coreSwapoverTest() throws Exception {
-    ServerContext serverCtx1 = createServerContext("broker1-with-plugin.xml", "site1", "myuser", "mypass");
-    ServerContext serverCtx2 = createServerContext("broker2-with-plugin.xml", "site2", "myuser", "mypass");
+    ServerContext serverCtx1 = createServerContext("broker1-with-plugin.xml", "ContinuityFailoverTest.coreSwapoverTest", "myuser", "mypass");
+    ServerContext serverCtx2 = createServerContext("broker2-with-plugin.xml", "ContinuityFailoverTest.coreSwapoverTest", "myuser", "mypass");
     serverCtx1.getServer().start();
     serverCtx2.getServer().start();
     Thread.sleep(2000L);
@@ -54,15 +54,15 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
     
     log.debug("\n\nStarting consumer for test message on broker2\n\n");
     CoreMessageHandlerStub handler2 = new CoreMessageHandlerStub("broker2");
-    ClientSession session2 = startCoreConsumer("vm://2", "myuser", "mypass", "example1-durable", handler2);
+    CoreHandle core2 = startCoreConsumer("vm://2", "myuser", "mypass", "example1-durable", handler2);
     
     log.debug("\n\nStarting consumer for test message on broker1\n\n");
     CoreMessageHandlerStub handler1 = new CoreMessageHandlerStub("broker1");
-    ClientSession session1 = startCoreConsumer("vm://1", "myuser", "mypass", "example1-durable", handler1);
+    CoreHandle core1 = startCoreConsumer("vm://1", "myuser", "mypass", "example1-durable", handler1);
 
     Thread.sleep(20L);
     log.debug("\n\nKilling session on broker 1\n\n");
-    session1.close();
+    core1.getSession().close();
 
     log.debug("\n\nKilled session on broker 1\n\n");
     
@@ -80,16 +80,16 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
 
     log.debug("\n\nShutting down\n\n");
 
-    session1.close();
-    session2.close();
+    core1.close();
+    core2.close();
     serverCtx1.getServer().asyncStop(()->{ log.debug("server1 stopped again"); });
     serverCtx2.getServer().asyncStop(()->{ log.debug("server2 stopped"); });
   }
 
   @Test
   public void coreFailoverTest() throws Exception {
-    ServerContext serverCtx1 = createServerContext("broker1-with-plugin.xml", "site1", "myuser", "mypass");
-    ServerContext serverCtx2 = createServerContext("broker2-with-plugin.xml", "site2", "myuser", "mypass");
+    ServerContext serverCtx1 = createServerContext("broker1-with-plugin.xml", "ContinuityFailoverTest.coreFailoverTest", "myuser", "mypass");
+    ServerContext serverCtx2 = createServerContext("broker2-with-plugin.xml", "ContinuityFailoverTest.coreFailoverTest", "myuser", "mypass");
     serverCtx1.getServer().start();
     serverCtx2.getServer().start();
     Thread.sleep(2000L);
@@ -99,13 +99,14 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
 
     log.debug("\n\nStarting consumer for test message on broker2\n\n");
     CoreMessageHandlerStub handler2 = new CoreMessageHandlerStub("broker2");
-    ClientSession session2 = startCoreConsumer("vm://2", "myuser", "mypass", "example1-durable", handler2);
+    CoreHandle core2 = startCoreConsumer("vm://2", "myuser", "mypass", "example1-durable", handler2);
     
     log.debug("\n\nStarting consumer for test message on broker1\n\n");
     ServerLocator locator1 = ActiveMQClient.createServerLocator("vm://1");
     ClientSessionFactory factory1 = locator1.createSessionFactory();
     ClientSession session1 = factory1.createSession("myuser", "mypass", false, false, false, false, 1);
     ClientConsumer consumer1 = session1.createConsumer("example1-durable");
+    CoreHandle core1 = new CoreHandle(locator1, factory1, session1, null, consumer1);
     session1.start();
     for(int i=0; i < 50; i++) {
       ClientMessage msg = consumer1.receive();
@@ -131,15 +132,15 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
 
     log.debug("Shutting down");
 
-    session1.close();
-    session2.close();
+    core1.close();
+    core2.close();
     serverCtx2.getServer().asyncStop(()->{ log.debug("server2 stopped"); });
   }
 
   @Test
   public void jmsSwapoverTest() throws Exception {
-    ServerContext serverCtx1 = createServerContext("broker1-with-plugin.xml", "site1", "myuser", "mypass");
-    ServerContext serverCtx2 = createServerContext("broker2-with-plugin.xml", "site2", "myuser", "mypass");
+    ServerContext serverCtx1 = createServerContext("broker1-with-plugin.xml", "ContinuityFailoverTest.jmsSwapoverTest", "myuser", "mypass");
+    ServerContext serverCtx2 = createServerContext("broker2-with-plugin.xml", "ContinuityFailoverTest.jmsSwapoverTest", "myuser", "mypass");
     serverCtx1.getServer().start();
     serverCtx2.getServer().start();
     Thread.sleep(2000L);
@@ -149,16 +150,16 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
 
     log.debug("\n\nStarting consumer for test message on broker2\n\n");
     JmsMessageListenerStub handler2 = new JmsMessageListenerStub("broker2");
-    Connection conn2 = startJmsConsumer("vm://2", "myuser", "mypass", "example1-durable", handler2);
+    JmsHandle jms2 = startJmsConsumer("vm://2", "myuser", "mypass", "example1-durable", handler2);
     
     log.debug("\n\nStarting consumer for test message on broker1\n\n");
     JmsMessageListenerStub handler1 = new JmsMessageListenerStub("broker2");
-    Connection conn1 = startJmsConsumer("vm://1", "myuser", "mypass", "example1-durable", handler1);
+    JmsHandle jms1 = startJmsConsumer("vm://1", "myuser", "mypass", "example1-durable", handler1);
 
     Thread.sleep(20L);
 
     log.debug("\n\nStopping server1\n\n");
-    conn1.close();
+    jms1.getConnection().close();
 
     activateSite("vm://2");
 
@@ -174,15 +175,16 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
 
     log.debug("Shutting down");
 
-    conn1.close();
-    conn2.close();
+    jms1.close();
+    jms2.close();
+    serverCtx1.getServer().asyncStop(()->{ log.debug("server1 stopped"); });
     serverCtx2.getServer().asyncStop(()->{ log.debug("server2 stopped"); });
   }
 
   @Test
   public void jmsTransactionalFailoverTest() throws Exception {
-    ServerContext serverCtx1 = createServerContext("broker1-with-plugin.xml", "site1", "myuser", "mypass");
-    ServerContext serverCtx2 = createServerContext("broker2-with-plugin.xml", "site2", "myuser", "mypass");
+    ServerContext serverCtx1 = createServerContext("broker1-with-plugin.xml", "ContinuityFailoverTest.jmsTransactionalFailoverTest", "myuser", "mypass");
+    ServerContext serverCtx2 = createServerContext("broker2-with-plugin.xml", "ContinuityFailoverTest.jmsTransactionalFailoverTest", "myuser", "mypass");
     serverCtx1.getServer().start();
     serverCtx2.getServer().start();
     Thread.sleep(2000L);
@@ -192,13 +194,14 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
 
     log.debug("\n\nStarting consumer for test message on broker2\n\n");
     JmsMessageListenerStub handler2 = new JmsMessageListenerStub("broker2");
-    Connection conn2 = startJmsConsumer("vm://2", "myuser", "mypass", "example1-durable", handler2);
+    JmsHandle jms2 = startJmsConsumer("vm://2", "myuser", "mypass", "example1-durable", handler2);
     
     ConnectionFactory factory1 = new ActiveMQConnectionFactory("tcp://localhost:61616");
     Connection conn1 = factory1.createConnection("myuser", "mypass");
     Session session1 = conn1.createSession(true, Session.AUTO_ACKNOWLEDGE);
     javax.jms.Queue queue1 = session1.createQueue("example1-durable");
     MessageConsumer consumer1 = session1.createConsumer(queue1);
+    JmsHandle jms1 = new JmsHandle(factory1, conn1, session1, queue1, null, consumer1);
     conn1.start();
     for(int i=0; i < 50; i++) {
       Message msg = consumer1.receive();
@@ -223,8 +226,8 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
 
     log.debug("Shutting down");
 
-    conn1.close();
-    conn2.close();
+    jms1.close();
+    jms2.close();
     serverCtx2.getServer().asyncStop(()->{ log.debug("server2 stopped"); });
   }
 

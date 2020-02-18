@@ -98,6 +98,7 @@ public class ContinuityService {
     for(ContinuityFlow flow : flows.values()) {
       flow.stop();
     }
+    getManagement().unregisterContinuityService();
     isStarted = false;
   }
 

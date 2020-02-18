@@ -67,14 +67,15 @@ public class ContinuityTestBase extends ActiveMQTestBase {
 
   private static final Logger log = LoggerFactory.getLogger(ContinuityTestBase.class);
 
-  public ServerContext createServerContext(String serverConfigFile, String serverId, String user, String pass)
+  public ServerContext createServerContext(String serverConfigFile, String jmxDomain, String user, String pass)
       throws Exception {
     FileConfiguration fc = new FileConfiguration();
+    fc.setJMXDomain(jmxDomain);
+
     FileDeploymentManager deploymentManager = new FileDeploymentManager(serverConfigFile);
     deploymentManager.addDeployable(fc);
     deploymentManager.readConfiguration();
 
-    //MBeanServerFactory.releaseMBeanServer(ManagementFactory.getPlatformMBeanServer());
     MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
     ActiveMQJAASSecurityManager securityManager = new ActiveMQJAASSecurityManager(InVMLoginModule.class.getName(),
@@ -83,7 +84,6 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     securityManager.getConfiguration().addRole(user, "amq");
 
     ActiveMQServer server = addServer(ActiveMQServers.newActiveMQServer(fc, mbeanServer, securityManager, false));
-    server.setIdentity(serverId);
 
     return new ServerContext(server, mbeanServer, fc, securityManager);
   }
@@ -143,11 +143,8 @@ public class ContinuityTestBase extends ActiveMQTestBase {
 
     Thread.sleep(100L);
 
-    consumer.close();
-    producer.close();
-    session.close();
-    factory.close();
-    locator.close();
+    CoreHandle handle = new CoreHandle(locator, factory, session, producer, consumer);
+    handle.close();
   }
 
   public void produceMessage(ContinuityConfig continuityConfig, ServerContext serverCtx, 
@@ -169,10 +166,8 @@ public class ContinuityTestBase extends ActiveMQTestBase {
       
     producer.send(msg);
 
-    producer.close();
-    session.close();
-    factory.close();
-    locator.close();
+    CoreHandle handle = new CoreHandle(locator, factory, session, producer, null);
+    handle.close();
   }
 
   public void produceMessage(String url, String username, String password, String address, String messageBody) throws Exception {  
@@ -188,10 +183,8 @@ public class ContinuityTestBase extends ActiveMQTestBase {
      
     producer.send(msg);
 
-    producer.close();
-    session.close();
-    factory.close();
-    locator.close();
+    CoreHandle handle = new CoreHandle(locator, factory, session, producer, null);
+    handle.close();
   }
 
   public void consumeMessages(ContinuityConfig continuityConfig, ServerContext serverCtx, String address, String queueName, MessageHandler handler) throws Exception {
@@ -206,10 +199,8 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     session.start();
     Thread.sleep(100L);
 
-    consumer.close();
-    session.close();
-    factory.close();
-    locator.close();
+    CoreHandle handle = new CoreHandle(locator, factory, session, null, consumer);
+    handle.close();
   }
 
   public void produceMessages(String uri, String username, String password, String address, String messageBody, int count) throws Exception {
@@ -225,10 +216,8 @@ public class ContinuityTestBase extends ActiveMQTestBase {
       producer.send(msg);
     }
 
-    producer.close();
-    session.close();
-    factory.close();
-    locator.close();
+    CoreHandle handle = new CoreHandle(locator, factory, session, producer, null);
+    handle.close();
   }
 
   public void consumeMessages(ServerContext serverCtx, String inVmUri, String username, String password,
@@ -245,10 +234,8 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     session.start();
     Thread.sleep(100L);
 
-    consumer.close();
-    session.close();
-    factory.close();
-    locator.close();
+    CoreHandle handle = new CoreHandle(locator, factory, session, null, consumer);
+    handle.close();
   }
 
   public void produceJmsMessages(String uri, String username, String password, String address, String messageBody, int count) throws Exception {
@@ -265,10 +252,11 @@ public class ContinuityTestBase extends ActiveMQTestBase {
       producer.send(message);
     }
     
-    connection.close();
+    JmsHandle handle = new JmsHandle(factory, connection, session, null, producer, null);
+    handle.close();
   }
 
-  public void startConsumer(ServerContext serverCtx, String inVmUri, String username, String password, String queueName, MessageHandler handler) throws Exception {
+  public CoreHandle startConsumer(ServerContext serverCtx, String inVmUri, String username, String password, String queueName, MessageHandler handler) throws Exception {
     ServerLocator locator = ActiveMQClient.createServerLocator(inVmUri);
     ClientSessionFactory factory = locator.createSessionFactory();
     ClientSession session = factory.createSession(username, password, false, true, true, true, locator.getAckBatchSize());
@@ -276,10 +264,10 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     ClientConsumer consumer = session.createConsumer(queueName, "AMQDurable = 'DURABLE'");
     consumer.setMessageHandler(handler);
 
-    session.start();
+    return new CoreHandle(locator, factory, session, null, consumer);
   }
 
-  public ClientSession startCoreConsumer(String url, String username, String password, String queueName, CoreMessageHandlerStub handler) throws Exception {
+  public CoreHandle startCoreConsumer(String url, String username, String password, String queueName, CoreMessageHandlerStub handler) throws Exception {
     ServerLocator locator = ActiveMQClient.createServerLocator(url);
     ClientSessionFactory factory = locator.createSessionFactory();
     ClientSession session = factory.createSession(username, password, false, false, false, false, 1); // locator.getAckBatchSize());
@@ -290,10 +278,10 @@ public class ContinuityTestBase extends ActiveMQTestBase {
 
     session.start();
 
-    return session;
+    return new CoreHandle(locator, factory, session, null, consumer);
   }
 
-  public Connection startJmsConsumer(String uri, String username, String password, String queueName, JmsMessageListenerStub listener) throws Exception {
+  public JmsHandle startJmsConsumer(String uri, String username, String password, String queueName, JmsMessageListenerStub listener) throws Exception {
     ConnectionFactory factory = new ActiveMQConnectionFactory(uri);
     Connection connection = factory.createConnection(username, password);
     Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
@@ -306,10 +294,10 @@ public class ContinuityTestBase extends ActiveMQTestBase {
 
     connection.start();
 
-    return connection;
+    return new JmsHandle(factory, connection, session, queue, null, consumer);
   }
 
-  public ClientSession consumeDirect(String url, String username, String password, String address, RoutingType routingType, String queueName, MessageHandler handler) throws Exception {
+  public CoreHandle consumeDirect(String url, String username, String password, String address, RoutingType routingType, String queueName, MessageHandler handler) throws Exception {
     ServerLocator locator = ActiveMQClient.createServerLocator(url);
     ClientSessionFactory factory = locator.createSessionFactory();
     ClientSession session = factory.createSession(username, password, false, true, true, false, locator.getAckBatchSize());
@@ -321,7 +309,89 @@ public class ContinuityTestBase extends ActiveMQTestBase {
 
     session.start();
 
-    return session;
+    return new CoreHandle(locator, factory, session, null, consumer);
+  }
+
+  public class JmsHandle {
+    private final ConnectionFactory factory;
+    private final Connection connection;
+    private final Session session;
+    private final Queue queue;
+    private MessageConsumer consumer = null;
+    private MessageProducer producer = null;
+    public JmsHandle(final ConnectionFactory factory, final Connection connection, final Session session, final Queue queue, MessageProducer producer, MessageConsumer consumer) {
+      this.factory = factory;
+      this.connection = connection;
+      this.session = session;
+      this.queue = queue;
+      this.producer = producer;
+      this.consumer = consumer;
+    }
+    public void close() throws JMSException {
+      if(consumer != null)
+        consumer.close();
+      if(producer != null)
+        producer.close();
+      session.close();
+      connection.close();
+    }
+    public ConnectionFactory getFactory() {
+      return factory;
+    }
+    public Connection getConnection() {
+      return connection;
+    }
+    public Session getSession() {
+      return session;
+    }
+    public Queue getQueue() {
+      return queue;
+    }
+    public MessageConsumer getConsumer() {
+      return consumer;
+    }
+    public MessageProducer getProducer() {
+      return producer;
+    }
+  }
+
+  public class CoreHandle {
+    private final ServerLocator locator;
+    private final ClientSessionFactory factory;
+    private final ClientSession session;
+    private ClientConsumer consumer = null;
+    private ClientProducer producer = null;
+    public CoreHandle(final ServerLocator locator, final ClientSessionFactory factory, final ClientSession session, ClientProducer producer, ClientConsumer consumer) {
+      this.locator = locator;
+      this.factory = factory;
+      this.session = session;
+      this.producer = producer;
+      this.consumer = consumer;
+    }
+    public void close() throws ActiveMQException {
+      if(producer != null)
+        producer.close();
+      if(consumer != null)
+        consumer.close();
+      session.close();
+      factory.close();
+      locator.close();
+    }
+    public ServerLocator getLocator() {
+      return locator;
+    }
+    public ClientSessionFactory getFactory() {
+      return factory;
+    }
+    public ClientSession getSession() {
+      return session;
+    }
+    public ClientConsumer getConsumer() {
+      return consumer;
+    }
+    public ClientProducer getProducer() {
+      return producer;
+    }
   }
 
   public class MessageHandlerStub implements MessageHandler {    

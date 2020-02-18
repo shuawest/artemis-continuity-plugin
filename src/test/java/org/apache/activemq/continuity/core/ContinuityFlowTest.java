@@ -36,7 +36,7 @@ public class ContinuityFlowTest extends ContinuityTestBase {
 
   @Test
   public void constructorTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "ContinuityFlowTest.constructorTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
 
     when(continuityCtx.getConfig().getOutflowMirrorSuffix()).thenReturn(".out.mirror");
@@ -70,11 +70,13 @@ public class ContinuityFlowTest extends ContinuityTestBase {
     assertThat(flow.getInflowMirrorName(), equalTo("async-sample1-a.in.mirror"));
     assertThat(flow.getInflowAcksName(), equalTo("async-sample1-a.in.acks"));
     assertThat(flow.getTargetBridgeName(), equalTo("async-sample1-a.in.mirror.bridge"));
+
+    serverCtx.getServer().asyncStop(()->{});
   }
 
   @Test
   public void initializeTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "ContinuityFlowTest.initializeTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
@@ -112,6 +114,9 @@ public class ContinuityFlowTest extends ContinuityTestBase {
     assertThat("AckInterceptor", flow.getAckInterceptor(), notNullValue());
     assertThat("AckManager", flow.getAckManager(), notNullValue());
     assertThat("AckReceiver", flow.getAckReceiver(), notNullValue());
+
+    flow.stop();
+    serverCtx.getServer().asyncStop(()->{});
   }
 
   private void verifyQueueExists(ServerContext serverCtx, String qName, RoutingType routingType) {

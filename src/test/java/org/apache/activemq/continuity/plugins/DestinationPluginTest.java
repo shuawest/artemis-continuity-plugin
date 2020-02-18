@@ -29,7 +29,7 @@ public class DestinationPluginTest extends ContinuityTestBase {
 
   @Test
   public void addQueueTest() throws Exception { 
-    ServerContext serverCtx = createServerContext("broker2-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker2-noplugin.xml", "DestinationPluginTest.addQueueTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     
     DestinationPlugin plugin = new DestinationPlugin(continuityCtx.getService());
@@ -38,6 +38,8 @@ public class DestinationPluginTest extends ContinuityTestBase {
     serverCtx.getServer().start();
 
     verify(continuityCtx.getService(), times(3)).handleAddQueue(any(Queue.class));
+    
+    serverCtx.getServer().asyncStop(()->{});
   }
   
 }

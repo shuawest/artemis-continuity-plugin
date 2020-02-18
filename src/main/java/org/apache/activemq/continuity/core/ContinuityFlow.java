@@ -183,6 +183,7 @@ public class ContinuityFlow {
       stopBridge(targetBridge);
       ackInterceptor.stop();
       ackReceiver.stop();
+      service.getManagement().unregisterFlowManagement(service, this);
     } catch (Exception e) {
       throw new ContinuityException("Unable to stop bridge", e);
     }

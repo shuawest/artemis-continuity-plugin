@@ -31,7 +31,7 @@ public class CommandReceiverTest extends ContinuityTestBase {
 
   @Test
   public void sendCommandTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "CommandReceiverTest.sendCommandTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
@@ -53,11 +53,13 @@ public class CommandReceiverTest extends ContinuityTestBase {
     assertThat(actualCmd.getAction(), equalTo(cmd.getAction()));
     assertThat(actualCmd.getAddress(), equalTo(cmd.getAddress()));
     assertThat(actualCmd.getQueue(), equalTo(cmd.getQueue()));
+
+    serverCtx.getServer().asyncStop(()->{});
   }
 
   @Test
   public void sendInvalidCommandTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "CommandReceiverTest.sendInvalidCommandTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
     
@@ -68,6 +70,8 @@ public class CommandReceiverTest extends ContinuityTestBase {
     produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, "cmd-mock", "cmd-mock", receiver, cmdJson, null);
 
     verify(continuityCtx.getService(), times(0)).handleIncomingCommand(any());
+
+    serverCtx.getServer().asyncStop(()->{});
   }
 
 }

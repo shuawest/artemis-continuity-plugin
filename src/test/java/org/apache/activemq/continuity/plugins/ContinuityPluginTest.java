@@ -32,7 +32,7 @@ public class ContinuityPluginTest extends ContinuityTestBase {
 
   @Test
   public void pluginStartTest() throws Exception { 
-    ServerContext serverCtx = createServerContext("broker2-noplugin.xml", "test-broker2", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker2-noplugin.xml", "ContinuityPluginTest.pluginStartTest", "myuser", "mypass");
 
     ContinuityPlugin plugin = new ContinuityPlugin();
     plugin.init(new HashMap<String, String>() {{
@@ -50,7 +50,7 @@ public class ContinuityPluginTest extends ContinuityTestBase {
     
     // create a dummy connection to start the plugin
     MessageHandlerStub dummyHandler = new MessageHandlerStub();
-    consumeDirect("tcp://localhost:61617", "myuser", "mypass", "artemis.continuity.commands.in", RoutingType.MULTICAST, "commandStubQueue", dummyHandler);
+    CoreHandle conumerHandle = consumeDirect("tcp://localhost:61617", "myuser", "mypass", "artemis.continuity.commands.in", RoutingType.MULTICAST, "commandStubQueue", dummyHandler);
 
     assertThat(plugin.getConfig(), notNullValue());
     assertThat(plugin.getConfig().getSiteId(), equalTo("site2"));
@@ -74,12 +74,17 @@ public class ContinuityPluginTest extends ContinuityTestBase {
     assertThat(flow1.getAckReceiver(), notNullValue());
     assertThat(flow1.getAckReceiver().isStarted(), equalTo(true));
     assertThat(flow1.getAckManager(), notNullValue());
+
+    // cleanup
+    conumerHandle.close();
+    plugin.getService().stop();
+    serverCtx.getServer().asyncStop(()->{});
   }
   
   @Test
   public void brokerConnectTest() throws Exception { 
-    ServerContext serverCtx1 = createServerContext("broker1-with-plugin.xml", "test-broker1", "myuser", "mypass");
-    ServerContext serverCtx2 = createServerContext("broker2-with-plugin.xml", "test-broker2", "myuser", "mypass");
+    ServerContext serverCtx1 = createServerContext("broker1-with-plugin.xml", "ContinuityPluginTest.brokerConnectTest", "myuser", "mypass");
+    ServerContext serverCtx2 = createServerContext("broker2-with-plugin.xml", "ContinuityPluginTest.brokerConnectTest", "myuser", "mypass");
     serverCtx1.getServer().start();
     serverCtx2.getServer().start();
 
@@ -101,6 +106,11 @@ public class ContinuityPluginTest extends ContinuityTestBase {
     ContinuityFlow flow1b = plugin1.getService().locateFlow("example2-durable");
     assertThat(flow1a, notNullValue());
     assertThat(flow1b, notNullValue());
+
+    plugin1.getService().stop();
+    plugin2.getService().stop();
+    serverCtx1.getServer().asyncStop(()->{});
+    serverCtx2.getServer().asyncStop(()->{});
   }
 
   private ContinuityPlugin getContinuityPlugin(ServerContext serverCtx) {

@@ -34,7 +34,7 @@ public class CommandManagerTest extends ContinuityTestBase {
 
   @Test
   public void initializeTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "CommandManagerTest.initializeTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
     
@@ -55,15 +55,16 @@ public class CommandManagerTest extends ContinuityTestBase {
     assertThat("command in listener not subscribed", cmdQueue.getConsumerCount(), equalTo(1));
 
     manager.stop();
+    serverCtx.getServer().asyncStop(()->{});
   }
 
   @Test
   public void bridgeCommandTest() throws Exception {
-    ServerContext serverCtx1 = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx1 = createServerContext("broker1-noplugin.xml", "CommandManagerTest.bridgeCommandTest", "myuser", "mypass");
     ContinuityContext continuityCtx1 = createMockContext(serverCtx1, "primary", 1);
     serverCtx1.getServer().start();
 
-    ServerContext serverCtx2 = createServerContext("broker2-noplugin.xml", "backup-server", "myuser", "mypass");
+    ServerContext serverCtx2 = createServerContext("broker2-noplugin.xml", "CommandManagerTest.bridgeCommandTest", "myuser", "mypass");
     ContinuityContext continuityCtx2 = createMockContext(serverCtx2, "backup", 2);
     serverCtx2.getServer().start();
 
@@ -86,15 +87,17 @@ public class CommandManagerTest extends ContinuityTestBase {
       
     manager1.stop();
     manager2.stop();
+    serverCtx1.getServer().asyncStop(()->{});
+    serverCtx2.getServer().asyncStop(()->{});
   }
 
   @Test
   public void bridgeCommandFromBackupTest() throws Exception {
-    ServerContext serverCtx1 = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx1 = createServerContext("broker1-noplugin.xml", "CommandManagerTest.bridgeCommandFromBackupTest", "myuser", "mypass");
     ContinuityContext continuityCtx1 = createMockContext(serverCtx1, "primary", 1);
     serverCtx1.getServer().start();
 
-    ServerContext serverCtx2 = createServerContext("broker2-noplugin.xml", "backup-server", "myuser", "mypass");
+    ServerContext serverCtx2 = createServerContext("broker2-noplugin.xml", "CommandManagerTest.bridgeCommandFromBackupTest", "myuser", "mypass");
     ContinuityContext continuityCtx2 = createMockContext(serverCtx2, "backup", 2);
     serverCtx2.getServer().start();
 
@@ -110,13 +113,15 @@ public class CommandManagerTest extends ContinuityTestBase {
     manager2.sendCommand("test message from backup");
     Thread.sleep(200L);
 
-    verifyMessage(continuityCtx1, "test message from backup", continuityCtx1.getConfig().getSiteId(), 
+    verifyMessage(continuityCtx1, "test message from backup", continuityCtx2.getConfig().getSiteId(), 
         1, "Failed to receive command on primary from backup");
     verifyMessage(continuityCtx2, "test message from backup", continuityCtx1.getConfig().getSiteId(), 
         0, "should not receive on backup from backup");
       
     manager1.stop();
     manager2.stop();
+    serverCtx1.getServer().asyncStop(()->{});
+    serverCtx2.getServer().asyncStop(()->{});
   }
 
   // TODO

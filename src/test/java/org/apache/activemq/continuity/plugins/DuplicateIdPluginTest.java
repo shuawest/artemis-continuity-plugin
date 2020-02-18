@@ -42,7 +42,7 @@ public class DuplicateIdPluginTest extends ContinuityTestBase {
 
   @Test
   public void mockedMessageTest() throws Exception { 
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "DuplicateIdPluginTest.mockedMessageTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
  
     String addressName = "async-sample1";
@@ -67,7 +67,7 @@ public class DuplicateIdPluginTest extends ContinuityTestBase {
 
   @Test
   public void mockedMessageNonTargetAddressTest() throws Exception { 
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "DuplicateIdPluginTest.mockedMessageNonTargetAddressTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
  
     String addressName = "non-targetAddress";
@@ -88,7 +88,7 @@ public class DuplicateIdPluginTest extends ContinuityTestBase {
 
   @Test
   public void mockedMessageAlreadyHasDuplicateIdTest() throws Exception { 
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "DuplicateIdPluginTest.mockedMessageAlreadyHasDuplicateIdTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
  
     String addressName = "async-sample1";
@@ -109,7 +109,7 @@ public class DuplicateIdPluginTest extends ContinuityTestBase {
 
   @Test
   public void actualMessageTest() throws Exception { 
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "DuplicateIdPluginTest.actualMessageTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
@@ -134,11 +134,13 @@ public class DuplicateIdPluginTest extends ContinuityTestBase {
     assertThat("message was not received", receivedMessage.getBodyBuffer().readString(), equalTo(expectedMessage));
     assertThat("message duplicate id header was null", receivedMessage.getStringProperty(Message.HDR_DUPLICATE_DETECTION_ID), notNullValue());
     assertThat("message duplicate id bytes was null", receivedMessage.getDuplicateIDBytes(), notNullValue());
+
+    serverCtx.getServer().asyncStop(()->{});
   }
 
   @Test
   public void actualMessageAlreadyHasDuplicateIdTest() throws Exception { 
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "primary-server", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "DuplicateIdPluginTest.actualMessageAlreadyHasDuplicateIdTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
@@ -164,6 +166,8 @@ public class DuplicateIdPluginTest extends ContinuityTestBase {
     assertThat("message was not received", receivedMessage.getBodyBuffer().readString(), equalTo(expectedMessage));
     assertThat("message duplicate id header was null", receivedMessage.getStringProperty(Message.HDR_DUPLICATE_DETECTION_ID), equalTo(expectedUuid));
     assertThat("message duplicate id bytes was null", receivedMessage.getDuplicateIDBytes(), notNullValue());
+
+    serverCtx.getServer().asyncStop(()->{});
   }
   
   @Test
