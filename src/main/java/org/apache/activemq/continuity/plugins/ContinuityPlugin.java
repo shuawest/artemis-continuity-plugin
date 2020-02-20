@@ -15,9 +15,11 @@ package org.apache.activemq.continuity.plugins;
 
 import java.util.Map;
 
+import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.core.config.Configuration;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerPlugin;
+import org.apache.activemq.artemis.spi.core.protocol.RemotingConnection;
 import org.apache.activemq.continuity.core.ContinuityConfig;
 import org.apache.activemq.continuity.core.ContinuityException;
 import org.apache.activemq.continuity.core.ContinuityService;
@@ -61,6 +63,11 @@ public class ContinuityPlugin implements ActiveMQServerPlugin {
         log.error("Unable to stop continuity service on unregister", e);
       }
     }
+  }
+
+  @Override
+  public void afterDestroyConnection(RemotingConnection connection) throws ActiveMQException {
+    log.debug("Connection destroyed: {}", connection);
   }
 
   public ContinuityService getService() {

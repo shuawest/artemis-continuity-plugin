@@ -239,7 +239,7 @@ public class CommandManager {
   public void sendCommand(String body) throws ContinuityException {
     try {
       if(log.isDebugEnabled()) {
-        log.debug("Sending command: {}", body);
+        log.debug("Sending command: {} (Thread: {})", body, Thread.currentThread().getName());
       }
 
       ClientMessage message = session.createMessage(true);

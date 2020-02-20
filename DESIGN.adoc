@@ -67,9 +67,8 @@ image:docs/202001ContinuityPlugin-internals-diagram-v0.2-2.png[Continuity Plugin
 
 ## TODO
 
-- fix server stop issue
-- fix Ack and Command receive acknowledgment issue
 - fix command send session issue 
+- fix Ack and Command receive acknowledgment issue
 - convert info logging to AuditLogger pattern
 - add additional queues to the same address both anycast and multicast
 - rationalize what happens when there are nondurable and temporary susbscribers
@@ -79,6 +78,7 @@ image:docs/202001ContinuityPlugin-internals-diagram-v0.2-2.png[Continuity Plugin
 - analyze FSI apps and create IBM MQ eqivalent destinations
 - extract MQ configuration from IBM WAS-ND and replicate in AMQ config
 
+- fix server stop issue (can't figure out how to hook into pre-server shutdown to stop sessions, bridges, etc)
 1. create image and automated deployment to push to multiple openshift sites
 2. load test 2 site single broker install (compare with single site without the plugin)
 3. soak test broker with continuity replication
