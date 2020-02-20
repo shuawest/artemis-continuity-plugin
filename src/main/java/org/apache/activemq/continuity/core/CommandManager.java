@@ -61,6 +61,7 @@ public class CommandManager {
   private ClientProducer producer = null;
   private ClientConsumer consumer = null;
 
+  // TODO: Fix receive ack issue
   public CommandManager(final ContinuityService service, final CommandReceiver commandReceiver) {
     this.service = service;
     this.commandReceiver = commandReceiver;
@@ -109,7 +110,9 @@ public class CommandManager {
       return;
 
     try {
-      getServer().getActiveMQServerControl().destroyBridge(commandOutBridgeName);
+      if(getServer().isStarted()) {
+        getServer().getActiveMQServerControl().destroyBridge(commandOutBridgeName);
+      }
       consumer.close();
       producer.close();
       session.close();
@@ -129,13 +132,15 @@ public class CommandManager {
   
     Queue queue = null;
     try {
-      queue = getServer().createQueue(new SimpleString(addressName), // address
-                                      routingType, // routing type
-                                      new SimpleString(queueName), // queue name
-                                      null, // filter
-                                      true, // durable
-                                      false); // temporary
-
+      if(!queueExists(queueName)) {
+        queue = getServer().createQueue(
+          new SimpleString(addressName), // address
+          routingType, // routing type
+          new SimpleString(queueName), // queue name
+          null, // filter
+          true, // durable
+          false); // temporary
+      }
     } catch (final Exception e) {
       log.error("Failed to create continuity command destination", e);
       throw new ContinuityException("Failed to create continuity command destination", e);
@@ -146,8 +151,13 @@ public class CommandManager {
   private boolean queueExists(final String queueName) throws ContinuityException {
     try {
       final QueueQueryResult queueSearch = getServer().queueQuery(SimpleString.toSimpleString(queueName));
-      log.debug("Checking if queue {} exists: {}", queueName, queueSearch.isExists());
+      
+      if(log.isTraceEnabled()) {
+        log.trace("Checking if queue {} exists: {}", queueName, queueSearch.isExists());
+      }
+      
       return (queueSearch.isExists());
+
     } catch (final Exception e) {
       final String eMessage = String.format("Failed check if queue exists: %s", queueName);
       log.error(eMessage, e);

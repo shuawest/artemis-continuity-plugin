@@ -99,7 +99,7 @@ public class ContinuityManagementService {
         try {
             ObjectName name = getContinuityServiceName();
             if (log.isDebugEnabled()) {
-                log.debug("Registering continuity service for management: {}", name);
+                log.debug("Unregistering continuity service from management: {}", name);
             }
             managementService.unregisterFromJMX(name);
             managementService.unregisterFromRegistry(CONTINUITY_SERVICE_NAME);

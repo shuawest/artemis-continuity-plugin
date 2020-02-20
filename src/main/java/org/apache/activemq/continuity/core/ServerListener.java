@@ -68,15 +68,23 @@ public class ServerListener implements ActivateCallback {
     }
 
     @Override
-    public void stop(ActiveMQServer server) {
+    public void deActivate() {
         if(log.isDebugEnabled()) {
-            log.debug("Server stop");
+            log.debug("Server deActivate");
         }
 
         try {
             service.stop();
         } catch(ContinuityException e) {
-            log.error("Unable to start continuity service", e);
+            log.error("Unable to stop continuity service", e);
+        }
+    }
+
+    // Stop doesn't appear to be called 
+    @Override
+    public void stop(ActiveMQServer server) {
+        if(log.isDebugEnabled()) {
+            log.debug("Server stop");
         }
     }
  

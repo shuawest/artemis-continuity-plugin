@@ -19,6 +19,7 @@ import org.apache.activemq.artemis.core.config.Configuration;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerPlugin;
 import org.apache.activemq.continuity.core.ContinuityConfig;
+import org.apache.activemq.continuity.core.ContinuityException;
 import org.apache.activemq.continuity.core.ContinuityService;
 import org.apache.activemq.continuity.core.ServerListener;
 import org.slf4j.Logger;
@@ -38,16 +39,28 @@ public class ContinuityPlugin implements ActiveMQServerPlugin {
 
   @Override
   public void registered(ActiveMQServer server) {
-      log.debug("Creating continuity service");
-      this.continuityService = new ContinuityService(server, continuityConfig);
-      ServerListener.registerActivateCallback(server, continuityService);
+    log.debug("Creating continuity service");
+    this.continuityService = new ContinuityService(server, continuityConfig);
+    ServerListener.registerActivateCallback(server, continuityService);
 
-      log.debug("Registering dependent plugins");
-      Configuration brokerConfig = server.getConfiguration();
-      brokerConfig.registerBrokerPlugin(new DestinationPlugin(continuityService));
-      brokerConfig.registerBrokerPlugin(new DuplicateIdPlugin(continuityService));
-      brokerConfig.registerBrokerPlugin(new InflowMirrorPlugin(continuityService));
-      brokerConfig.registerBrokerPlugin(new AckInterceptorPlugin(continuityService));
+    log.debug("Registering dependent plugins");
+    Configuration brokerConfig = server.getConfiguration();
+    brokerConfig.registerBrokerPlugin(new DestinationPlugin(continuityService));
+    brokerConfig.registerBrokerPlugin(new DuplicateIdPlugin(continuityService));
+    brokerConfig.registerBrokerPlugin(new InflowMirrorPlugin(continuityService));
+    brokerConfig.registerBrokerPlugin(new AckInterceptorPlugin(continuityService));
+  }
+
+  @Override
+  public void unregistered(ActiveMQServer server) {
+    log.debug("Unregistering continuity service");
+    try {
+      continuityService.stop();
+    } catch (ContinuityException e) {
+      if(log.isErrorEnabled()) {
+        log.error("Unable to stop continuity service on unregister", e);
+      }
+    }
   }
 
   public ContinuityService getService() {
