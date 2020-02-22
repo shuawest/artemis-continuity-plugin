@@ -72,8 +72,8 @@ public class AckReceiver implements MessageHandler {
       if (session == null || session.isClosed()) {
         this.locator = ActiveMQClient.createServerLocator(getConfig().getLocalInVmUri());
         this.factory = locator.createSessionFactory();
-        this.session = factory.createSession(getConfig().getLocalUsername(), getConfig().getLocalPassword(), false,
-            false, false, false, locator.getAckBatchSize());
+        this.session = factory.createSession(getConfig().getLocalUsername(), getConfig().getLocalPassword(), 
+                          false, true, true, true, locator.getAckBatchSize());
         session.start();
 
         if (log.isDebugEnabled())

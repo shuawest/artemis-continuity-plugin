@@ -19,7 +19,6 @@ import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
-import org.apache.activemq.artemis.api.core.client.ClientProducer;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.apache.activemq.artemis.api.core.client.MessageHandler;
@@ -72,8 +71,7 @@ public class CommandReceiver implements MessageHandler {
         this.factory = locator.createSessionFactory();
         this.session = factory.createSession(getConfig().getLocalUsername(),
                                              getConfig().getLocalPassword(), 
-                                             false, true, true, false, 
-                                             locator.getAckBatchSize());
+                                             false, true, true, true, locator.getAckBatchSize());
         session.start();
       }
 

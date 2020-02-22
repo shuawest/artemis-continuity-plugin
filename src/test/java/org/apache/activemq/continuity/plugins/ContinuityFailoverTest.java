@@ -47,7 +47,7 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
     ServerContext serverCtx2 = createServerContext("broker2-with-plugin.xml", "ContinuityFailoverTest.coreSwapoverTest", "myuser", "mypass");
     serverCtx1.getServer().start();
     serverCtx2.getServer().start();
-    Thread.sleep(2000L);
+    Thread.sleep(3000L);
 
     log.debug("\n\nProducing test messages on broker1\n\n");
     produceMessages("vm://1", "myuser", "mypass", "example1", "test message", 100);
@@ -60,7 +60,7 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
     CoreMessageHandlerStub handler1 = new CoreMessageHandlerStub("broker1");
     CoreHandle core1 = startCoreConsumer("vm://1", "myuser", "mypass", "example1-durable", handler1);
 
-    Thread.sleep(20L);
+    Thread.sleep(25L);
     log.debug("\n\nKilling session on broker 1\n\n");
     core1.getSession().close();
 
