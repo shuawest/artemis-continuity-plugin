@@ -41,7 +41,7 @@ public class CommandReceiverTest extends ContinuityTestBase {
     cmd.setQueue("myqueue");
     String cmdJson = ContinuityCommand.toJSON(cmd);
 
-    CommandReceiver receiver = new CommandReceiver(continuityCtx.getService());
+    CommandReceiver receiver = new CommandReceiver(continuityCtx.getService(), continuityCtx.getCommandManager());
 
     produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, "cmd-mock", "cmd-mock", receiver, cmdJson, null);
 
@@ -65,7 +65,7 @@ public class CommandReceiverTest extends ContinuityTestBase {
     
     String cmdJson = "{asdfasfs}";
 
-    CommandReceiver receiver = new CommandReceiver(continuityCtx.getService());
+    CommandReceiver receiver = new CommandReceiver(continuityCtx.getService(), continuityCtx.getCommandManager());
 
     produceAndConsumeMessage(continuityCtx.getConfig(), serverCtx, "cmd-mock", "cmd-mock", receiver, cmdJson, null);
 

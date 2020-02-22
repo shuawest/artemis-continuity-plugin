@@ -39,14 +39,13 @@ public class CommandManager {
 
   private static final Logger log = LoggerFactory.getLogger(CommandManager.class);
 
-  public static final String ORIGIN_HEADER = "CONTINUITY_ORIGIN";
-
   private final ContinuityService service;
-  private final CommandReceiver commandReceiver;
 
   private final String commandInQueueName;
   private final String commandOutQueueName;
   private final String commandOutBridgeName;
+
+  private CommandReceiver commandReceiver;
 
   private Queue commandInQueue = null;
   private Queue commandOutQueue = null;
@@ -55,16 +54,10 @@ public class CommandManager {
   private boolean isInitialized = false;
   private boolean isStarted = false;
 
-  private ClientSession session = null;
-  private ServerLocator locator = null;
-  private ClientSessionFactory factory = null;
-  private ClientProducer producer = null;
-  private ClientConsumer consumer = null;
 
   // TODO: Fix receive ack issue
-  public CommandManager(final ContinuityService service, final CommandReceiver commandReceiver) {
+  public CommandManager(final ContinuityService service) {
     this.service = service;
-    this.commandReceiver = commandReceiver;
     this.commandInQueueName = getConfig().getCommandDestinationPrefix() + ".in";
     this.commandOutQueueName = getConfig().getCommandDestinationPrefix() + ".out";
     this.commandOutBridgeName = getConfig().getCommandDestinationPrefix() + ".out.bridge";
@@ -79,6 +72,8 @@ public class CommandManager {
     commandInQueue = createCommandQueue(commandInQueueName, commandInQueueName, RoutingType.ANYCAST);
     commandOutQueue = createCommandQueue(commandOutQueueName, commandOutQueueName, RoutingType.MULTICAST);
 
+    this.commandReceiver = new CommandReceiver(service, this);
+
     isInitialized = true;
 
     if (log.isDebugEnabled()) {
@@ -90,13 +85,13 @@ public class CommandManager {
     if(isStarted)
       return; 
 
-    prepareSession();
-    
     commandOutBridge = createCommandBridge(commandOutBridgeName, 
                                            getConfig().getRemoteConnectorRef(), 
                                            commandOutQueueName, 
                                            commandInQueueName, 
                                            true);
+
+    commandReceiver.start();
 
     isStarted = true;
 
@@ -106,18 +101,15 @@ public class CommandManager {
   }
 
   public void stop() throws ContinuityException {
-    if(!isInitialized) 
+    if(!isStarted) 
       return;
 
     try {
       if(getServer().isStarted()) {
         getServer().getActiveMQServerControl().destroyBridge(commandOutBridgeName);
       }
-      consumer.close();
-      producer.close();
-      session.close();
-      factory.close();
-      locator.close();
+      commandReceiver.stop();
+
     } catch (final Exception e) {
       String eMessage = "Failed to stop command manager";
       log.error(eMessage, e);
@@ -197,42 +189,12 @@ public class CommandManager {
     return bridge;
   }
 
-  private void prepareSession() throws ContinuityException {
-    try {
-      if (this.session == null || session.isClosed()) {
-
-        if(log.isDebugEnabled()) {
-          log.debug("Creating local session for commands on '{}' with user '{}'", getConfig().getLocalInVmUri(), getConfig().getLocalUsername());
-        }
-        
-        this.locator = ActiveMQClient.createServerLocator(getConfig().getLocalInVmUri());
-        this.factory = locator.createSessionFactory();
-        this.session = factory.createSession(getConfig().getLocalUsername(),
-                                             getConfig().getLocalPassword(), 
-                                             false, true, true, false, 
-                                             locator.getAckBatchSize());
-        session.start();
-      }
-
-      if(producer == null || producer.isClosed()) {
-        log.debug("Creating producer for commands {}", commandOutQueueName);
-        this.producer = session.createProducer(commandOutQueueName);
-      }
-
-      if(consumer == null || consumer.isClosed()) {
-        log.debug("Creating consumer for commands {}", commandInQueueName);
-        this.consumer = session.createConsumer(commandInQueueName);
-        consumer.setMessageHandler(commandReceiver);
-      }
-    } catch (Exception e) {
-      String eMessage = "Failed to create session for continuity command queue";
-      log.error(eMessage, e);
-      throw new ContinuityException(eMessage, e);
-    }
-  }
-
+  // TODO: consider adding batch send command method to reuse a single session
   public void sendCommand(ContinuityCommand command) throws ContinuityException {
+    command.setOrigin(getConfig().getSiteId());
+
     String body = ContinuityCommand.toJSON(command);
+    
     sendCommand(body);
   }
 
@@ -242,14 +204,29 @@ public class CommandManager {
         log.debug("Sending command: {} (Thread: {})", body, Thread.currentThread().getName());
       }
 
+      ServerLocator locator = ActiveMQClient.createServerLocator(getConfig().getLocalInVmUri());
+      ClientSessionFactory factory = locator.createSessionFactory();
+      ClientSession session = factory.createSession(getConfig().getLocalUsername(),
+                                            getConfig().getLocalPassword(), 
+                                            false, true, true, false, 
+                                            locator.getAckBatchSize());
+
+      ClientProducer producer = session.createProducer(commandOutQueueName);
+
+      session.start();
+      
       ClientMessage message = session.createMessage(true);
-      message.putStringProperty(ORIGIN_HEADER, getConfig().getSiteId());
       message.getBodyBuffer().writeString(body);
 
       producer.send(message);
+
+      producer.close();
+      session.close();
+      factory.close();
+      locator.close();
       
     } catch (Exception e) {
-      String eMessage = "Failed send command: " + body;
+      String eMessage = "Failed to send command: " + body;
       log.error(eMessage, e);
       throw new ContinuityException(eMessage, e);
     }

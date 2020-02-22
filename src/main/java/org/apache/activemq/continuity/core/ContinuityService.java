@@ -59,8 +59,7 @@ public class ContinuityService {
     }
 
     if(this.commandManager == null) {
-      CommandReceiver cmdReceiver = new CommandReceiver(this);
-      CommandManager cmdMgr = new CommandManager(this, cmdReceiver);
+      CommandManager cmdMgr = new CommandManager(this);
       cmdMgr.initialize();
     }
 

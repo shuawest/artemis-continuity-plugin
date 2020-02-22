@@ -16,8 +16,15 @@ package org.apache.activemq.continuity.core;
 import java.text.ParseException;
 
 import org.apache.activemq.artemis.api.core.ActiveMQException;
+import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
+import org.apache.activemq.artemis.api.core.client.ClientConsumer;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
+import org.apache.activemq.artemis.api.core.client.ClientProducer;
+import org.apache.activemq.artemis.api.core.client.ClientSession;
+import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.apache.activemq.artemis.api.core.client.MessageHandler;
+import org.apache.activemq.artemis.api.core.client.ServerLocator;
+import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,9 +33,80 @@ public class CommandReceiver implements MessageHandler {
   private static final Logger log = LoggerFactory.getLogger(CommandReceiver.class);
 
   private final ContinuityService service;
+  private final CommandManager commandManager;
 
-  public CommandReceiver(final ContinuityService service) {
+  private boolean isStarted = false;
+
+  private ClientSession session = null;
+  private ServerLocator locator = null;
+  private ClientSessionFactory factory = null;
+  private ClientConsumer consumer = null;
+
+  public CommandReceiver(final ContinuityService service, final CommandManager commandManager) {
     this.service = service;
+    this.commandManager = commandManager;
+  }
+
+  public void start() throws ContinuityException {
+    if(isStarted)
+      return; 
+
+    prepareSession();
+ 
+    isStarted = true;
+
+    if (log.isDebugEnabled()) {
+      log.debug("Finished starting continuity command receiver");
+    }
+  }
+
+  private void prepareSession() throws ContinuityException {
+    try {
+      if (this.session == null || session.isClosed()) {
+
+        if(log.isDebugEnabled()) {
+          log.debug("Creating local session for commands on '{}' with user '{}'", getConfig().getLocalInVmUri(), getConfig().getLocalUsername());
+        }
+        
+        this.locator = ActiveMQClient.createServerLocator(getConfig().getLocalInVmUri());
+        this.factory = locator.createSessionFactory();
+        this.session = factory.createSession(getConfig().getLocalUsername(),
+                                             getConfig().getLocalPassword(), 
+                                             false, true, true, false, 
+                                             locator.getAckBatchSize());
+        session.start();
+      }
+
+      if(consumer == null || consumer.isClosed()) {
+        log.debug("Creating consumer for commands {}", commandManager.getCommandInQueueName());
+        this.consumer = session.createConsumer(commandManager.getCommandInQueueName());
+        consumer.setMessageHandler(this);
+      }
+
+    } catch (Exception e) {
+      String eMessage = "Failed to create session for continuity reciever";
+      log.error(eMessage, e);
+      throw new ContinuityException(eMessage, e);
+    }
+  }
+
+  public void stop() throws ContinuityException {
+    if(!isStarted) 
+      return;
+
+    try {
+      if(getServer().isStarted()) {
+        getServer().getActiveMQServerControl().destroyBridge(commandManager.getCommandOutBridgeName());
+      }
+      consumer.close();
+      session.close();
+      factory.close();
+      locator.close();
+    } catch (final Exception e) {
+      String eMessage = "Failed to stop command receiver";
+      log.error(eMessage, e);
+      throw new ContinuityException(eMessage, e);
+    }
   }
 
   public void onMessage(ClientMessage message) {
@@ -42,6 +120,7 @@ public class CommandReceiver implements MessageHandler {
       ContinuityCommand command = ContinuityCommand.fromJSON(body);
       service.handleIncomingCommand(command);
       message.acknowledge(); 
+
     } catch(ContinuityException e) {
       String msg = String.format("Unable to handle ContinuityCommand: %s", body);
       log.error(msg, e);
@@ -52,6 +131,18 @@ public class CommandReceiver implements MessageHandler {
       String msg = String.format("Unable to ackknowledge ContinuityCommand message: %s", body);
       log.error(msg, e);
     }
+  }
+
+  private ContinuityConfig getConfig() {
+    return service.getConfig();
+  }
+
+  private ActiveMQServer getServer() {
+    return service.getServer();
+  }
+
+  public boolean isStarted() {
+    return isStarted;
   }
 
 }

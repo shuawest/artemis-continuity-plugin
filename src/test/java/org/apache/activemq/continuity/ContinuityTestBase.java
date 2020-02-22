@@ -105,6 +105,8 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     when(configMock.getLocalPassword()).thenReturn("mypass");
     when(configMock.getLocalConnectorRef()).thenReturn("local-connector");
     when(configMock.getRemoteConnectorRef()).thenReturn("remote-connector");
+    when(configMock.getBridgeInterval()).thenReturn(500L);
+    when(configMock.getBridgeIntervalMultiplier()).thenReturn(0.5);
 
     ContinuityContext continuityCtx = new ContinuityContext();
     continuityCtx.setConfig(configMock);

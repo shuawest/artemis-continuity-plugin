@@ -20,7 +20,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import org.apache.activemq.artemis.api.core.SimpleString;
-import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.continuity.ContinuityTestBase;
 import org.junit.Test;
@@ -38,7 +37,7 @@ public class CommandManagerTest extends ContinuityTestBase {
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
     
-    CommandManager manager = new CommandManager(continuityCtx.getService(), continuityCtx.getCommandReceiver());
+    CommandManager manager = new CommandManager(continuityCtx.getService());
     manager.initialize();
     manager.start();
 
@@ -68,22 +67,25 @@ public class CommandManagerTest extends ContinuityTestBase {
     ContinuityContext continuityCtx2 = createMockContext(serverCtx2, "backup", 2);
     serverCtx2.getServer().start();
 
-    CommandManager manager1 = new CommandManager(continuityCtx1.getService(), continuityCtx1.getCommandReceiver());
+    CommandManager manager1 = new CommandManager(continuityCtx1.getService());
+    CommandManager manager2 = new CommandManager(continuityCtx2.getService());
     manager1.initialize();
-
-    CommandManager manager2 = new CommandManager(continuityCtx2.getService(), continuityCtx2.getCommandReceiver());
     manager2.initialize();
-
     manager1.start();
     manager2.start();
 
-    manager1.sendCommand("test message from primary");
+    ContinuityCommand expectedCmd = new ContinuityCommand();
+    expectedCmd.setAction("test from primary");
+
+    manager1.sendCommand(expectedCmd);
     Thread.sleep(200L);
 
-    verifyMessage(continuityCtx2, "test message from primary", continuityCtx1.getConfig().getSiteId(), 
+    verifyMessage(continuityCtx2, "test from primary", continuityCtx1.getConfig().getSiteId(), 
         1, "Failed to receive command on backup from primary");
-    verifyMessage(continuityCtx1, "test message from primary", continuityCtx1.getConfig().getSiteId(), 
+    verifyMessage(continuityCtx1, "test from primary", continuityCtx1.getConfig().getSiteId(), 
         0, "should not received on primary from primary message from primary");
+        
+    //handleIncomingCommand(ContinuityCommand command)
       
     manager1.stop();
     manager2.stop();
@@ -101,21 +103,22 @@ public class CommandManagerTest extends ContinuityTestBase {
     ContinuityContext continuityCtx2 = createMockContext(serverCtx2, "backup", 2);
     serverCtx2.getServer().start();
 
-    CommandManager manager1 = new CommandManager(continuityCtx1.getService(), continuityCtx1.getCommandReceiver());
+    CommandManager manager1 = new CommandManager(continuityCtx1.getService());
+    CommandManager manager2 = new CommandManager(continuityCtx2.getService());
     manager1.initialize();
-
-    CommandManager manager2 = new CommandManager(continuityCtx2.getService(), continuityCtx2.getCommandReceiver());
     manager2.initialize();
-
     manager1.start();
     manager2.start();
 
-    manager2.sendCommand("test message from backup");
+    ContinuityCommand expectedCmd = new ContinuityCommand();
+    expectedCmd.setAction("test from backup");
+
+    manager2.sendCommand(expectedCmd);
     Thread.sleep(200L);
 
-    verifyMessage(continuityCtx1, "test message from backup", continuityCtx2.getConfig().getSiteId(), 
+    verifyMessage(continuityCtx1, "test from backup", continuityCtx2.getConfig().getSiteId(), 
         1, "Failed to receive command on primary from backup");
-    verifyMessage(continuityCtx2, "test message from backup", continuityCtx1.getConfig().getSiteId(), 
+    verifyMessage(continuityCtx2, "test from backup", continuityCtx1.getConfig().getSiteId(), 
         0, "should not receive on backup from backup");
       
     manager1.stop();
@@ -128,20 +131,20 @@ public class CommandManagerTest extends ContinuityTestBase {
   // sharedJournalNodeFailureTest - primary and backup 2 node shared-journal clusters
   // sharedNothingNodeFailureTest - primary and backup 3 node shared-nothing clusters
 
-  private void verifyMessage(ContinuityContext cctx, String body, String originHeader, int count, String description) {
-    ArgumentCaptor<ClientMessage> msgCaptor = ArgumentCaptor.forClass(ClientMessage.class);
+  private void verifyMessage(ContinuityContext cctx, String expectedAction, String expectedOrigin, int count, String description) throws ContinuityException {
+    ArgumentCaptor<ContinuityCommand> cmdCaptor = ArgumentCaptor.forClass(ContinuityCommand.class);
     if(count == 0) { 
-      verify(cctx.getCommandReceiver(), times(count).description(description)).onMessage(any());
+      verify(cctx.getService(), times(count).description(description)).handleIncomingCommand(any());
     } else {
-      verify(cctx.getCommandReceiver(), times(count).description(description)).onMessage(msgCaptor.capture());
-      ClientMessage msg = msgCaptor.getValue();
-      String actualBody = msg.getReadOnlyBodyBuffer().readString().toString();
-      String actualOrigin = msg.getStringProperty(CommandManager.ORIGIN_HEADER); 
+      verify(cctx.getService(), times(count).description(description)).handleIncomingCommand(cmdCaptor.capture());
+      ContinuityCommand cmd = cmdCaptor.getValue();
+      String actualBody = cmd.getAction();
+      String actualOrigin = cmd.getOrigin();
 
-      log.debug("Received message - origin '{}', body: {}\n\n", actualOrigin, actualBody);
+      log.debug("Received message - origin '{}', body: {}\n\n", expectedOrigin, actualBody);
 
-      assertThat(msg.getReadOnlyBodyBuffer().readString().toString(), equalTo(body));
-      assertThat(msg.getStringProperty(CommandManager.ORIGIN_HEADER), equalTo(originHeader));
+      assertThat(actualBody, equalTo(expectedAction));
+      assertThat(actualOrigin, equalTo(expectedOrigin));
     }
   }
 
