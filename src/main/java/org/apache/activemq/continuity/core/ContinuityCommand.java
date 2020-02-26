@@ -24,7 +24,7 @@ import org.apache.activemq.artemis.utils.JsonLoader;
 public class ContinuityCommand {
 
   public static final String ACTION_ACTIVATE_SITE = "activate-site";
-  public static final String NOTIF_OUTFLOW_EXHAUSTED = "outflow-exchausted";
+  public static final String NOTIF_OUTFLOW_EXHAUSTED = "outflow-exhausted";
   public static final String NOTIF_SITE_ACTIVATED = "site-activated";
   public static final String ACTION_BROKER_CONNECT = "broker-connect";
   public static final String ACTION_ADD_ADDRESS = "add-address";

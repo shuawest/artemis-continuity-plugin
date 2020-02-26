@@ -43,6 +43,39 @@ public class ContinuityControlImpl extends AbstractControl implements Continuity
     /* Status */
 
     @Override
+    public Boolean getSiteActivated() {
+        if (ContinuityAuditLogger.isEnabled() && service != null && service.getCommandManager() != null) {
+            ContinuityAuditLogger.isSiteActivated(service);
+        }
+        clearIO();
+        try {
+            if(service == null)
+                return null;
+            
+            return service.isActivated();
+        } finally {
+            blockOnIO();
+        }        
+    }
+
+    @Override
+    public Boolean getDelivering() {
+        if (ContinuityAuditLogger.isEnabled() && service != null && service.getCommandManager() != null) {
+            ContinuityAuditLogger.isDelivering(service);
+        }
+        clearIO();
+        try {
+            if(service == null)
+                return null;
+            
+            return service.isDelivering();
+        } finally {
+            blockOnIO();
+        }        
+    }
+    
+
+    @Override
     public String getServiceInitialized() {
         if (ContinuityAuditLogger.isEnabled() && service != null) {
             ContinuityAuditLogger.isServiceInitialized(service);

@@ -152,7 +152,7 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     long ackedCountBefore = example1Queue.getMessagesAcknowledged();
 
     // stop new connections from being accepted
-    plugin1.getService().pauseNonContinuityAcceptors();
+    plugin1.getService().stopNonContinuityAcceptors();
     // kill existing connections on non-continuity acceptors
     plugin1.getService().stopNonContinuityDelivery();
 

@@ -69,6 +69,7 @@ public class ContinuityConfig {
     this.outflowAcksSuffix = parseProperty(properties, "outflow-acks-suffix", DEFAULT_OUTFLOW_ACKS_SUFFIX);
     this.inflowMirrorSuffix = parseProperty(properties, "inflow-mirror-suffix", DEFAULT_INFLOW_MIRROR_SUFFIX);
     this.inflowAcksSuffix = parseProperty(properties, "inflow-acks-suffix", DEFAULT_INFLOW_ACKS_SUFFIX);
+
     this.inflowStagingDelay = parseLongProperty(properties, "inflow-staging-delay-ms", 60000L);
     this.bridgeInterval = parseLongProperty(properties, "bridge-interval-ms", 100L);
     this.bridgeIntervalMultiplier = parseDoubleProperty(properties, "bridge-interval-multiplier", 0.5);
@@ -77,7 +78,6 @@ public class ContinuityConfig {
     this.activationTimeout = parseLongProperty(properties, "activation-timeout-ms", 300000L); // default to 5mins
     this.commandDestinationPrefix = parseProperty(properties, "command-destination-prefix", DEFAULT_CMD_DESTINATION_PREFIX);
     this.isReorgManagementHierarchy = parseBooleanProperty(properties, "reorg-management-hierarchy", true);
-
 
     log.debug("Continuity config parsed: {}", this.toString());
   }

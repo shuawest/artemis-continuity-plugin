@@ -57,7 +57,7 @@ public class AckManagerTest extends ContinuityTestBase {
     long preHandleQueueCount = inflowMirrorQueue.getDurableMessageCount();
 
     AckManager ackManager = new AckManager(continuityCtx.getService(), flowMock);
-    ackManager.removeMessageFromMirror(expectedInflowQueueName, expectedUuid);
+    ackManager.removeMessageFromQueue(expectedInflowQueueName, expectedUuid);
 
     long postHandleQueueCount = inflowMirrorQueue.getDurableMessageCount();
 
@@ -156,6 +156,7 @@ public class AckManagerTest extends ContinuityTestBase {
     AckManager ackManager = new AckManager(continuityCtx.getService(), flowMock);
     ackManager.setAddDuplicatesToTarget(false);
     ackManager.setRemoveMessageFromMirror(false);
+    ackManager.setRemoveMessageFromTarget(false);
     
     long currentTime = System.currentTimeMillis();
     AckInfo ack1 = new AckInfo();

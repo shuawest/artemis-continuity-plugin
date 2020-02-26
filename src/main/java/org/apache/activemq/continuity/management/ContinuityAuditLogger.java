@@ -96,6 +96,23 @@ public interface ContinuityAuditLogger extends BasicLogger {
        }
     }
 
+    
+    static void isSiteActivated(Object source) {
+        LOGGER.isSiteActivated(getCaller(), source);
+    }
+
+    @LogMessage(level = Logger.Level.INFO)
+    @Message(id = 221000, value = "User {0} is getting isSiteActivated on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
+    void isSiteActivated(String user, Object source, Object... args);
+
+    static void isDelivering(Object source) {
+        LOGGER.isDelivering(getCaller(), source);
+    }
+
+    @LogMessage(level = Logger.Level.INFO)
+    @Message(id = 221027, value = "User {0} is getting isDelivering on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
+    void isDelivering(String user, Object source, Object... args);
+
     static void isServiceInitialized(Object source) {
         LOGGER.isServiceInitialized(getCaller(), source);
     }

@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.apache.activemq.artemis.api.core.SimpleString;
@@ -41,6 +40,7 @@ public class ContinuityService {
   private final ContinuityManagementService mgmt;
 
   private boolean isActivated = false;
+  private boolean isDelivering = false;
   private boolean isInitializing = false;
   private boolean isInitialized = false;
   private boolean isStarting = false;
@@ -81,8 +81,13 @@ public class ContinuityService {
   }
 
   public void start() throws ContinuityException {
-    if (!getConfig().isSiteActiveByDefault()) {
-      pauseNonContinuityAcceptors();
+    if (getConfig().isSiteActiveByDefault()) {
+      isActivated = true;
+      isDelivering = true;
+    } else {
+      stopNonContinuityAcceptors();
+      isActivated = false;
+      isDelivering = false;
     }
 
     commandManager.start();
@@ -185,9 +190,6 @@ public class ContinuityService {
   }
 
   public void handleIncomingCommand(ContinuityCommand command) throws ContinuityException {
-    if (log.isDebugEnabled()) {
-      log.debug("Received command: {}", command);
-    }
 
     switch (command.getAction()) {
       case ContinuityCommand.ACTION_ACTIVATE_SITE:
@@ -235,16 +237,17 @@ public class ContinuityService {
   public void activateSite(long timeout) throws ContinuityException {
     isActivated = true;
 
-    unpauseNonContinuityAcceptors(); 
+    startNonContinuityAcceptors();
 
     ContinuityCommand cmd = new ContinuityCommand();
     cmd.setAction(ContinuityCommand.NOTIF_SITE_ACTIVATED);
+    getCommandManager().sendCommand(cmd);
 
     // start timeout executor for exhausted notification to start delivery
     startActivationTimeoutExecutor(timeout);
   }
 
-  public void pauseNonContinuityAcceptors() throws ContinuityException {
+  public void stopNonContinuityAcceptors() throws ContinuityException {
     Set<TransportConfiguration> acceptorConfigs = getServer().getConfiguration().getAcceptorConfigurations();
     for (TransportConfiguration acceptorConfig : acceptorConfigs) {
       String acceptorName = acceptorConfig.getName();
@@ -252,8 +255,14 @@ public class ContinuityService {
       if (!acceptorName.equals(getConfig().getExternalAcceptorName())
           && !acceptorName.equals(getConfig().getInternalAcceptorName())) {
         Acceptor acceptor = getServer().getRemotingService().getAcceptor(acceptorConfig.getName());
-        if(acceptor != null) {
-          acceptor.pause();
+        if (acceptor != null) {
+          try {
+            acceptor.stop();
+          } catch (Exception e) {
+            if(log.isWarnEnabled()) {
+              log.warn("Unable to stop acceptor '{}'", acceptorName);
+            }
+          }
 
           if (log.isDebugEnabled()) {
             log.debug("Paused acceptor '{}'", acceptorName);
@@ -263,7 +272,7 @@ public class ContinuityService {
     }
   }
 
-  public void unpauseNonContinuityAcceptors() throws ContinuityException {
+  public void startNonContinuityAcceptors() throws ContinuityException {
     Set<TransportConfiguration> acceptorConfigs = getServer().getConfiguration().getAcceptorConfigurations();
     for (TransportConfiguration acceptorConfig : acceptorConfigs) {
       String acceptorName = acceptorConfig.getName();
@@ -362,18 +371,24 @@ public class ContinuityService {
       for(ContinuityFlow flow : flows.values()) {
         flow.startSubjectQueueDelivery();
       }
+      isDelivering = true;
     }
+  }
+
+  public void stopSubjectQueueDelivery() throws ContinuityException {
+    for(ContinuityFlow flow : flows.values()) {
+      flow.stopSubjectQueueDelivery();
+    }
+    isDelivering = false;
   }
 
   public void deactivateSite() throws ContinuityException {
     isActivated = false;
 
     // stop delivering messages to subject queues from staging
-    for(ContinuityFlow flow : flows.values()) {
-      flow.stopSubjectQueueDelivery();
-    }
+    stopSubjectQueueDelivery();
     // stop new connections from being accepted
-    pauseNonContinuityAcceptors();
+    stopNonContinuityAcceptors();
     // kill existing connections on non-continuity acceptors
     stopNonContinuityDelivery();
     // wait for mirrors to be emptied, then notify peer site
@@ -451,6 +466,10 @@ public class ContinuityService {
 
   public boolean isActivated() {
     return isActivated;
+  }
+
+  public boolean isDelivering() {
+    return isDelivering;
   }
 
   private static Pattern continuityAddressPattern;

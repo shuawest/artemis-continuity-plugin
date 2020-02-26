@@ -39,6 +39,7 @@ public class AckManager {
 
   private boolean isAddDuplicatesToTarget = true;
   private boolean isRemoveMessageFromMirror = true;
+  private boolean isRemoveMessageFromTarget = true;
   private boolean isDelayMessageOnInflow = true;
 
   private Double averageAckDuration = null;
@@ -63,7 +64,11 @@ public class AckManager {
     }
 
     if(isRemoveMessageFromMirror) {
-      removeMessageFromMirror(flow.getInflowMirrorName(), ack.getMessageUuid());
+      removeMessageFromQueue(flow.getInflowMirrorName(), ack.getMessageUuid());
+    }
+
+    if(isRemoveMessageFromTarget) {
+      removeMessageFromQueue(flow.getSubjectQueueName(), ack.getMessageUuid());
     }
 
     updateAckStats(ack);
@@ -126,21 +131,20 @@ public class AckManager {
       throw new ContinuityException(eMessage, e);
     }
   }
-  
-  public void removeMessageFromMirror(String queueName, String duplicateId) throws ContinuityException {
+
+  public void removeMessageFromQueue(String queueName, String duplicateId) throws ContinuityException {
     try 
     { 
-      // Remove message from mirror based on ack
       String dupIdHeader = Message.HDR_DUPLICATE_DETECTION_ID.toString();
       Filter filter = FilterImpl.createFilter(String.format("%s = '%s'", dupIdHeader, duplicateId));
-      Queue mirrorQueue = getServer().locateQueue(SimpleString.toSimpleString(queueName));
-      if(mirrorQueue != null) {
-        mirrorQueue.deleteMatchingReferences(filter);
+      Queue queue = getServer().locateQueue(SimpleString.toSimpleString(queueName));
+      if(queue != null) {
+        queue.deleteMatchingReferences(filter);
       } else {
-        throw new ContinuityException(String.format("inflow mirror queue did not exist: %s", queueName));
+        throw new ContinuityException(String.format("queue does not exist: %s", queueName));
       }
     } catch (Exception e) {
-      String eMessage = String.format("Failed remove duplicates from mirror '%s': %s '", queueName, duplicateId);
+      String eMessage = String.format("Failed remove duplicates from queue '%s': %s '", queueName, duplicateId);
       log.error(eMessage, e);
       throw new ContinuityException(eMessage, e);
     }
@@ -220,6 +224,14 @@ public class AckManager {
 
   public void setRemoveMessageFromMirror(boolean isRemoveMessageFromMirror) {
     this.isRemoveMessageFromMirror = isRemoveMessageFromMirror;
+  }
+
+  public boolean isRemoveMessageFromTarget() {
+    return isRemoveMessageFromTarget;
+  }
+
+  public void setRemoveMessageFromTarget(boolean isRemoveMessageFromTarget) {
+    this.isRemoveMessageFromTarget = isRemoveMessageFromTarget;
   }
 
   public boolean isDelayMessageOnInflow() {

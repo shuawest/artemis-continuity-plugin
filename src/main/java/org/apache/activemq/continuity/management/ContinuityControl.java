@@ -22,6 +22,12 @@ import org.apache.activemq.artemis.api.core.management.Parameter;
 public interface ContinuityControl {
 
     /* Status */
+    
+    @Attribute(desc = "Status: whether the site is activated or not")
+    Boolean getSiteActivated();
+
+    @Attribute(desc = "Status: whether the site is delivering messages to the target queues")
+    Boolean getDelivering();
 
     @Attribute(desc = "Status: whether the continuity service is initialized")
     String getServiceInitialized();
