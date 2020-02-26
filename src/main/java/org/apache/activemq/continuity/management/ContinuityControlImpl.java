@@ -351,14 +351,18 @@ public class ContinuityControlImpl extends AbstractControl implements Continuity
     }
 
     @Override
-    public void activateSite() throws Exception {
+    public void activateSite(Long timeout) throws Exception {
         if (ContinuityAuditLogger.isEnabled() && service != null) {
-           ContinuityAuditLogger.activateSite(service);
+           ContinuityAuditLogger.activateSite(service, timeout);
         }
         clearIO();
         try {
-            if(service != null)
-               service.activateSite();
+            if(service != null) {
+                if(timeout == null) {
+                    timeout = service.getConfig().getActivationTimeout();
+                }
+                service.activateSite(timeout);
+            }
         } finally {
            blockOnIO();
         }

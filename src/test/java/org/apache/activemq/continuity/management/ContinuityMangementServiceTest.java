@@ -101,15 +101,4 @@ public class ContinuityMangementServiceTest extends ContinuityTestBase {
     return mBeanServer.isRegistered(objName);
   }
 
-  private ContinuityPlugin getContinuityPlugin(ServerContext serverCtx) {
-    ContinuityPlugin plugin = null;
-    for(ActiveMQServerBasePlugin p : serverCtx.getServer().getBrokerPlugins()) {
-      if(p.getClass().equals(ContinuityPlugin.class)) {
-        plugin = (ContinuityPlugin)p;
-        break;
-      }
-    }
-    return plugin;
-  }
-
 }

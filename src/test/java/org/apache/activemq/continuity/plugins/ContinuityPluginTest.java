@@ -42,6 +42,9 @@ public class ContinuityPluginTest extends ContinuityTestBase {
       put("local-password", "mypass");
       put("local-connector-ref", "local-connector");
       put("remote-connector-ref", "remote-connector");
+      put("external-acceptor", "continuity-external");
+      put("internal-acceptor", "continuity-internal");
+      put("active-on-start", "true");
     }}); 
 
     serverCtx.getServer().getConfiguration().registerBrokerPlugin(plugin);
@@ -113,14 +116,4 @@ public class ContinuityPluginTest extends ContinuityTestBase {
     serverCtx2.getServer().asyncStop(()->{});
   }
 
-  private ContinuityPlugin getContinuityPlugin(ServerContext serverCtx) {
-    ContinuityPlugin plugin = null;
-    for(ActiveMQServerBasePlugin p : serverCtx.getServer().getBrokerPlugins()) {
-      if(p.getClass().equals(ContinuityPlugin.class)) {
-        plugin = (ContinuityPlugin)p;
-        break;
-      }
-    }
-    return plugin;
-  }
 }

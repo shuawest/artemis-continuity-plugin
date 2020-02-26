@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.continuity.ContinuityTestBase;
+import org.apache.activemq.continuity.plugins.ContinuityPlugin;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,8 @@ public class ContinuityServiceTest extends ContinuityTestBase {
 
   @Test
   public void constructorTest() throws Exception {
-    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "ContinuityServiceTest.constructorTest", "myuser", "mypass");
+    ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "ContinuityServiceTest.constructorTest",
+        "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
@@ -67,7 +69,7 @@ public class ContinuityServiceTest extends ContinuityTestBase {
 
     assertThat("ContinuitySevice isInflowAcksAddress", svc.isInflowAcksAddress("example1.in.acks"), equalTo(true));
     assertThat("ContinuitySevice isInflowAcksAddress", svc.isInflowAcksAddress("example1.in.acks.asdf"), equalTo(false));
-    
+
     CommandManager cmdMgrMock = mock(CommandManager.class);
     svc.registerCommandManager(cmdMgrMock);
     assertThat(svc.getCommandManager(), equalTo(cmdMgrMock));
@@ -77,7 +79,8 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     assertThat(svc.locateFlow("example1"), equalTo(flowMock));
     assertThat(svc.locateFlow("asdf"), nullValue());
 
-    serverCtx.getServer().asyncStop(()->{});
+    serverCtx.getServer().asyncStop(() -> {
+    });
   }
 
   @Test
@@ -86,7 +89,8 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
-    when(continuityCtx.getConfig().getOutflowMirrorSuffix()).thenReturn(".out.mirror");
+    when(continuityCtx.getConfig().getInternalAcceptorName()).thenReturn("continuity-internal");
+    when(continuityCtx.getConfig().getExternalAcceptorName()).thenReturn("continuity-external");
     when(continuityCtx.getConfig().getOutflowAcksSuffix()).thenReturn(".out.acks");
     when(continuityCtx.getConfig().getInflowMirrorSuffix()).thenReturn(".in.mirror");
     when(continuityCtx.getConfig().getInflowAcksSuffix()).thenReturn(".in.acks");
@@ -96,7 +100,8 @@ public class ContinuityServiceTest extends ContinuityTestBase {
 
     assertThat(svc.getCommandManager(), notNullValue());
 
-    serverCtx.getServer().asyncStop(()->{});
+    serverCtx.getServer().asyncStop(() -> {
+    });
   }
 
   @Test
@@ -106,6 +111,8 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     serverCtx.getServer().start();
 
     when(continuityCtx.getCommandManager().isStarted()).thenReturn(true);
+    when(continuityCtx.getConfig().getInternalAcceptorName()).thenReturn("continuity-internal");
+    when(continuityCtx.getConfig().getExternalAcceptorName()).thenReturn("continuity-external");
     when(continuityCtx.getConfig().getOutflowMirrorSuffix()).thenReturn(".out.mirror");
     when(continuityCtx.getConfig().getOutflowAcksSuffix()).thenReturn(".out.acks");
     when(continuityCtx.getConfig().getInflowMirrorSuffix()).thenReturn(".in.mirror");
@@ -122,7 +129,51 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     assertThat(svc.locateFlow("async-sample1"), notNullValue());
     verify(continuityCtx.getCommandManager(), times(1)).sendCommand(any(ContinuityCommand.class));
 
-    serverCtx.getServer().asyncStop(()->{});
+    serverCtx.getServer().asyncStop(() -> {});
   }
+
+  @Test
+  public void pauseAcceptorsTest() throws Exception {
+    ServerContext serverCtx1 = createServerContext("broker1-with-plugin.xml", "ContinuityServiceTest.pauseAcceptorsTest", "myuser", "mypass");
+    ServerContext serverCtx2 = createServerContext("broker2-with-plugin.xml", "ContinuityServiceTest.pauseAcceptorsTest", "myuser", "mypass");
+    serverCtx1.getServer().start();
+    serverCtx2.getServer().start();
+    Thread.sleep(2000L);
+
+    ContinuityPlugin plugin1 = getContinuityPlugin(serverCtx1);
+    Queue example1Queue = serverCtx1.getServer().locateQueue(SimpleString.toSimpleString("example1-durable"));
+
+    ScheduledProducerExecutor producerExecutor = startScheduledProducer(serverCtx1.getServer(), "tcp://0.0.0.0:61616", "myuser", "mypass", "example1", 25L);
+    ScheduledConsumerExecutor consumerExecutor = startScheduledConsumer(serverCtx1.getServer(), "tcp://0.0.0.0:61616", "myuser", "mypass", "example1-durable", 50L);
+
+    Thread.sleep(500L);
+    
+    long addedCountBefore = example1Queue.getMessagesAdded();
+    long ackedCountBefore = example1Queue.getMessagesAcknowledged();
+
+    // stop new connections from being accepted
+    plugin1.getService().pauseNonContinuityAcceptors();
+    // kill existing connections on non-continuity acceptors
+    plugin1.getService().stopNonContinuityDelivery();
+
+    Thread.sleep(1000L);
+
+    long addedCountAfter = example1Queue.getMessagesAdded();
+    long ackedCountAfter = example1Queue.getMessagesAcknowledged();
+    long producedCount = producerExecutor.getProducedCount();
+    long consumedCount = consumerExecutor.getConsumedCount();
+    
+    log.debug("addedCountBefore '{}' addedCountAfter '{}', producedCount '{}'", addedCountBefore, addedCountAfter, producerExecutor.getProducedCount());
+    log.debug("ackedCountBefore '{}' ackedCountAfter '{}', consumedCount '{}'", ackedCountBefore, ackedCountAfter, consumerExecutor.getConsumedCount());
+    
+    assertThat(producedCount, equalTo(addedCountAfter));
+    assertThat(consumedCount, equalTo(ackedCountAfter));
+
+    producerExecutor.stop();
+    consumerExecutor.stop();
+    serverCtx1.getServer().asyncStop(() -> {});
+  }
+
+
 
 }

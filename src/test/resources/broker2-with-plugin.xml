@@ -50,7 +50,8 @@ under the License.
 
       <acceptors>
          <acceptor name="artemis">tcp://0.0.0.0:61617?tcpSendBufferSize=1048576;tcpReceiveBufferSize=1048576;protocols=CORE,AMQP,STOMP,HORNETQ,MQTT,OPENWIRE;useEpoll=true;amqpCredits=1000;amqpLowCredits=300</acceptor>
-         <acceptor name="in-vm">vm://2</acceptor>
+         <acceptor name="continuity-external">tcp://0.0.0.0:61627?tcpSendBufferSize=1048576;tcpReceiveBufferSize=1048576;protocols=AMQP;useEpoll=true;amqpCredits=1000;amqpLowCredits=300</acceptor>
+         <acceptor name="continuity-internal">vm://2</acceptor>
       </acceptors>
 
       <security-settings>
@@ -126,7 +127,7 @@ under the License.
 
       <connectors>
          <connector name="local-connector">vm://2</connector>
-         <connector name="remote-connector">tcp://localhost:61616</connector>
+         <connector name="remote-connector">tcp://localhost:61626</connector>
       </connectors>
 
       <broker-plugins>
@@ -135,11 +136,13 @@ under the License.
             <property key="local-invm-uri" value="vm://2" />
             <property key="local-username" value="myuser" />
             <property key="local-password" value="mypass" />
+            <property key="external-acceptor" value="continuity-external" />
+            <property key="internal-acceptor" value="continuity-internal" />
             <property key="local-connector-ref" value="local-connector" />
             <property key="remote-connector-ref" value="remote-connector" />
+            <property key="active-on-start" value="false" />
             <property key="inflow-staging-delay-ms" value="2000" />
-            <property key="reorg-management-hierarchy" value="true" />
-            
+            <property key="reorg-management-hierarchy" value="true" /> 
          </broker-plugin> 
       </broker-plugins>
     

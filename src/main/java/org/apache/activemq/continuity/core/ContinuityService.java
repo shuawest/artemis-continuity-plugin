@@ -13,14 +13,21 @@
  */
 package org.apache.activemq.continuity.core;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.apache.activemq.artemis.api.core.SimpleString;
+import org.apache.activemq.artemis.api.core.TransportConfiguration;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.Queue;
+import org.apache.activemq.artemis.spi.core.protocol.RemotingConnection;
+import org.apache.activemq.artemis.spi.core.remoting.Acceptor;
 import org.apache.activemq.continuity.management.ContinuityManagementService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +38,7 @@ public class ContinuityService {
 
   private final ActiveMQServer server;
   private final ContinuityConfig config;
-  private final ContinuityManagementService mgmt; 
+  private final ContinuityManagementService mgmt;
 
   private boolean isActivated = false;
   private boolean isInitializing = false;
@@ -40,7 +47,10 @@ public class ContinuityService {
   private boolean isStarted = false;
 
   private CommandManager commandManager;
-  private Map<String,ContinuityFlow> flows = new HashMap<String,ContinuityFlow>();
+  private Map<String, ContinuityFlow> flows = new HashMap<String, ContinuityFlow>();
+
+  private TransportConfiguration internalAcceptorConfig;
+  private TransportConfiguration externalAcceptorConfig;
 
   public ContinuityService(final ActiveMQServer server, final ContinuityConfig config) {
     this.server = server;
@@ -49,28 +59,35 @@ public class ContinuityService {
   }
 
   public synchronized void initialize() throws ContinuityException {
-    if(isInitialized || isInitializing)
+    if (isInitialized || isInitializing)
       return;
 
     isInitializing = true;
 
-    if(log.isDebugEnabled()) {
+    if (log.isDebugEnabled()) {
       log.debug("Initializing continuity service");
     }
 
-    if(this.commandManager == null) {
+    if (this.commandManager == null) {
       CommandManager cmdMgr = new CommandManager(this);
       cmdMgr.initialize();
     }
+
+    internalAcceptorConfig = locateAcceptorTransportConfig(getConfig().getInternalAcceptorName());
+    externalAcceptorConfig = locateAcceptorTransportConfig(getConfig().getExternalAcceptorName());
 
     isInitialized = true;
     isInitializing = false;
   }
 
   public void start() throws ContinuityException {
+    if (!getConfig().isSiteActiveByDefault()) {
+      pauseNonContinuityAcceptors();
+    }
+
     commandManager.start();
 
-    for(ContinuityFlow flow : flows.values()) {
+    for (ContinuityFlow flow : flows.values()) {
       flow.start();
     }
 
@@ -83,7 +100,7 @@ public class ContinuityService {
 
     isStarted = true;
 
-    if(log.isInfoEnabled()) {
+    if (log.isInfoEnabled()) {
       log.info("Continuity Plugin Started");
     }
   }
@@ -94,7 +111,7 @@ public class ContinuityService {
 
   public void stop() throws ContinuityException {
     commandManager.stop();
-    for(ContinuityFlow flow : flows.values()) {
+    for (ContinuityFlow flow : flows.values()) {
       flow.stop();
     }
     getManagement().unregisterContinuityService();
@@ -102,19 +119,19 @@ public class ContinuityService {
   }
 
   public void handleAddQueue(Queue queue) throws ContinuityException {
-    if(isSubjectQueue(queue)) {
+    if (isSubjectQueue(queue)) {
       initialize();
 
       QueueInfo queueInfo = extractQueueInfo(queue);
 
-      if(locateFlow(queueInfo.getQueueName()) == null) {
-        
+      if (locateFlow(queueInfo.getQueueName()) == null) {
+
         ContinuityFlow flow = createFlow(queueInfo);
-        if(isStarted) {
+        if (isStarted) {
           flow.start();
         }
-        
-        if(commandManager != null && commandManager.isStarted()) {
+
+        if (commandManager != null && commandManager.isStarted()) {
           ContinuityCommand cmd = new ContinuityCommand();
           cmd.setAction(ContinuityCommand.ACTION_ADD_QUEUE);
           cmd.setAddress(queueInfo.getAddressName());
@@ -127,17 +144,24 @@ public class ContinuityService {
   }
 
   public void handleRemoveQueue(Queue queue) throws ContinuityException {
-    if(commandManager != null && commandManager.isStarted() && isSubjectQueue(queue)) {
+    if (commandManager != null && commandManager.isStarted() && isSubjectQueue(queue)) {
       QueueInfo queueInfo = extractQueueInfo(queue);
 
-      ContinuityCommand cmd = new ContinuityCommand();
-      cmd.setAction(ContinuityCommand.ACTION_REMOVE_QUEUE);
-      cmd.setAddress(queueInfo.getAddressName());
-      cmd.setQueue(queueInfo.getQueueName());
-      commandManager.sendCommand(cmd);
+      String queueName = queueInfo.getQueueName();
+      ContinuityFlow flow = locateFlow(queueName);
+      if (flow != null) {
+        flow.destroyFlow();
+        flows.remove(queueName);
+
+        ContinuityCommand cmd = new ContinuityCommand();
+        cmd.setAction(ContinuityCommand.ACTION_REMOVE_QUEUE);
+        cmd.setAddress(queueInfo.getAddressName());
+        cmd.setQueue(queueInfo.getQueueName());
+        commandManager.sendCommand(cmd);
+      }
     }
   }
- 
+
   private ContinuityFlow createFlow(QueueInfo queueInfo) throws ContinuityException {
     ContinuityFlow flow = new ContinuityFlow(this, queueInfo);
     flow.initialize();
@@ -160,19 +184,26 @@ public class ContinuityService {
     return queueInfo;
   }
 
-
   public void handleIncomingCommand(ContinuityCommand command) throws ContinuityException {
-    if(log.isDebugEnabled()) {
+    if (log.isDebugEnabled()) {
       log.debug("Received command: {}", command);
     }
 
-    switch(command.getAction()) {
-      case ContinuityCommand.ACTION_ACTIVATE_SITE: 
-        activateSite();
+    switch (command.getAction()) {
+      case ContinuityCommand.ACTION_ACTIVATE_SITE:
+        activateSite(getConfig().getActivationTimeout());
+        break;
+
+      case ContinuityCommand.NOTIF_SITE_ACTIVATED:
+        deactivateSite();
+        break;
+
+      case ContinuityCommand.NOTIF_OUTFLOW_EXHAUSTED:
+        startInflowAcksConsumedWatcher();
         break;
 
       case ContinuityCommand.ACTION_BROKER_CONNECT:
-        for(ContinuityFlow flow : flows.values()) {
+        for (ContinuityFlow flow : flows.values()) {
           ContinuityCommand cmd = new ContinuityCommand();
           cmd.setAction(ContinuityCommand.ACTION_ADD_QUEUE);
           cmd.setAddress(flow.getSubjectAddressName());
@@ -180,37 +211,219 @@ public class ContinuityService {
           cmd.setRoutingType(flow.getSubjectQueueRoutingType());
           commandManager.sendCommand(cmd);
         }
-        break; 
+        break;
 
       case ContinuityCommand.ACTION_ADD_QUEUE:
         QueueInfo queueInfo = new QueueInfo();
         queueInfo.setAddressName(command.getAddress());
         queueInfo.setQueueName(command.getQueue());
         queueInfo.setRoutingType(command.getRoutingType());
-        if(locateFlow(queueInfo.getQueueName()) == null) {
+        if (locateFlow(queueInfo.getQueueName()) == null) {
           ContinuityFlow flow = createFlow(queueInfo);
           flow.start();
         }
         break;
 
       case ContinuityCommand.ACTION_REMOVE_QUEUE:
-        // TODO
+        String queueName = command.getQueue();
+        Queue queue = getServer().locateQueue(SimpleString.toSimpleString(queueName));
+        handleRemoveQueue(queue);
         break;
     }
   }
 
-  public void activateSite() throws ContinuityException {
+  public void activateSite(long timeout) throws ContinuityException {
     isActivated = true;
-    for(ContinuityFlow flow : flows.values()) {
-      flow.startSubjectQueueDelivery();
+
+    unpauseNonContinuityAcceptors(); 
+
+    ContinuityCommand cmd = new ContinuityCommand();
+    cmd.setAction(ContinuityCommand.NOTIF_SITE_ACTIVATED);
+
+    // start timeout executor for exhausted notification to start delivery
+    startActivationTimeoutExecutor(timeout);
+  }
+
+  public void pauseNonContinuityAcceptors() throws ContinuityException {
+    Set<TransportConfiguration> acceptorConfigs = getServer().getConfiguration().getAcceptorConfigurations();
+    for (TransportConfiguration acceptorConfig : acceptorConfigs) {
+      String acceptorName = acceptorConfig.getName();
+
+      if (!acceptorName.equals(getConfig().getExternalAcceptorName())
+          && !acceptorName.equals(getConfig().getInternalAcceptorName())) {
+        Acceptor acceptor = getServer().getRemotingService().getAcceptor(acceptorConfig.getName());
+        if(acceptor != null) {
+          acceptor.pause();
+
+          if (log.isDebugEnabled()) {
+            log.debug("Paused acceptor '{}'", acceptorName);
+          }
+        }
+      }
+    }
+  }
+
+  public void unpauseNonContinuityAcceptors() throws ContinuityException {
+    Set<TransportConfiguration> acceptorConfigs = getServer().getConfiguration().getAcceptorConfigurations();
+    for (TransportConfiguration acceptorConfig : acceptorConfigs) {
+      String acceptorName = acceptorConfig.getName();
+
+      if (!acceptorName.equals(getConfig().getExternalAcceptorName())
+          && !acceptorName.equals(getConfig().getInternalAcceptorName())) {
+        Acceptor acceptor = getServer().getRemotingService().getAcceptor(acceptorConfig.getName());
+        
+        try {
+          if(acceptor != null) {
+            acceptor.start();
+
+            if(log.isDebugEnabled()) {
+              log.debug("Unpaused acceptor '{}'", acceptorName);
+            }
+          }
+        } catch (Exception e) {
+          String msg = String.format("Unable to unpause non-continuity acceptor: %s", acceptorName);
+          log.error(msg, e); 
+          throw new ContinuityException(msg, e);
+        }
+      }
+    }
+  }
+
+  public void stopNonContinuityDelivery() throws ContinuityException {
+    Set<RemotingConnection> connections = getServer().getRemotingService().getConnections();
+    for(RemotingConnection conn : connections) {
+      TransportConfiguration connectionTransportConfig = conn.getTransportConnection().getConnectorConfig();
+      boolean isInternalAcceptorConn = isTransportEqual(connectionTransportConfig, internalAcceptorConfig);
+      boolean isExternalAcceptorConn = isTransportEqual(connectionTransportConfig, externalAcceptorConfig);
+
+      if(!isInternalAcceptorConn && !isExternalAcceptorConn) {
+        conn.disconnect(false);
+        conn.destroy();
+      }
+    }
+  }
+  
+  private boolean isTransportEqual(TransportConfiguration t1, TransportConfiguration t2) {
+    if(!t1.isEquivalent(t2))
+      return false;
+
+    Object t1Port = t1.getParams().get("port");
+    Object t2Port = t2.getParams().get("port");
+    if(t1Port != null && t2Port != null && t1Port.toString().equals(t2Port.toString())) {
+      return true;
+    }
+
+    Object t1ServerId = t1.getParams().get("serverId");
+    Object t2ServerId = t2.getParams().get("serverId");
+    if(t1ServerId != null && t2ServerId != null && t1ServerId.toString().equals(t2ServerId.toString())) {
+      return true;
+    }
+
+    return false;
+  }
+
+  public OutflowExhaustedWatcher startOutflowWatcher() throws ContinuityException {
+    // wait until outflow mirror and ack queue exhausted, then notify peer site
+    OutflowExhaustedWatcher watcher = 
+      new OutflowExhaustedWatcher(
+        this, getConfig().getOutflowExhaustedPollDuration(), 
+        getServer().getScheduledPool(), 
+        getServer().getExecutorFactory().getExecutor());
+
+    watcher.start();
+    return watcher;
+  }
+
+  public InflowAcksConsumedWatcher startInflowAcksConsumedWatcher() throws ContinuityException {
+    // wait until inflow acks consumed, then start subject queue delivery
+    InflowAcksConsumedWatcher watcher = 
+      new InflowAcksConsumedWatcher(
+        this, getConfig().getInflowAcksConsumedPollDuration(),
+        getServer().getScheduledPool(), 
+        getServer().getExecutorFactory().getExecutor());
+
+    watcher.start();
+    return watcher;
+  }
+
+  public ActivationTimeoutExecutor startActivationTimeoutExecutor(long timeout) throws ContinuityException {
+    ActivationTimeoutExecutor activationExecutor = 
+      new ActivationTimeoutExecutor(
+        this, timeout,
+        getServer().getScheduledPool(), 
+        getServer().getExecutorFactory().getExecutor());
+    
+    activationExecutor.start();
+    return activationExecutor;
+  }
+
+  public void startSubjectQueueDelivery() throws ContinuityException {
+    if(isActivated) {
+      for(ContinuityFlow flow : flows.values()) {
+        flow.startSubjectQueueDelivery();
+      }
     }
   }
 
   public void deactivateSite() throws ContinuityException {
     isActivated = false;
+
+    // stop delivering messages to subject queues from staging
     for(ContinuityFlow flow : flows.values()) {
       flow.stopSubjectQueueDelivery();
     }
+    // stop new connections from being accepted
+    pauseNonContinuityAcceptors();
+    // kill existing connections on non-continuity acceptors
+    stopNonContinuityDelivery();
+    // wait for mirrors to be emptied, then notify peer site
+    startOutflowWatcher();
+  }
+
+  public void handleOutflowExhausted() throws ContinuityException {
+    ContinuityCommand cmd = new ContinuityCommand();
+    cmd.setAction(ContinuityCommand.NOTIF_OUTFLOW_EXHAUSTED);
+    getCommandManager().sendCommand(cmd);
+  }
+
+  public void handleInflowQueuesConsumed() throws ContinuityException {
+    startSubjectQueueDelivery();
+  }
+
+
+  private TransportConfiguration locateAcceptorTransportConfig(String name) throws ContinuityException {
+    Set<TransportConfiguration> acceptorConfigs = getServer().getConfiguration().getAcceptorConfigurations();
+    for (TransportConfiguration acceptorConfig : acceptorConfigs) {
+      String acceptorName = acceptorConfig.getName();
+      if(name.equals(acceptorName)) {
+        return acceptorConfig;
+      }
+    }
+
+    // if not found throw exception
+    throw new ContinuityException(String.format("Unable to find acceptor configuration '%s'", name));
+  }
+
+  public List<Queue> getOutflowQueues() {
+    List<Queue> outflowQueues = new ArrayList<Queue>();
+    Collection<ContinuityFlow> flows = getFlows();
+    for (ContinuityFlow flow : flows) {
+      Queue outflowMirrorQueue = getServer().locateQueue(SimpleString.toSimpleString(flow.getOutflowMirrorName()));
+      Queue outflowAcksQueue = getServer().locateQueue(SimpleString.toSimpleString(flow.getOutflowAcksName()));
+      outflowQueues.add(outflowMirrorQueue);
+      outflowQueues.add(outflowAcksQueue);
+    }
+    return outflowQueues;
+  }
+
+  public List<Queue> getInfowAcksQueues() {
+    List<Queue> inflowAcksQueues = new ArrayList<Queue>();
+    Collection<ContinuityFlow> flows = getFlows();
+    for (ContinuityFlow flow : flows) {
+      Queue infowAcksQueue = getServer().locateQueue(SimpleString.toSimpleString(flow.getInflowAcksName()));
+      inflowAcksQueues.add(infowAcksQueue);
+    }
+    return inflowAcksQueues;
   }
 
   public ContinuityConfig getConfig() {

@@ -50,6 +50,7 @@ import org.apache.activemq.artemis.core.config.impl.FileConfiguration;
 import org.apache.activemq.artemis.core.config.impl.SecurityConfiguration;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.ActiveMQServers;
+import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerBasePlugin;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.activemq.artemis.spi.core.security.ActiveMQJAASSecurityManager;
 import org.apache.activemq.artemis.spi.core.security.ActiveMQSecurityManager;
@@ -60,6 +61,23 @@ import org.apache.activemq.continuity.core.CommandReceiver;
 import org.apache.activemq.continuity.core.ContinuityConfig;
 import org.apache.activemq.continuity.core.ContinuityService;
 import org.apache.activemq.continuity.management.ContinuityManagementService;
+import org.apache.activemq.continuity.plugins.ContinuityPlugin;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.activemq.artemis.api.core.ActiveMQException;
+import org.apache.activemq.artemis.api.core.SimpleString;
+import org.apache.activemq.artemis.api.core.TransportConfiguration;
+import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
+import org.apache.activemq.artemis.api.core.client.ClientConsumer;
+import org.apache.activemq.artemis.api.core.client.ClientMessage;
+import org.apache.activemq.artemis.api.core.client.ClientProducer;
+import org.apache.activemq.artemis.api.core.client.ClientSession;
+import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
+import org.apache.activemq.artemis.api.core.client.ServerLocator;
+import org.apache.activemq.artemis.core.server.ActiveMQScheduledComponent;
+import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,6 +132,17 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     continuityCtx.setCommandManager(commandManagerMock);
     continuityCtx.setCommandReceiver(commandRecieverMock);
     return continuityCtx;
+  }
+
+  public ContinuityPlugin getContinuityPlugin(ServerContext serverCtx) {
+    ContinuityPlugin plugin = null;
+    for(ActiveMQServerBasePlugin p : serverCtx.getServer().getBrokerPlugins()) {
+      if(p.getClass().equals(ContinuityPlugin.class)) {
+        plugin = (ContinuityPlugin)p;
+        break;
+      }
+    }
+    return plugin;
   }
 
   public void produceAndConsumeMessage(ContinuityConfig continuityConfig, ServerContext serverCtx, 
@@ -312,6 +341,149 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     session.start();
 
     return new CoreHandle(locator, factory, session, null, consumer);
+  }
+
+
+  public ScheduledProducerExecutor startScheduledProducer(ActiveMQServer server, String url, String username, String password, String address, long msPeriod) {
+    ScheduledProducerExecutor executor = 
+      new ScheduledProducerExecutor(url, username, password, address, 
+                                    server.getScheduledPool(), 
+                                    server.getExecutorFactory().getExecutor(), 
+                                    msPeriod);
+    executor.start();
+    return executor;
+  }
+
+  public ScheduledConsumerExecutor startScheduledConsumer(ActiveMQServer server, String url, String username, String password, String queueName, long msPeriod) {
+    ScheduledConsumerExecutor executor = 
+      new ScheduledConsumerExecutor(url, username, password, queueName, 
+                                    server.getScheduledPool(), 
+                                    server.getExecutorFactory().getExecutor(), 
+                                    msPeriod);
+    executor.start();
+    return executor;
+  }
+  public final class ScheduledProducerExecutor extends ActiveMQScheduledComponent {
+
+    private final String url;
+    private final String username;
+    private final String password;
+    private final String address;
+
+    private CoreHandle coreHandle;
+    private long producedCount;
+
+    public ScheduledProducerExecutor(String url, String username, String password, String address, 
+                                     ScheduledExecutorService scheduledExecutorService, Executor executor, long checkPeriod) {
+      super(scheduledExecutorService, executor, checkPeriod, TimeUnit.MILLISECONDS, false);
+      this.url = url;
+      this.username = username;
+      this.password = password;
+      this.address = address;
+    }
+
+    @Override
+    public void run() {
+      try {
+        if (coreHandle == null) {
+          ServerLocator locator = ActiveMQClient.createServerLocator(url);
+          ClientSessionFactory factory = locator.createSessionFactory();
+          ClientSession session = factory.createSession(username, password, false, true, true, false, locator.getAckBatchSize());;
+          ClientProducer producer = session.createProducer(address);
+          session.start();
+
+          coreHandle = new CoreHandle(locator, factory, session, producer, null);
+        }
+
+        String messageBody = "Test message " + producedCount;
+        ClientMessage msg = coreHandle.getSession().createMessage(true);
+        msg.getBodyBuffer().writeString(messageBody);
+      
+        coreHandle.getProducer().send(msg);
+
+        producedCount++;
+      } catch (Exception e) {
+        log.error("Unable to produce test message", e);
+      }
+    }
+
+    @Override
+    public void stop() {
+      if(coreHandle != null) {
+        try {
+          coreHandle.close();
+        } catch (ActiveMQException e) {
+          log.error("Unable to stop scheduled producer", e);
+        }
+      }
+
+      super.stop();
+    }
+    
+    public long getProducedCount() {
+      return producedCount;
+    }
+  }
+
+  public final class ScheduledConsumerExecutor extends ActiveMQScheduledComponent {
+
+    private final String url;
+    private final String username;
+    private final String password;
+    private final String queue;
+
+    private CoreHandle coreHandle;
+    private long consumedCount = 0;
+
+    public ScheduledConsumerExecutor(String url, String username, String password, String queue,
+                                     ScheduledExecutorService scheduledExecutorService, Executor executor, long checkPeriod) {
+      super(scheduledExecutorService, executor, checkPeriod, TimeUnit.MILLISECONDS, false);
+      this.url = url;
+      this.username = username;
+      this.password = password;
+      this.queue = queue;
+    }
+
+    @Override
+    public void run() {
+      try {
+        if (coreHandle == null) {
+          ServerLocator locator = ActiveMQClient.createServerLocator(url);
+          ClientSessionFactory factory = locator.createSessionFactory();
+          ClientSession session = factory.createSession(username, password, false, true, true, false, 1);;
+          ClientConsumer consumer = session.createConsumer(SimpleString.toSimpleString(queue));
+          session.start();
+          coreHandle = new CoreHandle(locator, factory, session, null, consumer);
+        }
+
+        ClientMessage message = coreHandle.getConsumer().receive();
+        message.acknowledge();
+        //coreHandle.getSession().commit();
+        consumedCount++;
+
+        log.debug("Consumed and acked message: {}", message.getBodyBuffer().readString());
+
+      } catch (Exception e) {
+        log.error("Unable to consume test message", e);
+      } 
+    }
+
+    @Override
+    public void stop() {
+      if(coreHandle != null) {
+        try {
+          coreHandle.close();
+        } catch (ActiveMQException e) {
+          log.error("Unable to stop scheduled producer", e);
+        }
+      }
+
+      super.stop();
+    }
+
+    public long getConsumedCount() {
+      return consumedCount;
+    }
   }
 
   public class JmsHandle {

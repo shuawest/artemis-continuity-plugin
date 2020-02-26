@@ -33,14 +33,23 @@ public class ContinuityPlugin implements ActiveMQServerPlugin {
 
   private ContinuityService continuityService;
   private ContinuityConfig continuityConfig;
+  private boolean isConfigValid = false;
 
   @Override
   public void init(Map<String, String> properties) {
-    this.continuityConfig = new ContinuityConfig(properties);
+    try {
+      this.continuityConfig = new ContinuityConfig(properties);
+      isConfigValid = true;
+    } catch(ContinuityException e) {
+      log.error("Unable to process continuity configuration. Continuity plugin will not start", e);
+    }
   }
 
   @Override
   public void registered(ActiveMQServer server) {
+    if(!isConfigValid)
+      return;
+
     log.debug("Creating continuity service");
     this.continuityService = new ContinuityService(server, continuityConfig);
     ServerListener.registerActivateCallback(server, continuityService);
@@ -57,17 +66,14 @@ public class ContinuityPlugin implements ActiveMQServerPlugin {
   public void unregistered(ActiveMQServer server) {
     log.debug("Unregistering continuity service");
     try {
-      continuityService.stop();
+      if(isConfigValid) {
+        continuityService.stop();
+      }
     } catch (ContinuityException e) {
       if(log.isErrorEnabled()) {
         log.error("Unable to stop continuity service on unregister", e);
       }
     }
-  }
-
-  @Override
-  public void afterDestroyConnection(RemotingConnection connection) throws ActiveMQException {
-    log.debug("Connection destroyed: {}", connection);
   }
 
   public ContinuityService getService() {

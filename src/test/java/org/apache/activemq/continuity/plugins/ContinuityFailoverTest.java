@@ -94,6 +94,8 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
     serverCtx2.getServer().start();
     Thread.sleep(2000L);
 
+    ContinuityPlugin plugin2 = getContinuityPlugin(serverCtx2);
+
     log.debug("\n\nProducing test messages on broker1\n\n");
     produceMessages("vm://1", "myuser", "mypass", "example1", "test message", 100);
 
@@ -119,7 +121,7 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
     log.debug("\n\nStopping server1\n\n");
     serverCtx1.getServer().asyncStop(()->{ log.debug("\n\nserver1 stopped\n\n"); });
 
-    activateSite("vm://2");
+    plugin2.getService().activateSite(500L);
 
     Thread.sleep(2000L);
     
@@ -145,6 +147,8 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
     serverCtx2.getServer().start();
     Thread.sleep(2000L);
 
+    ContinuityPlugin plugin2 = getContinuityPlugin(serverCtx2);
+    
     log.debug("\n\nProducing test messages on broker1\n\n");
     produceJmsMessages("vm://1", "myuser", "mypass", "example1", "test message", 100);
 
@@ -161,7 +165,7 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
     log.debug("\n\nStopping server1\n\n");
     jms1.getConnection().close();
 
-    activateSite("vm://2");
+    plugin2.getService().activateSite(500L);
 
     Thread.sleep(2000L);
     
@@ -189,6 +193,8 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
     serverCtx2.getServer().start();
     Thread.sleep(2000L);
 
+    ContinuityPlugin plugin2 = getContinuityPlugin(serverCtx2);
+
     log.debug("\n\nProducing test messages on broker1\n\n");
     produceJmsMessages("vm://1", "myuser", "mypass", "example1", "test message", 100);
 
@@ -213,7 +219,7 @@ public class ContinuityFailoverTest extends ContinuityTestBase {
     log.debug("\n\nStopping server1\n\n");
     serverCtx1.getServer().asyncStop(()->{ log.debug("\n\nserver1 stopped\n\n"); });
 
-    activateSite("vm://2");
+    plugin2.getService().activateSite(500L);
 
     Thread.sleep(2000L);
     

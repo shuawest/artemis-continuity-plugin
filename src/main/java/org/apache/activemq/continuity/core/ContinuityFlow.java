@@ -84,7 +84,7 @@ public class ContinuityFlow {
 
   public void initialize() throws ContinuityException {
     service.registerContinuityFlow(queueInfo.getQueueName(), this);
-    
+
     createFlowQueue(outflowMirrorName, outflowMirrorName, RoutingType.MULTICAST);
     createDivert(outflowDivertName, subjectAddressName, outflowMirrorName);
 
@@ -100,7 +100,7 @@ public class ContinuityFlow {
 
     isInitialized = true;
 
-    if(log.isInfoEnabled()) {
+    if (log.isInfoEnabled()) {
       log.info("Initialized new flow '{}'", subjectQueueName);
     }
   }
@@ -109,25 +109,28 @@ public class ContinuityFlow {
     ackInterceptor.start();
     ackReceiver.start();
 
-    this.outflowMirrorBridge = createBridge(outflowMirrorBridgeName, outflowMirrorName, inflowMirrorName, RoutingType.ANYCAST, getConfig().getRemoteConnectorRef(), true);
-    this.outflowAcksBridge = createBridge(outflowAcksBridgeName, outflowAcksName, inflowAcksName, RoutingType.ANYCAST, getConfig().getRemoteConnectorRef(), true);
-    
+    this.outflowMirrorBridge = createBridge(outflowMirrorBridgeName, outflowMirrorName, inflowMirrorName,
+        RoutingType.ANYCAST, getConfig().getRemoteConnectorRef(), true);
+    this.outflowAcksBridge = createBridge(outflowAcksBridgeName, outflowAcksName, inflowAcksName, RoutingType.ANYCAST,
+        getConfig().getRemoteConnectorRef(), true);
+
     boolean isActivated = service.isActivated();
-    this.targetBridge = createBridge(targetBridgeName, inflowMirrorName, subjectAddressName, RoutingType.valueOf(subjectQueueRoutingType), getConfig().getLocalConnectorRef(), isActivated);
+    this.targetBridge = createBridge(targetBridgeName, inflowMirrorName, subjectAddressName,
+        RoutingType.valueOf(subjectQueueRoutingType), getConfig().getLocalConnectorRef(), isActivated);
 
     service.getManagement().registerContinuityFlow(service, this);
 
     isStarted = true;
 
-    if(log.isInfoEnabled()) {
+    if (log.isInfoEnabled()) {
       log.info("Started flow '{}'", subjectQueueName);
     }
   }
 
   public void startSubjectQueueDelivery() throws ContinuityException {
     try {
-      if(isInitialized && isStarted) {
-        startBridge(targetBridge);      
+      if (isInitialized && isStarted) {
+        startBridge(targetBridge);
       }
 
     } catch (Exception e) {
@@ -137,8 +140,8 @@ public class ContinuityFlow {
 
   public void stopSubjectQueueDelivery() throws ContinuityException {
     try {
-      if(isInitialized && isStarted) {
-        stopBridge(targetBridge);      
+      if (isInitialized && isStarted) {
+        stopBridge(targetBridge);
       }
 
     } catch (Exception e) {
@@ -148,11 +151,12 @@ public class ContinuityFlow {
 
   private void startBridge(Bridge bridge) throws ContinuityException {
     try {
-      if(log.isDebugEnabled()) {
-        log.debug("Starting bridge from '{}' to '{}''", bridge.getQueue().getName().toString(), bridge.getForwardingAddress());
+      if (log.isDebugEnabled()) {
+        log.debug("Starting bridge from '{}' to '{}''", bridge.getQueue().getName().toString(),
+            bridge.getForwardingAddress());
       }
 
-      if(bridge == null) {
+      if (bridge == null) {
         log.warn("Unable to start bridge for flow '{}', it doesn't exist", this.getSubjectQueueName());
       } else {
         bridge.start();
@@ -165,16 +169,17 @@ public class ContinuityFlow {
 
   private void stopBridge(Bridge bridge) throws ContinuityException {
     try {
-      if(log.isDebugEnabled()) {
-        log.debug("Stopping bridge from '{}' to '{}''", bridge.getQueue().getName().toString(), bridge.getForwardingAddress());
+      if (log.isDebugEnabled()) {
+        log.debug("Stopping bridge from '{}' to '{}''", bridge.getQueue().getName().toString(),
+            bridge.getForwardingAddress());
       }
 
-      if(bridge == null) {
+      if (bridge == null) {
         log.warn("Unable to stop bridge for flow '{}', it doesn't exist", this.getSubjectQueueName());
       } else {
         bridge.stop();
       }
-      
+
     } catch (Exception e) {
       throw new ContinuityException("Unabled to start bridge", e);
     }
@@ -191,10 +196,9 @@ public class ContinuityFlow {
     } catch (Exception e) {
       throw new ContinuityException("Unable to stop bridge", e);
     }
-    
+
     isStarted = false;
   }
-
 
   private void createAckInterceptor() throws ContinuityException {
     this.ackInterceptor = new AckInterceptor(service, this);
@@ -312,7 +316,7 @@ public class ContinuityFlow {
 
       getServer().deployBridge(bridgeConfig);
 
-      bridge = getServer().getClusterManager().getBridges().get(bridgeName);
+      bridge = locateBridge(bridgeName);
 
       if(!start) {
         bridge.stop();
@@ -324,6 +328,42 @@ public class ContinuityFlow {
       throw new ContinuityException(eMessage, e);
     }
     return bridge;
+  }
+
+  public Bridge locateBridge(String bridgeName) {
+    return getServer().getClusterManager().getBridges().get(bridgeName);
+  }
+
+  public void destroyFlow() throws ContinuityException {
+    stop();
+    destroyBridge(outflowMirrorBridgeName);
+    destroyBridge(outflowAcksBridgeName);
+    destroyBridge(targetBridgeName);
+    destroyQueue(outflowMirrorName);
+    destroyQueue(outflowAcksName);
+    destroyQueue(inflowMirrorName);
+    destroyQueue(inflowAcksName);
+    destroyQueue(subjectQueueName);
+  }
+
+  private void destroyBridge(String bridgeName) throws ContinuityException {
+    try {
+      getServer().getClusterManager().destroyBridge(bridgeName);
+    } catch (Exception e) {
+      String msg = String.format("Unable to destroy bridge '%s'", bridgeName); 
+      log.error(msg, e);
+      throw new ContinuityException(msg, e);
+    }
+  }
+
+  private void destroyQueue(String queueName) throws ContinuityException {
+    try {
+      getServer().destroyQueue(SimpleString.toSimpleString(queueName));
+    } catch (Exception e) {
+      String msg = String.format("Unable to destroy queue '%s'", queueName); 
+      log.error(msg, e);
+      throw new ContinuityException(msg, e);
+    }
   }
 
   private ContinuityConfig getConfig() {

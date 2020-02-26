@@ -31,6 +31,7 @@ import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.apache.activemq.continuity.ContinuityTestBase;
 import org.apache.activemq.continuity.core.ContinuityConfig;
+import org.apache.activemq.continuity.core.ContinuityException;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.Logger;
@@ -171,8 +172,17 @@ public class DuplicateIdPluginTest extends ContinuityTestBase {
   }
   
   @Test
-  public void matchAddressTest() {
+  public void matchAddressTest() throws ContinuityException {
     ContinuityConfig config = new ContinuityConfig(new HashMap<String, String>() {{
+      put("site-id", "site2");
+      put("local-invm-uri", "vm://2");
+      put("local-username", "myuser");
+      put("local-password", "mypass");
+      put("local-connector-ref", "local-connector");
+      put("remote-connector-ref", "remote-connector");
+      put("external-acceptor", "continuity-external");
+      put("active-on-start", "true");
+      put("internal-acceptor", "continuity-internal");
       put("outflow-mirror-suffix", ".out.mirror");
       put("outflow-acks-suffix", ".out.acks");
       put("inflow-mirror-suffix", ".in.mirror");

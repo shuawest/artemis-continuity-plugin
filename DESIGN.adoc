@@ -67,16 +67,23 @@ image:docs/202001ContinuityPlugin-internals-diagram-v0.2-2.png[Continuity Plugin
 
 ## TODO
 
-- fix command send session issue 
-- fix Ack and Command receive acknowledgment issue
-- convert info logging to AuditLogger pattern
-- add additional queues to the same address both anycast and multicast
-- rationalize what happens when there are nondurable and temporary susbscribers
+x fix command send session issue 
+x fix Ack and Command receive acknowledgment issue
+
+- coordinate activation of site with deactivation
 - add 'wait for ack consumption' for site activation
+- block message produce/consume on deactivated site
+
+- rationalize what happens when there are nondurable and temporary susbscribers
 - add measurement of estimated RTA/RPA and duplicate message risk
 - load test 2 site single broker install (compare with single site without the plugin)
+
+- consider making flow name 'address-queue' name in case queue name, in case queue not is not easily derived from address name, or if queue name is reused (although queue names must be unique, if reusing they will only be aligned with the first address)
+- add additional queues to the same address both anycast and multicast
+
 - analyze FSI apps and create IBM MQ eqivalent destinations
 - extract MQ configuration from IBM WAS-ND and replicate in AMQ config
+- convert info logging to AuditLogger pattern
 
 - fix server stop issue (can't figure out how to hook into pre-server shutdown to stop sessions, bridges, etc)
 1. create image and automated deployment to push to multiple openshift sites
@@ -88,7 +95,7 @@ image:docs/202001ContinuityPlugin-internals-diagram-v0.2-2.png[Continuity Plugin
 6. deal with queue configuration updates (beyond the add it has today)
 7. implement queue / address removal
 8. allow for more than one remote site
-9. add security configuration to allow more than static user/pass for intra-broker communication
+9. add security configuration to allow more than static user/pass for intra-broker communication, plus continuity role/permissions
 10. add discovery groups for remote site connectivity
 11. add finer tuning of continuity strategy
 12. create examples of swapover for local DC, and DC spanned clients, with swapover model

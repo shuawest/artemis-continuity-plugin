@@ -256,8 +256,8 @@ public interface ContinuityAuditLogger extends BasicLogger {
     @Message(id = 221020, value = "User {0} is stopping continuity service on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
     void stopService(String user, Object source, Object... args);
 
-    static void activateSite(Object source) {
-        LOGGER.activateSite(getCaller(), source);
+    static void activateSite(Object source, Object... args) {
+        LOGGER.activateSite(getCaller(), source, arrayToString(args));
     }
 
     @LogMessage(level = Logger.Level.INFO)

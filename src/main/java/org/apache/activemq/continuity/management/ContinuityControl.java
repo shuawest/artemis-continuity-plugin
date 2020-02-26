@@ -89,7 +89,7 @@ public interface ContinuityControl {
     void stopService() throws Exception;
 
     @Operation(desc = "Activate the site to start message delivery to target queues", impact = MBeanOperationInfo.ACTION)
-    void activateSite() throws Exception;
+    void activateSite(@Parameter(name = "timeout", desc = "Grace period (ms) to wait for peer site to exhaust messaage and ack mirrors. Configured default if blank.") Long timeout) throws Exception;
 
     @Operation(desc = "Deactivate the site to stop message delivery to target queues", impact = MBeanOperationInfo.ACTION)
     void deactivateSite() throws Exception;
