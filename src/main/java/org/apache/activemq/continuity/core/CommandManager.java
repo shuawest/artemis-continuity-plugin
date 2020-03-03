@@ -164,6 +164,8 @@ public class CommandManager {
         .setQueueName(fromQueueName)
         .setForwardingAddress(toAddressName)
         .setHA(true)
+        .setUser(getConfig().getRemoteUsername())
+        .setPassword(getConfig().getRemotePassword())
         .setRetryInterval(getConfig().getBridgeInterval())
         .setRetryIntervalMultiplier(getConfig().getBridgeIntervalMultiplier())
         .setInitialConnectAttempts(-1)
@@ -203,7 +205,7 @@ public class CommandManager {
         log.debug("Sending command: {} (Thread: {})", body, Thread.currentThread().getName());
       }
 
-      ServerLocator locator = ActiveMQClient.createServerLocator(getConfig().getLocalInVmUri());
+      ServerLocator locator = ActiveMQClient.createServerLocator(false, service.getLocalConnector());
       ClientSessionFactory factory = locator.createSessionFactory();
       ClientSession session = factory.createSession(getConfig().getLocalUsername(),
                                             getConfig().getLocalPassword(), 

@@ -160,22 +160,6 @@ public class ContinuityControlImpl extends AbstractControl implements Continuity
             blockOnIO();
         }
     }
-
-    @Override
-    public String getLocalInVmUri() {
-        if (ContinuityAuditLogger.isEnabled() && service != null && service.getConfig() != null) {
-            ContinuityAuditLogger.getLocalInVmUri(service.getConfig());
-        }
-        clearIO();
-        try {
-            if(service == null || service.getConfig() == null)
-                return "Continuity configuration does not exist";
-            else
-                return service.getConfig().getLocalInVmUri();
-        } finally {
-            blockOnIO();
-        }
-    }
  
     @Override
     public String getLocalUsername() {
@@ -188,6 +172,22 @@ public class ContinuityControlImpl extends AbstractControl implements Continuity
                 return "Continuity configuration does not exist";
             else
                 return service.getConfig().getLocalUsername();
+        } finally {
+            blockOnIO();
+        }
+    }
+
+    @Override
+    public String getRemoteUsername() {
+        if (ContinuityAuditLogger.isEnabled() && service != null && service.getConfig() != null) {
+            ContinuityAuditLogger.getRemoteUsername(service.getConfig());
+        }
+        clearIO();
+        try {
+            if(service == null || service.getConfig() == null)
+                return "Continuity configuration does not exist";
+            else
+                return service.getConfig().getRemoteUsername();
         } finally {
             blockOnIO();
         }

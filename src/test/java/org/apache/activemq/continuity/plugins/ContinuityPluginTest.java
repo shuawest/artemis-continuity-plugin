@@ -19,7 +19,6 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.util.HashMap;
 
 import org.apache.activemq.artemis.api.core.RoutingType;
-import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerBasePlugin;
 import org.apache.activemq.continuity.ContinuityTestBase;
 import org.apache.activemq.continuity.core.ContinuityFlow;
 import org.junit.Test;
@@ -40,6 +39,8 @@ public class ContinuityPluginTest extends ContinuityTestBase {
       put("local-invm-uri", "vm://2");
       put("local-username", "myuser");
       put("local-password", "mypass");
+      put("remote-username", "myuser");
+      put("remote-password", "mypass");
       put("local-connector-ref", "local-connector");
       put("remote-connector-ref", "remote-connector");
       put("external-acceptor", "continuity-external");
@@ -57,9 +58,12 @@ public class ContinuityPluginTest extends ContinuityTestBase {
 
     assertThat(plugin.getConfig(), notNullValue());
     assertThat(plugin.getConfig().getSiteId(), equalTo("site2"));
-    assertThat(plugin.getConfig().getLocalInVmUri(), equalTo("vm://2"));
+    assertThat(plugin.getConfig().getLocalConnectorRef(), equalTo("local-connector"));
+    assertThat(plugin.getConfig().getRemoteConnectorRef(), equalTo("remote-connector"));
     assertThat(plugin.getConfig().getLocalUsername(), equalTo("myuser"));
     assertThat(plugin.getConfig().getLocalPassword(), equalTo("mypass"));
+    assertThat(plugin.getConfig().getRemoteUsername(), equalTo("myuser"));
+    assertThat(plugin.getConfig().getRemotePassword(), equalTo("mypass"));
 
     assertThat(plugin.getService(), notNullValue());
     assertThat(plugin.getService().isInitialized(), equalTo(true));

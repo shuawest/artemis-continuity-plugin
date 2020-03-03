@@ -20,7 +20,6 @@ import java.lang.management.ManagementFactory;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerBasePlugin;
 import org.apache.activemq.continuity.ContinuityTestBase;
 import org.apache.activemq.continuity.core.ContinuityFlow;
 import org.apache.activemq.continuity.core.ContinuityService;

@@ -19,8 +19,6 @@ import static org.mockito.Mockito.when;
 
 import org.apache.activemq.artemis.core.config.Configuration;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
-import org.apache.activemq.artemis.core.server.management.Notification;
-import org.apache.activemq.artemis.core.server.management.NotificationListener;
 import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerPlugin;
 import org.apache.activemq.continuity.ContinuityTestBase;
 import org.junit.Test;
@@ -36,7 +34,7 @@ public class ServerListenerTest extends ContinuityTestBase {
     ServerContext serverCtx = createServerContext("broker1-noplugin.xml", "ServerListenerTest.startTest", "myuser", "mypass");
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     
-    when(continuityCtx.getConfig().getLocalInVmUri()).thenReturn("vm://1");
+    when(continuityCtx.getConfig().getLocalConnectorRef()).thenReturn("local-conenctor");
 
     ActiveMQServerPlugin stubPlugin =  new ActiveMQServerPlugin() {
       @Override

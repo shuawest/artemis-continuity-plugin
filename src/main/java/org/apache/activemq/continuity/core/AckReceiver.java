@@ -70,7 +70,7 @@ public class AckReceiver implements MessageHandler {
   private void prepareSession() throws ContinuityException {
     try {
       if (session == null || session.isClosed()) {
-        this.locator = ActiveMQClient.createServerLocator(getConfig().getLocalInVmUri());
+        this.locator = ActiveMQClient.createServerLocator(false, service.getLocalConnector());
         this.factory = locator.createSessionFactory();
         this.session = factory.createSession(getConfig().getLocalUsername(), getConfig().getLocalPassword(), 
                           false, true, true, true, locator.getAckBatchSize());

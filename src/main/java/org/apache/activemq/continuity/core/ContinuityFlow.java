@@ -306,6 +306,8 @@ public class ContinuityFlow {
           .setQueueName(fromQueue)
           .setForwardingAddress(toAddress)
           .setHA(true)
+          .setUser(getConfig().getRemoteUsername())
+          .setPassword(getConfig().getRemotePassword())
           .setRetryInterval(getConfig().getBridgeInterval())
           .setRetryIntervalMultiplier(getConfig().getBridgeIntervalMultiplier())
           .setInitialConnectAttempts(-1)

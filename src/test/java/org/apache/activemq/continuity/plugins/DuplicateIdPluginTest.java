@@ -178,11 +178,13 @@ public class DuplicateIdPluginTest extends ContinuityTestBase {
       put("local-invm-uri", "vm://2");
       put("local-username", "myuser");
       put("local-password", "mypass");
+      put("remote-username", "myuser");
+      put("remote-password", "mypass");
       put("local-connector-ref", "local-connector");
       put("remote-connector-ref", "remote-connector");
       put("external-acceptor", "continuity-external");
-      put("active-on-start", "true");
       put("internal-acceptor", "continuity-internal");
+      put("active-on-start", "true");
       put("outflow-mirror-suffix", ".out.mirror");
       put("outflow-acks-suffix", ".out.acks");
       put("inflow-mirror-suffix", ".in.mirror");

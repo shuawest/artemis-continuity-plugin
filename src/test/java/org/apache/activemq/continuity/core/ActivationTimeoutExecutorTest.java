@@ -16,16 +16,8 @@ package org.apache.activemq.continuity.core;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.activemq.artemis.core.server.Queue;
-import org.apache.activemq.artemis.core.server.cluster.Bridge;
 import org.apache.activemq.continuity.ContinuityTestBase;
-import org.apache.activemq.continuity.plugins.ContinuityPlugin;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

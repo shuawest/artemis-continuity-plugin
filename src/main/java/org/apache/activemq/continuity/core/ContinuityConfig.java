@@ -30,9 +30,10 @@ public class ContinuityConfig {
 
   private String siteId; 
   
-  private String localInVmUri;  // TODO: remove this config, in favor of connector ref
-  private String localUsername; // TODO: create remote continuity user/pass config
+  private String localUsername; 
   private String localPassword;
+  private String remoteUsername; 
+  private String remotePassword;
   private String externalAcceptorName;
   private String internalAcceptorName;
   private boolean siteActiveByDefault;
@@ -56,9 +57,10 @@ public class ContinuityConfig {
 
   public ContinuityConfig(Map<String, String> properties) throws ContinuityException {
     this.siteId = parseRequiredProperty(properties, "site-id");
-    this.localInVmUri = parseRequiredProperty(properties, "local-invm-uri");
     this.localUsername = parseRequiredProperty(properties, "local-username");
     this.localPassword = parseRequiredProperty(properties, "local-password");
+    this.remoteUsername = parseRequiredProperty(properties, "remote-username");
+    this.remotePassword = parseRequiredProperty(properties, "remote-password");
     this.externalAcceptorName = parseRequiredProperty(properties, "external-acceptor");
     this.internalAcceptorName = parseRequiredProperty(properties, "internal-acceptor");
     this.localConnectorRef = parseRequiredProperty(properties, "local-connector-ref");
@@ -86,16 +88,20 @@ public class ContinuityConfig {
     return siteId;
   }
 
-  public String getLocalInVmUri() {
-    return localInVmUri;
-  }
-
   public String getLocalUsername() {
     return localUsername;
   }
 
   public String getLocalPassword() {
     return localPassword;
+  }
+
+  public String getRemoteUsername() {
+    return remoteUsername;
+  }
+
+  public String getRemotePassword() {
+    return remotePassword;
   }
 
   public String getExternalAcceptorName() {
@@ -169,9 +175,12 @@ public class ContinuityConfig {
   public String toString() {
     return "ContinuityConfig [" + 
       "siteId=" + siteId +
-      ", localInVmUri=" + localInVmUri + 
       ", localUsername=" + localUsername +
       ", localPassword=" + ((localPassword == null)? "null" : "******") + 
+      ", remoteUsername=" + remoteUsername +
+      ", remotePassword=" + ((remotePassword == null)? "null" : "******") + 
+      ", localConnectorRef=" + localConnectorRef + 
+      ", remoteConnectorRef=" + remoteConnectorRef + 
       ", externalAcceptorName=" + externalAcceptorName +
       ", internalAcceptorName=" + internalAcceptorName +
       ", siteActiveByDefault=" + siteActiveByDefault +
@@ -186,9 +195,7 @@ public class ContinuityConfig {
       ", inflowAcksConsumedPollDuration=" + inflowAcksConsumedPollDuration +
       ", activationTimeout=" + activationTimeout +
       ", commandDestinationPrefix=" + commandDestinationPrefix +
-      ", isReorgManagementHierarchy=" + isReorgManagementHierarchy +
-      ", localConnectorRef=" + localConnectorRef + 
-      ", remoteConnectorRef=" + remoteConnectorRef + "]";
+      ", isReorgManagementHierarchy=" + isReorgManagementHierarchy + "]";
   }
 
   private static String parseRequiredProperty(Map<String, String> properties, String name) throws ContinuityException {

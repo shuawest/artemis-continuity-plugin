@@ -136,6 +136,8 @@ under the License.
             <property key="local-invm-uri" value="vm://2" />
             <property key="local-username" value="myuser" />
             <property key="local-password" value="mypass" />
+            <property key="remote-username" value="myuser" />
+            <property key="remote-password" value="mypass" />
             <property key="external-acceptor" value="continuity-external" />
             <property key="internal-acceptor" value="continuity-internal" />
             <property key="local-connector-ref" value="local-connector" />

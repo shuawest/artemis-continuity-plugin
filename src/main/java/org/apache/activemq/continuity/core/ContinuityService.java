@@ -405,6 +405,13 @@ public class ContinuityService {
     startSubjectQueueDelivery();
   }
 
+  public TransportConfiguration getLocalConnector() {
+    return getServer().getConfiguration().getConnectorConfigurations().get(getConfig().getLocalConnectorRef());
+  }
+
+  public TransportConfiguration getRemoteConnector() {
+    return getServer().getConfiguration().getConnectorConfigurations().get(getConfig().getRemoteConnectorRef());
+  }
 
   private TransportConfiguration locateAcceptorTransportConfig(String name) throws ContinuityException {
     Set<TransportConfiguration> acceptorConfigs = getServer().getConfiguration().getAcceptorConfigurations();

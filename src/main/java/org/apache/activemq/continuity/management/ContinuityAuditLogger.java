@@ -153,21 +153,22 @@ public interface ContinuityAuditLogger extends BasicLogger {
     @Message(id = 221005, value = "User {0} is getting getSiteId on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
     void getSiteId(String user, Object source, Object... args);
 
-    static void getLocalInVmUri(Object source) {
-        LOGGER.getLocalInVmUri(getCaller(), source);
-    }
-
-    @LogMessage(level = Logger.Level.INFO)
-    @Message(id = 221006, value = "User {0} is getting getLocalInVmUri on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
-    void getLocalInVmUri(String user, Object source, Object... args);
-
     static void getLocalUsername(Object source) {
         LOGGER.getLocalUsername(getCaller(), source);
     }
 
     @LogMessage(level = Logger.Level.INFO)
-    @Message(id = 221007, value = "User {0} is getting getLocalUsername on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
+    @Message(id = 221006, value = "User {0} is getting getLocalUsername on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
     void getLocalUsername(String user, Object source, Object... args);
+
+    static void getRemoteUsername(Object source) {
+        LOGGER.getRemoteUsername(getCaller(), source);
+    }
+
+    @LogMessage(level = Logger.Level.INFO)
+    @Message(id = 221007, value = "User {0} is getting getRemoteUsername on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
+    void getRemoteUsername(String user, Object source, Object... args);
+
 
     static void getBridgeInterval(Object source) {
         LOGGER.getBridgeInterval(getCaller(), source);

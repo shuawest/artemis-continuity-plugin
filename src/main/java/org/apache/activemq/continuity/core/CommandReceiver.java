@@ -64,10 +64,10 @@ public class CommandReceiver implements MessageHandler {
       if (this.session == null || session.isClosed()) {
 
         if(log.isDebugEnabled()) {
-          log.debug("Creating local session for commands on '{}' with user '{}'", getConfig().getLocalInVmUri(), getConfig().getLocalUsername());
+          log.debug("Creating local session for commands on '{}' with user '{}'", service.getLocalConnector(), getConfig().getLocalUsername());
         }
         
-        this.locator = ActiveMQClient.createServerLocator(getConfig().getLocalInVmUri());
+        this.locator = ActiveMQClient.createServerLocator(false, service.getLocalConnector());
         this.factory = locator.createSessionFactory();
         this.session = factory.createSession(getConfig().getLocalUsername(),
                                              getConfig().getLocalPassword(), 

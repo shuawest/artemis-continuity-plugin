@@ -49,13 +49,13 @@ public interface ContinuityControl {
 
     @Attribute(desc = "Config: unique name for the site cluster")
     String getSiteId();
-
-    @Attribute(desc = "Config: local in-vm uri")    
-    String getLocalInVmUri();
  
     @Attribute(desc = "Config: local username")   
     String getLocalUsername();
  
+    @Attribute(desc = "Config: remote username")   
+    String getRemoteUsername();
+
     @Attribute(desc = "Config: Bridge reconnect interval applied to the all continuity bridges")
     String getBridgeInterval();
     

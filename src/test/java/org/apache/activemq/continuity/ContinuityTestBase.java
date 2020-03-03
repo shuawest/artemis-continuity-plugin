@@ -19,6 +19,9 @@ import static org.mockito.Mockito.when;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -35,6 +38,8 @@ import javax.management.MBeanServer;
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.api.core.RoutingType;
+import org.apache.activemq.artemis.api.core.SimpleString;
+import org.apache.activemq.artemis.api.core.TransportConfiguration;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
 import org.apache.activemq.artemis.api.core.client.ClientConsumer;
 import org.apache.activemq.artemis.api.core.client.ClientMessage;
@@ -48,6 +53,7 @@ import org.apache.activemq.artemis.core.config.Configuration;
 import org.apache.activemq.artemis.core.config.FileDeploymentManager;
 import org.apache.activemq.artemis.core.config.impl.FileConfiguration;
 import org.apache.activemq.artemis.core.config.impl.SecurityConfiguration;
+import org.apache.activemq.artemis.core.server.ActiveMQScheduledComponent;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.ActiveMQServers;
 import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerBasePlugin;
@@ -62,22 +68,6 @@ import org.apache.activemq.continuity.core.ContinuityConfig;
 import org.apache.activemq.continuity.core.ContinuityService;
 import org.apache.activemq.continuity.management.ContinuityManagementService;
 import org.apache.activemq.continuity.plugins.ContinuityPlugin;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.activemq.artemis.api.core.ActiveMQException;
-import org.apache.activemq.artemis.api.core.SimpleString;
-import org.apache.activemq.artemis.api.core.TransportConfiguration;
-import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
-import org.apache.activemq.artemis.api.core.client.ClientConsumer;
-import org.apache.activemq.artemis.api.core.client.ClientMessage;
-import org.apache.activemq.artemis.api.core.client.ClientProducer;
-import org.apache.activemq.artemis.api.core.client.ClientSession;
-import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
-import org.apache.activemq.artemis.api.core.client.ServerLocator;
-import org.apache.activemq.artemis.core.server.ActiveMQScheduledComponent;
-import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,13 +108,19 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     when(serviceMock.getConfig()).thenReturn(configMock);
     when(configMock.getSiteId()).thenReturn(serverId);
     when(configMock.getCommandDestinationPrefix()).thenReturn("artemis.continuity.commands");
-    when(configMock.getLocalInVmUri()).thenReturn("vm://" + inVmAcceptorId);
     when(configMock.getLocalUsername()).thenReturn("myuser");
     when(configMock.getLocalPassword()).thenReturn("mypass");
+    when(configMock.getRemoteUsername()).thenReturn("myuser");
+    when(configMock.getRemotePassword()).thenReturn("mypass");
     when(configMock.getLocalConnectorRef()).thenReturn("local-connector");
     when(configMock.getRemoteConnectorRef()).thenReturn("remote-connector");
     when(configMock.getBridgeInterval()).thenReturn(500L);
     when(configMock.getBridgeIntervalMultiplier()).thenReturn(0.5);
+
+    TransportConfiguration localConnector = serverContext.getServer().getConfiguration().getConnectorConfigurations().get(configMock.getLocalConnectorRef());
+    when(serviceMock.getLocalConnector()).thenReturn(localConnector);
+    TransportConfiguration remoteConnector = serverContext.getServer().getConfiguration().getConnectorConfigurations().get(configMock.getLocalConnectorRef());
+    when(serviceMock.getRemoteConnector()).thenReturn(remoteConnector);
 
     ContinuityContext continuityCtx = new ContinuityContext();
     continuityCtx.setConfig(configMock);
@@ -149,7 +145,8 @@ public class ContinuityTestBase extends ActiveMQTestBase {
                                        String address, String queueName, MessageHandler handler, 
                                        String messageBody, String dupId) throws Exception {
 
-    ServerLocator locator = ActiveMQClient.createServerLocator(continuityConfig.getLocalInVmUri());
+    TransportConfiguration localConnector = serverCtx.getServer().getConfiguration().getConnectorConfigurations().get(continuityConfig.getLocalConnectorRef());                                        
+    ServerLocator locator = ActiveMQClient.createServerLocator(false, localConnector);
     ClientSessionFactory factory = locator.createSessionFactory();
     ClientSession session = factory.createSession(continuityConfig.getLocalUsername(),
       continuityConfig.getLocalPassword(), false, true, true, true, locator.getAckBatchSize());
@@ -182,7 +179,8 @@ public class ContinuityTestBase extends ActiveMQTestBase {
                              String address, String queueName, 
                              String messageBody, String dupId) throws Exception {  
 
-    ServerLocator locator = ActiveMQClient.createServerLocator(continuityConfig.getLocalInVmUri());
+    TransportConfiguration localConnector = serverCtx.getServer().getConfiguration().getConnectorConfigurations().get(continuityConfig.getLocalConnectorRef());                                        
+    ServerLocator locator = ActiveMQClient.createServerLocator(false, localConnector);
     ClientSessionFactory factory = locator.createSessionFactory();
     ClientSession session = factory.createSession(continuityConfig.getLocalUsername(), continuityConfig.getLocalPassword(), false, true, true, false, locator.getAckBatchSize());;
     ClientProducer producer = session.createProducer(address);
@@ -219,7 +217,8 @@ public class ContinuityTestBase extends ActiveMQTestBase {
   }
 
   public void consumeMessages(ContinuityConfig continuityConfig, ServerContext serverCtx, String address, String queueName, MessageHandler handler) throws Exception {
-    ServerLocator locator = ActiveMQClient.createServerLocator(continuityConfig.getLocalInVmUri());
+    TransportConfiguration localConnector = serverCtx.getServer().getConfiguration().getConnectorConfigurations().get(continuityConfig.getLocalConnectorRef());                                        
+    ServerLocator locator = ActiveMQClient.createServerLocator(false, localConnector);
     ClientSessionFactory factory = locator.createSessionFactory();
     ClientSession session = factory.createSession(continuityConfig.getLocalUsername(),
       continuityConfig.getLocalPassword(), false, true, true, false, locator.getAckBatchSize());
