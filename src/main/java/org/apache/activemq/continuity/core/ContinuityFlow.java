@@ -109,14 +109,14 @@ public class ContinuityFlow {
     ackInterceptor.start();
     ackReceiver.start();
 
-    this.outflowMirrorBridge = createBridge(outflowMirrorBridgeName, outflowMirrorName, inflowMirrorName,
-        RoutingType.ANYCAST, getConfig().getRemoteConnectorRef(), true);
+    this.outflowMirrorBridge = createBridge(outflowMirrorBridgeName, outflowMirrorName, inflowMirrorName, RoutingType.ANYCAST, 
+                                            getConfig().getRemoteConnectorRef(), getConfig().getRemoteUsername(), getConfig().getRemotePassword(), true);
     this.outflowAcksBridge = createBridge(outflowAcksBridgeName, outflowAcksName, inflowAcksName, RoutingType.ANYCAST,
-        getConfig().getRemoteConnectorRef(), true);
+                                          getConfig().getRemoteConnectorRef(), getConfig().getRemoteUsername(), getConfig().getRemotePassword(), true);
 
     boolean isActivated = service.isActivated();
-    this.targetBridge = createBridge(targetBridgeName, inflowMirrorName, subjectAddressName,
-        RoutingType.valueOf(subjectQueueRoutingType), getConfig().getLocalConnectorRef(), isActivated);
+    this.targetBridge = createBridge(targetBridgeName, inflowMirrorName, subjectAddressName, RoutingType.valueOf(subjectQueueRoutingType), 
+                                     getConfig().getLocalConnectorRef(), getConfig().getLocalUsername(), getConfig().getLocalPassword(), isActivated);
 
     service.getManagement().registerContinuityFlow(service, this);
 
@@ -292,7 +292,7 @@ public class ContinuityFlow {
     }
   }
 
-  private Bridge createBridge(final String bridgeName, final String fromQueue, final String toAddress, final RoutingType targetRoutingType, final String connectorRef, final boolean start) throws ContinuityException {
+  private Bridge createBridge(final String bridgeName, final String fromQueue, final String toAddress, final RoutingType targetRoutingType, final String connectorRef, final String user, final String pass, final boolean start) throws ContinuityException {
     Bridge bridge = null;
     try {
       ComponentConfigurationRoutingType bridgeRoutingType;
@@ -306,8 +306,8 @@ public class ContinuityFlow {
           .setQueueName(fromQueue)
           .setForwardingAddress(toAddress)
           .setHA(true)
-          .setUser(getConfig().getRemoteUsername())
-          .setPassword(getConfig().getRemotePassword())
+          .setUser(user)
+          .setPassword(pass)
           .setRetryInterval(getConfig().getBridgeInterval())
           .setRetryIntervalMultiplier(getConfig().getBridgeIntervalMultiplier())
           .setInitialConnectAttempts(-1)
