@@ -69,42 +69,54 @@ image:docs/202001ContinuityPlugin-internals-diagram-v0.2-2.png[Continuity Plugin
 
 x fix command send session issue 
 x fix Ack and Command receive acknowledgment issue
+x coordinate activation of site with deactivation
+x add 'wait for ack consumption' for site activation
+x block message produce/consume on deactivated site
+x rationalize what happens when there are nondurable and temporary susbscribers
+x add mbeans for observability of plugin components
+x add additional queues to the same address both anycast and multicast
 
-- coordinate activation of site with deactivation
-- add 'wait for ack consumption' for site activation
-- block message produce/consume on deactivated site
+- flow name 'address-queue' name in case queue name, in case queue not is not easily derived from address name, or if queue name is reused (although queue names must be unique, if reusing they will only be aligned with the first address)
 
-- rationalize what happens when there are nondurable and temporary susbscribers
+- add security configuration to allow more than static user/pass for intra-broker communication, plus continuity role/permissions
+
+- test with master:slave cluster for each site
+
+- create operator to deploy image and connect between two sites
+- create Operator to orchestrate the broker swapover
+
 - add measurement of estimated RTA/RPA and duplicate message risk
+  - Outflow Message Loss Risk: outflow mirror depth
+  - Outflow Duplicate Risk: outflow acks depth 
+  - Outflow Recovery Point Actual: time of last bridged message - time it was acked by bridge
+  - Inflow Recovery Point Actual: time of bridged message - time originally sent
+  - Recovery Time Estimate: time to receive peer mirror and acks, plus time to remove messages based on acks
+  
 - load test 2 site single broker install (compare with single site without the plugin)
 
-- consider making flow name 'address-queue' name in case queue name, in case queue not is not easily derived from address name, or if queue name is reused (although queue names must be unique, if reusing they will only be aligned with the first address)
-- add additional queues to the same address both anycast and multicast
+- implement queue / address removal
+
+- load test 2 site single broker install (compare with single site without the plugin)
+- soak test broker with continuity replication
+- test model with shared nothing broker cluster in two sites
+- add additional queue configuration synchronization (beyond initial queue/address pair it does now - filters, diverts, etc)
+- deal with queue configuration updates (beyond the add it has today)
+
+- allow for more than one remote site
+- add discovery groups for remote site connectivity
+- add finer tuning of continuity strategy
+- create examples of swapover for local DC, and DC spanned clients, with swapover model
+- automatically adjust delivery delay strategy timeframe based on detected RTO/RPO
+- improve plugin failure / error handling, and shutdown cleanup
+- improve documentation - add user level topology diagrams/docs, and detailed level contributor diagrams/docs
+- create Continuity Plugin overview presentation
+- evaluate adding synchronous replication model (custom divert that sends message and acks remotely, preventing delivery if 1 or more remotes are not available)
 
 - analyze FSI apps and create IBM MQ eqivalent destinations
 - extract MQ configuration from IBM WAS-ND and replicate in AMQ config
 - convert info logging to AuditLogger pattern
 
 - fix server stop issue (can't figure out how to hook into pre-server shutdown to stop sessions, bridges, etc)
-1. create image and automated deployment to push to multiple openshift sites
-2. load test 2 site single broker install (compare with single site without the plugin)
-3. soak test broker with continuity replication
-3. test model with shared nothing broker cluster in two sites
-4. add mbeans for observability of plugin components, and RTO/RPO estimate metrics
-5. add additional queue configuration synchronization (beyond initial queue/address pair it does now - filters, diverts, etc)
-6. deal with queue configuration updates (beyond the add it has today)
-7. implement queue / address removal
-8. allow for more than one remote site
-9. add security configuration to allow more than static user/pass for intra-broker communication, plus continuity role/permissions
-10. add discovery groups for remote site connectivity
-11. add finer tuning of continuity strategy
-12. create examples of swapover for local DC, and DC spanned clients, with swapover model
-13. create Operator to orchestrate the broker swapover
-14. automatically adjust delivery delay strategy timeframe based on detected RTO/RPO
-15. improve plugin failure / error handling, and shutdown cleanup
-16. improve documentation - add user level topology diagrams/docs, and detailed level contributor diagrams/docs
-17. create Continuity Plugin overview presentation
-18. evaluate adding synchronous replication model (custom divert that sends message and acks remotely, preventing delivery if 1 or more remotes are not available)
 
 ## Risks
 
