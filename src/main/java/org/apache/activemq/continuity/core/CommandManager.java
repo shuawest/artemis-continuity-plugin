@@ -84,11 +84,12 @@ public class CommandManager {
     if(isStarted)
       return; 
 
-    commandOutBridge = createCommandBridge(commandOutBridgeName, 
-                                           getConfig().getRemoteConnectorRef(), 
-                                           commandOutQueueName, 
-                                           commandInQueueName, 
-                                           true);
+    commandOutBridge = 
+      createCommandBridge(commandOutBridgeName, 
+        getConfig().getRemoteConnectorRef(), 
+        commandOutQueueName, 
+        commandInQueueName, 
+        true);
 
     commandReceiver.start();
 

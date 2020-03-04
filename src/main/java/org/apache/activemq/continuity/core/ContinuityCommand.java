@@ -24,25 +24,34 @@ import org.apache.activemq.artemis.utils.JsonLoader;
 public class ContinuityCommand {
 
   public static final String ACTION_ACTIVATE_SITE = "activate-site";
-  public static final String NOTIF_OUTFLOW_EXHAUSTED = "outflow-exhausted";
-  public static final String NOTIF_SITE_ACTIVATED = "site-activated";
+  public static final String ACTION_DEACTIVATE_SITE = "deactivate-site";
   public static final String ACTION_BROKER_CONNECT = "broker-connect";
   public static final String ACTION_ADD_ADDRESS = "add-address";
   public static final String ACTION_ADD_QUEUE = "add-queue";
   public static final String ACTION_REMOVE_ADDRESS = "remove-address";
   public static final String ACTION_REMOVE_QUEUE = "remove-queue";
+  public static final String NOTIF_OUTFLOW_EXHAUSTED = "notif-outflow-exhausted";
+  public static final String NOTIF_SITE_ACTIVE = "notif-site-active";
+  public static final String NOTIF_SITE_INACTIVE = "notif-site-inactive";
+
+  public static final String STATUS_ACTIVE = "active";
+  public static final String STATUS_INACTIVE = "inacive";
 
   private static final String ACTION_FIELD = "action";
   private static final String ADDRESS_FIELD = "addr";
   private static final String QUEUE_FIELD = "queue";
   private static final String ROUTING_TYPE_FIELD = "routing";
   private static final String ORIGIN_FIELD = "origin";
+  private static final String STATUS_FIELD = "status";
+
+  
 
   private String action;
   private String address; 
   private String queue;
   private String routingType;
   private String origin;
+  private String status;
 
   public ContinuityCommand() { }
 
@@ -86,6 +95,14 @@ public class ContinuityCommand {
     this.origin = origin;
   }
 
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
+
   /** Marshalling **/
 
   public static String toJSON(ContinuityCommand cc) {
@@ -101,6 +118,8 @@ public class ContinuityCommand {
       builder.add(ROUTING_TYPE_FIELD, cc.getRoutingType());
     if(cc.getOrigin() != null)
       builder.add(ORIGIN_FIELD, cc.getOrigin());
+      if(cc.getStatus() != null)
+      builder.add(STATUS_FIELD, cc.getStatus());
 
     JsonObject jsonObject = builder.build();
     return jsonObject.toString();
@@ -120,6 +139,8 @@ public class ContinuityCommand {
       cc.setRoutingType(jsonObject.getString(ROUTING_TYPE_FIELD));
     if(jsonObject.containsKey(ORIGIN_FIELD))
       cc.setOrigin(jsonObject.getString(ORIGIN_FIELD));
+      if(jsonObject.containsKey(STATUS_FIELD))
+      cc.setStatus(jsonObject.getString(STATUS_FIELD));
 
     return cc;
   }

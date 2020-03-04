@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
@@ -114,6 +115,7 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     when(configMock.getRemotePassword()).thenReturn("mypass");
     when(configMock.getLocalConnectorRef()).thenReturn("local-connector");
     when(configMock.getRemoteConnectorRef()).thenReturn("remote-connector");
+    when(configMock.getServingAcceptors()).thenReturn(Arrays.asList("artemis"));
     when(configMock.getBridgeInterval()).thenReturn(500L);
     when(configMock.getBridgeIntervalMultiplier()).thenReturn(0.5);
 

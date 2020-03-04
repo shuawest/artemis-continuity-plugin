@@ -22,6 +22,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
+
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.continuity.ContinuityTestBase;
@@ -89,8 +91,7 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     ContinuityContext continuityCtx = createMockContext(serverCtx, "primary", 1);
     serverCtx.getServer().start();
 
-    when(continuityCtx.getConfig().getInternalAcceptorName()).thenReturn("continuity-internal");
-    when(continuityCtx.getConfig().getExternalAcceptorName()).thenReturn("continuity-external");
+    when(continuityCtx.getConfig().getServingAcceptors()).thenReturn(Arrays.asList("artemis"));
     when(continuityCtx.getConfig().getOutflowAcksSuffix()).thenReturn(".out.acks");
     when(continuityCtx.getConfig().getInflowMirrorSuffix()).thenReturn(".in.mirror");
     when(continuityCtx.getConfig().getInflowAcksSuffix()).thenReturn(".in.acks");
@@ -111,8 +112,7 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     serverCtx.getServer().start();
 
     when(continuityCtx.getCommandManager().isStarted()).thenReturn(true);
-    when(continuityCtx.getConfig().getInternalAcceptorName()).thenReturn("continuity-internal");
-    when(continuityCtx.getConfig().getExternalAcceptorName()).thenReturn("continuity-external");
+    when(continuityCtx.getConfig().getServingAcceptors()).thenReturn(Arrays.asList("artemis"));
     when(continuityCtx.getConfig().getOutflowMirrorSuffix()).thenReturn(".out.mirror");
     when(continuityCtx.getConfig().getOutflowAcksSuffix()).thenReturn(".out.acks");
     when(continuityCtx.getConfig().getInflowMirrorSuffix()).thenReturn(".in.mirror");
@@ -152,9 +152,9 @@ public class ContinuityServiceTest extends ContinuityTestBase {
     long ackedCountBefore = example1Queue.getMessagesAcknowledged();
 
     // stop new connections from being accepted
-    plugin1.getService().stopNonContinuityAcceptors();
+    plugin1.getService().stopServingAcceptors();
     // kill existing connections on non-continuity acceptors
-    plugin1.getService().stopNonContinuityDelivery();
+    plugin1.getService().stopServingDelivery();
 
     Thread.sleep(1000L);
 

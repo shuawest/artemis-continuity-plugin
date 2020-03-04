@@ -43,13 +43,14 @@ public class ContinuityPluginTest extends ContinuityTestBase {
       put("remote-password", "mypass");
       put("local-connector-ref", "local-connector");
       put("remote-connector-ref", "remote-connector");
-      put("external-acceptor", "continuity-external");
-      put("internal-acceptor", "continuity-internal");
+      put("serving-acceptors", "artemis");
       put("active-on-start", "true");
     }}); 
 
     serverCtx.getServer().getConfiguration().registerBrokerPlugin(plugin);
     serverCtx.getServer().start();
+    Thread.sleep(700L);
+    plugin.getService().activateSite(1L);
     Thread.sleep(300L);
     
     // create a dummy connection to start the plugin
@@ -94,7 +95,6 @@ public class ContinuityPluginTest extends ContinuityTestBase {
     ServerContext serverCtx2 = createServerContext("broker2-with-plugin.xml", "ContinuityPluginTest.brokerConnectTest", "myuser", "mypass");
     serverCtx1.getServer().start();
     serverCtx2.getServer().start();
-
     Thread.sleep(500L);
   
     log.debug("\n\nServers started\n\n");

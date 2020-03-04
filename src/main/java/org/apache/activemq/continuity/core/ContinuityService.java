@@ -31,6 +31,8 @@ import org.apache.activemq.continuity.management.ContinuityManagementService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.netty.channel.epoll.EpollServerChannelConfig;
+
 public class ContinuityService {
 
   private static final Logger log = LoggerFactory.getLogger(ContinuityService.class);
@@ -49,8 +51,7 @@ public class ContinuityService {
   private CommandManager commandManager;
   private Map<String, ContinuityFlow> flows = new HashMap<String, ContinuityFlow>();
 
-  private TransportConfiguration internalAcceptorConfig;
-  private TransportConfiguration externalAcceptorConfig;
+  private List<TransportConfiguration> servingAcceptorConfigs = new ArrayList<TransportConfiguration>();
 
   public ContinuityService(final ActiveMQServer server, final ContinuityConfig config) {
     this.server = server;
@@ -73,25 +74,21 @@ public class ContinuityService {
       cmdMgr.initialize();
     }
 
-    internalAcceptorConfig = locateAcceptorTransportConfig(getConfig().getInternalAcceptorName());
-    externalAcceptorConfig = locateAcceptorTransportConfig(getConfig().getExternalAcceptorName());
+    for(String servingAcceptorName : getConfig().getServingAcceptors()) {
+      TransportConfiguration acceptorConfig = locateAcceptorTransportConfig(servingAcceptorName);
+      servingAcceptorConfigs.add(acceptorConfig);
+    }
 
     isInitialized = true;
     isInitializing = false;
   }
 
   public void start() throws ContinuityException {
-    if (getConfig().isSiteActiveByDefault()) {
-      isActivated = true;
-      isDelivering = true;
-    } else {
-      stopNonContinuityAcceptors();
-      isActivated = false;
-      isDelivering = false;
-    }
+    assertSiteStopped();
 
     commandManager.start();
 
+    scanForUninitializedFlows();
     for (ContinuityFlow flow : flows.values()) {
       flow.start();
     }
@@ -99,8 +96,10 @@ public class ContinuityService {
     getManagement().registerContinuityService(this);
 
     // Notify peer sites that this broker has started
+    String status = (isActivated)? ContinuityCommand.STATUS_ACTIVE : ContinuityCommand.STATUS_INACTIVE;
     ContinuityCommand cmdStarted = new ContinuityCommand();
     cmdStarted.setAction(ContinuityCommand.ACTION_BROKER_CONNECT);
+    cmdStarted.setStatus(status);
     commandManager.sendCommand(cmdStarted);
 
     isStarted = true;
@@ -167,44 +166,29 @@ public class ContinuityService {
     }
   }
 
-  private ContinuityFlow createFlow(QueueInfo queueInfo) throws ContinuityException {
-    ContinuityFlow flow = new ContinuityFlow(this, queueInfo);
-    flow.initialize();
-    return flow;
-  }
-
-  public void registerContinuityFlow(String queueName, ContinuityFlow flow) throws ContinuityException {
-    flows.put(queueName, flow);
-  }
-
-  public ContinuityFlow locateFlow(String queueName) {
-    return flows.get(queueName);
-  }
-
-  private QueueInfo extractQueueInfo(Queue queue) {
-    QueueInfo queueInfo = new QueueInfo();
-    queueInfo.setAddressName(queue.getAddress().toString());
-    queueInfo.setQueueName(queue.getName().toString());
-    queueInfo.setRoutingType(queue.getRoutingType().toString());
-    return queueInfo;
-  }
-
   public void handleIncomingCommand(ContinuityCommand command) throws ContinuityException {
 
     switch (command.getAction()) {
-      case ContinuityCommand.ACTION_ACTIVATE_SITE:
-        activateSite(getConfig().getActivationTimeout());
-        break;
-
-      case ContinuityCommand.NOTIF_SITE_ACTIVATED:
-        deactivateSite();
-        break;
-
-      case ContinuityCommand.NOTIF_OUTFLOW_EXHAUSTED:
-        startInflowAcksConsumedWatcher();
-        break;
 
       case ContinuityCommand.ACTION_BROKER_CONNECT:
+
+        if(ContinuityCommand.STATUS_ACTIVE.equals(command.getStatus())) {
+          if(isActivated) {
+            assertSiteStopped();
+          } else {
+            notifySiteActive();
+          }
+        }
+        else if(ContinuityCommand.STATUS_INACTIVE.equals(command.getStatus())) {
+          if(isActivated) {
+            notifySiteActive();
+          } else if (getConfig().isSiteActiveByDefault()) {
+            activateSite(1L);  // activate the site immediately
+          } else {
+            notifySiteInactive();
+          }
+        }
+
         for (ContinuityFlow flow : flows.values()) {
           ContinuityCommand cmd = new ContinuityCommand();
           cmd.setAction(ContinuityCommand.ACTION_ADD_QUEUE);
@@ -213,6 +197,25 @@ public class ContinuityService {
           cmd.setRoutingType(flow.getSubjectQueueRoutingType());
           commandManager.sendCommand(cmd);
         }
+        break;
+
+      case ContinuityCommand.ACTION_DEACTIVATE_SITE:
+        deactivateSite();
+        break;
+
+      case ContinuityCommand.NOTIF_SITE_ACTIVE:
+        assertSiteStopped();
+        break;
+      
+      case ContinuityCommand.NOTIF_SITE_INACTIVE:        
+        break;
+
+      case ContinuityCommand.NOTIF_OUTFLOW_EXHAUSTED:
+        startInflowAcksConsumedWatcher();
+        break;
+
+      case ContinuityCommand.ACTION_ACTIVATE_SITE:
+        activateSite(getConfig().getActivationTimeout());
         break;
 
       case ContinuityCommand.ACTION_ADD_QUEUE:
@@ -237,75 +240,135 @@ public class ContinuityService {
   public void activateSite(long timeout) throws ContinuityException {
     isActivated = true;
 
-    startNonContinuityAcceptors();
+    startServingAcceptors();
 
-    ContinuityCommand cmd = new ContinuityCommand();
-    cmd.setAction(ContinuityCommand.NOTIF_SITE_ACTIVATED);
-    getCommandManager().sendCommand(cmd);
+    deactivatePeerSite();
 
     // start timeout executor for exhausted notification to start delivery
     startActivationTimeoutExecutor(timeout);
   }
 
-  public void stopNonContinuityAcceptors() throws ContinuityException {
+  public void deactivatePeerSite() throws ContinuityException {
+    ContinuityCommand cmd = new ContinuityCommand();
+    cmd.setAction(ContinuityCommand.ACTION_DEACTIVATE_SITE);
+    getCommandManager().sendCommand(cmd);
+  }
+
+  public void notifySiteActive() throws ContinuityException {
+    ContinuityCommand cmd = new ContinuityCommand();
+    cmd.setAction(ContinuityCommand.NOTIF_SITE_ACTIVE);
+    getCommandManager().sendCommand(cmd);
+  }
+
+  public void notifySiteInactive() throws ContinuityException {
+    ContinuityCommand cmd = new ContinuityCommand();
+    cmd.setAction(ContinuityCommand.NOTIF_SITE_INACTIVE);
+    getCommandManager().sendCommand(cmd);
+  }
+
+  private void scanForUninitializedFlows() throws ContinuityException {
+    try {
+      for(SimpleString address : getServer().getPostOffice().getAddresses()) {
+        for(Queue queue : getServer().getPostOffice().listQueuesForAddress(address)) {
+          if (isSubjectQueue(queue)) {
+            QueueInfo queueInfo = extractQueueInfo(queue);
+            if (locateFlow(queueInfo.getQueueName()) == null) {
+              createFlow(queueInfo);
+            }
+          }
+        }
+      }
+    } catch(Exception e) {
+      String msg = String.format("Unable to scan for new flows");
+      throw new ContinuityException(msg, e);
+    }
+  }
+
+  private ContinuityFlow createFlow(QueueInfo queueInfo) throws ContinuityException {
+    ContinuityFlow flow = new ContinuityFlow(this, queueInfo);
+    flow.initialize();
+    return flow;
+  }
+
+  public void registerContinuityFlow(String queueName, ContinuityFlow flow) throws ContinuityException {
+    flows.put(queueName, flow);
+  }
+
+  public ContinuityFlow locateFlow(String queueName) {
+    return flows.get(queueName);
+  }
+
+  private QueueInfo extractQueueInfo(Queue queue) {
+    QueueInfo queueInfo = new QueueInfo();
+    queueInfo.setAddressName(queue.getAddress().toString());
+    queueInfo.setQueueName(queue.getName().toString());
+    queueInfo.setRoutingType(queue.getRoutingType().toString());
+    return queueInfo;
+  }
+
+  public void stopServingAcceptors() throws ContinuityException {
     Set<TransportConfiguration> acceptorConfigs = getServer().getConfiguration().getAcceptorConfigurations();
     for (TransportConfiguration acceptorConfig : acceptorConfigs) {
       String acceptorName = acceptorConfig.getName();
 
-      if (!acceptorName.equals(getConfig().getExternalAcceptorName())
-          && !acceptorName.equals(getConfig().getInternalAcceptorName())) {
+      if(getConfig().getServingAcceptors().contains(acceptorName)) {
         Acceptor acceptor = getServer().getRemotingService().getAcceptor(acceptorConfig.getName());
         if (acceptor != null) {
           try {
             acceptor.stop();
+
+            if (log.isDebugEnabled()) {
+              log.debug("Stopped serving acceptor '{}'", acceptorName);
+            }
           } catch (Exception e) {
             if(log.isWarnEnabled()) {
-              log.warn("Unable to stop acceptor '{}'", acceptorName);
+              log.warn("Unable to stop serving acceptor '{}'", acceptorName);
             }
-          }
-
-          if (log.isDebugEnabled()) {
-            log.debug("Paused acceptor '{}'", acceptorName);
           }
         }
       }
     }
   }
 
-  public void startNonContinuityAcceptors() throws ContinuityException {
+  public void startServingAcceptors() throws ContinuityException {
     Set<TransportConfiguration> acceptorConfigs = getServer().getConfiguration().getAcceptorConfigurations();
     for (TransportConfiguration acceptorConfig : acceptorConfigs) {
       String acceptorName = acceptorConfig.getName();
 
-      if (!acceptorName.equals(getConfig().getExternalAcceptorName())
-          && !acceptorName.equals(getConfig().getInternalAcceptorName())) {
+      if(getConfig().getServingAcceptors().contains(acceptorName)) {
         Acceptor acceptor = getServer().getRemotingService().getAcceptor(acceptorConfig.getName());
-        
-        try {
-          if(acceptor != null) {
-            acceptor.start();
-
-            if(log.isDebugEnabled()) {
-              log.debug("Unpaused acceptor '{}'", acceptorName);
+        if (acceptor != null) {
+          try {
+            if(acceptor != null) {
+              acceptor.start();
+  
+              if(log.isDebugEnabled()) {
+                log.debug("Started serving acceptor '{}'", acceptorName);
+              }
             }
+          } catch (Exception e) {
+            String msg = String.format("Unable to start serving acceptor: %s", acceptorName);
+            log.error(msg, e); 
+            throw new ContinuityException(msg, e);
           }
-        } catch (Exception e) {
-          String msg = String.format("Unable to unpause non-continuity acceptor: %s", acceptorName);
-          log.error(msg, e); 
-          throw new ContinuityException(msg, e);
         }
       }
     }
   }
 
-  public void stopNonContinuityDelivery() throws ContinuityException {
+  public void stopServingDelivery() throws ContinuityException {
     Set<RemotingConnection> connections = getServer().getRemotingService().getConnections();
     for(RemotingConnection conn : connections) {
       TransportConfiguration connectionTransportConfig = conn.getTransportConnection().getConnectorConfig();
-      boolean isInternalAcceptorConn = isTransportEqual(connectionTransportConfig, internalAcceptorConfig);
-      boolean isExternalAcceptorConn = isTransportEqual(connectionTransportConfig, externalAcceptorConfig);
+      boolean isServingAcceptor = false;
+      for(TransportConfiguration servingTransport : servingAcceptorConfigs) {
+        if(isTransportEqual(connectionTransportConfig, servingTransport)) {
+          isServingAcceptor = true;
+          break;
+        }
+      }
 
-      if(!isInternalAcceptorConn && !isExternalAcceptorConn) {
+      if(isServingAcceptor) {
         conn.disconnect(false);
         conn.destroy();
       }
@@ -383,16 +446,20 @@ public class ContinuityService {
   }
 
   public void deactivateSite() throws ContinuityException {
+    assertSiteStopped();
+    // wait for mirrors to be emptied, then notify peer site
+    startOutflowWatcher();
+  }
+
+  public void assertSiteStopped() throws ContinuityException {
     isActivated = false;
 
     // stop delivering messages to subject queues from staging
     stopSubjectQueueDelivery();
     // stop new connections from being accepted
-    stopNonContinuityAcceptors();
+    stopServingAcceptors();
     // kill existing connections on non-continuity acceptors
-    stopNonContinuityDelivery();
-    // wait for mirrors to be emptied, then notify peer site
-    startOutflowWatcher();
+    stopServingDelivery();
   }
 
   public void handleOutflowExhausted() throws ContinuityException {

@@ -13,6 +13,9 @@
  */
 package org.apache.activemq.continuity.core;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -34,8 +37,7 @@ public class ContinuityConfig {
   private String localPassword;
   private String remoteUsername; 
   private String remotePassword;
-  private String externalAcceptorName;
-  private String internalAcceptorName;
+  private List<String> servingAcceptors = new ArrayList<String>();
   private boolean siteActiveByDefault;
 
   private String outflowMirrorSuffix;
@@ -61,8 +63,7 @@ public class ContinuityConfig {
     this.localPassword = parseRequiredProperty(properties, "local-password");
     this.remoteUsername = parseRequiredProperty(properties, "remote-username");
     this.remotePassword = parseRequiredProperty(properties, "remote-password");
-    this.externalAcceptorName = parseRequiredProperty(properties, "external-acceptor");
-    this.internalAcceptorName = parseRequiredProperty(properties, "internal-acceptor");
+    this.servingAcceptors = parseRequiredListProperty(properties, "serving-acceptors");
     this.localConnectorRef = parseRequiredProperty(properties, "local-connector-ref");
     this.remoteConnectorRef = parseRequiredProperty(properties, "remote-connector-ref");
     this.siteActiveByDefault = parseRequiredBooleanProperty(properties, "active-on-start");
@@ -104,11 +105,8 @@ public class ContinuityConfig {
     return remotePassword;
   }
 
-  public String getExternalAcceptorName() {
-    return externalAcceptorName;
-  }
-  public String getInternalAcceptorName() {
-    return internalAcceptorName;
+  public List<String> getServingAcceptors() {
+    return servingAcceptors;
   }
 
   public String getLocalConnectorRef() {
@@ -181,8 +179,7 @@ public class ContinuityConfig {
       ", remotePassword=" + ((remotePassword == null)? "null" : "******") + 
       ", localConnectorRef=" + localConnectorRef + 
       ", remoteConnectorRef=" + remoteConnectorRef + 
-      ", externalAcceptorName=" + externalAcceptorName +
-      ", internalAcceptorName=" + internalAcceptorName +
+      ", servingAcceptors=" + servingAcceptors +
       ", siteActiveByDefault=" + siteActiveByDefault +
       ", outMirrorSuffix=" + outflowMirrorSuffix +
       ", outAcksSuffix=" + outflowAcksSuffix +
@@ -214,6 +211,24 @@ public class ContinuityConfig {
 
   private static String parseProperty(Map<String, String> properties, String name) {
     return properties.get(name);
+  }
+
+  private static List<String> parseRequiredListProperty(Map<String, String> properties, String name) throws ContinuityException {
+    List<String> listValue = parseListProperty(properties, name);
+    if(listValue.size() == 0) {
+      String msg = String.format("Required continuity configuration property '%s' not set", name);
+      throw new ContinuityException(msg);
+    } else {
+      return listValue;
+    }
+  }
+
+  private static List<String> parseListProperty(Map<String, String> properties, String name) {
+    String value = properties.get(name);
+    if(value == null)
+      return new ArrayList<String>();
+    else
+      return Arrays.asList(value.split(";"));
   }
 
   private static Long parseLongProperty(Map<String, String> properties, String name, long defaultValue) {
