@@ -15,6 +15,7 @@ package org.apache.activemq.continuity.core;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.api.core.SimpleString;
@@ -110,13 +111,13 @@ public class ContinuityFlow {
     ackReceiver.start();
 
     this.outflowMirrorBridge = createBridge(outflowMirrorBridgeName, outflowMirrorName, inflowMirrorName, RoutingType.ANYCAST, 
-                                            getConfig().getRemoteConnectorRef(), getConfig().getRemoteUsername(), getConfig().getRemotePassword(), true);
+                                            getConfig().getRemoteConnectorRefs(), getConfig().getRemoteUsername(), getConfig().getRemotePassword(), true);
     this.outflowAcksBridge = createBridge(outflowAcksBridgeName, outflowAcksName, inflowAcksName, RoutingType.ANYCAST,
-                                          getConfig().getRemoteConnectorRef(), getConfig().getRemoteUsername(), getConfig().getRemotePassword(), true);
+                                          getConfig().getRemoteConnectorRefs(), getConfig().getRemoteUsername(), getConfig().getRemotePassword(), true);
 
     boolean isActivated = service.isActivated();
     this.targetBridge = createBridge(targetBridgeName, inflowMirrorName, subjectAddressName, RoutingType.valueOf(subjectQueueRoutingType), 
-                                     getConfig().getLocalConnectorRef(), getConfig().getLocalUsername(), getConfig().getLocalPassword(), isActivated);
+                                     Arrays.asList(getConfig().getLocalConnectorRef()), getConfig().getLocalUsername(), getConfig().getLocalPassword(), isActivated);
 
     service.getManagement().registerContinuityFlow(service, this);
 
@@ -292,7 +293,7 @@ public class ContinuityFlow {
     }
   }
 
-  private Bridge createBridge(final String bridgeName, final String fromQueue, final String toAddress, final RoutingType targetRoutingType, final String connectorRef, final String user, final String pass, final boolean start) throws ContinuityException {
+  private Bridge createBridge(final String bridgeName, final String fromQueue, final String toAddress, final RoutingType targetRoutingType, final List<String> connectorRefs, final String user, final String pass, final boolean start) throws ContinuityException {
     Bridge bridge = null;
     try {
       ComponentConfigurationRoutingType bridgeRoutingType;
@@ -314,7 +315,7 @@ public class ContinuityFlow {
           .setReconnectAttempts(-1)
           .setRoutingType(bridgeRoutingType)
           .setConfirmationWindowSize(10000000)
-          .setStaticConnectors(Arrays.asList(connectorRef)); 
+          .setStaticConnectors(connectorRefs); 
 
       getServer().deployBridge(bridgeConfig);
 

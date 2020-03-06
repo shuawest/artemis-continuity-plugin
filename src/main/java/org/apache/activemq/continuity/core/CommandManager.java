@@ -14,6 +14,7 @@
 package org.apache.activemq.continuity.core;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.api.core.SimpleString;
@@ -32,8 +33,6 @@ import org.apache.activemq.artemis.core.server.cluster.Bridge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO: split out command producer so session is created on demand to send sets of commands 
-//       to avoid "AMQ212051: Invalid concurrent session usage. Sessions are not supposed to be used by more than one thread concurrently."
 public class CommandManager {
 
   private static final Logger log = LoggerFactory.getLogger(CommandManager.class);
@@ -86,7 +85,7 @@ public class CommandManager {
 
     commandOutBridge = 
       createCommandBridge(commandOutBridgeName, 
-        getConfig().getRemoteConnectorRef(), 
+        getConfig().getRemoteConnectorRefs(), 
         commandOutQueueName, 
         commandInQueueName, 
         true);
@@ -157,7 +156,7 @@ public class CommandManager {
     }
   }
 
-  private Bridge createCommandBridge(String bridgeName, String remoteUri, String fromQueueName, String toAddressName, final boolean start) throws ContinuityException {
+  private Bridge createCommandBridge(String bridgeName, List<String> remoteUris, String fromQueueName, String toAddressName, final boolean start) throws ContinuityException {
     Bridge bridge; 
     try {
       BridgeConfiguration bridgeConfig = new BridgeConfiguration()
@@ -172,9 +171,9 @@ public class CommandManager {
         .setInitialConnectAttempts(-1)
         .setReconnectAttempts(-1)
         .setRoutingType(ComponentConfigurationRoutingType.ANYCAST)
-        .setUseDuplicateDetection(true)
+        .setUseDuplicateDetection(false)
         .setConfirmationWindowSize(10000000)
-        .setStaticConnectors(Arrays.asList(getConfig().getRemoteConnectorRef()));
+        .setStaticConnectors(remoteUris);
 
       getServer().deployBridge(bridgeConfig);
 
@@ -184,7 +183,7 @@ public class CommandManager {
         bridge.stop();
       }
     } catch (Exception e) {
-      String eMessage = String.format("Failed to create command bridge, from '%s' to '%s.%s'", fromQueueName, remoteUri, toAddressName);
+      String eMessage = String.format("Failed to create command bridge, from '%s' to '%s.%s'", fromQueueName, remoteUris, toAddressName);
       log.error(eMessage, e);
       throw new ContinuityException(eMessage, e);
     }

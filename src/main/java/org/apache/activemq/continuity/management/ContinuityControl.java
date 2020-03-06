@@ -13,6 +13,8 @@
  */
 package org.apache.activemq.continuity.management;
 
+import java.util.List;
+
 import javax.management.MBeanOperationInfo;
 
 import org.apache.activemq.artemis.api.core.management.Attribute;
@@ -83,8 +85,8 @@ public interface ContinuityControl {
     @Attribute(desc = "Config: Name of the local connector used for continuity")
     String getLocalConnector();
     
-    @Attribute(desc = "Config: Name of the remote connector used for continuity")
-    String getRemoteConnector();
+    @Attribute(desc = "Config: Name of the remote connectors used for continuity")
+    List<String> getRemoteConnectors();
 
     /* Operations */ 
 

@@ -114,7 +114,7 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     when(configMock.getRemoteUsername()).thenReturn("myuser");
     when(configMock.getRemotePassword()).thenReturn("mypass");
     when(configMock.getLocalConnectorRef()).thenReturn("local-connector");
-    when(configMock.getRemoteConnectorRef()).thenReturn("remote-connector");
+    when(configMock.getRemoteConnectorRefs()).thenReturn(Arrays.asList("remote-connector"));
     when(configMock.getServingAcceptors()).thenReturn(Arrays.asList("artemis"));
     when(configMock.getBridgeInterval()).thenReturn(500L);
     when(configMock.getBridgeIntervalMultiplier()).thenReturn(0.5);
@@ -122,7 +122,7 @@ public class ContinuityTestBase extends ActiveMQTestBase {
     TransportConfiguration localConnector = serverContext.getServer().getConfiguration().getConnectorConfigurations().get(configMock.getLocalConnectorRef());
     when(serviceMock.getLocalConnector()).thenReturn(localConnector);
     TransportConfiguration remoteConnector = serverContext.getServer().getConfiguration().getConnectorConfigurations().get(configMock.getLocalConnectorRef());
-    when(serviceMock.getRemoteConnector()).thenReturn(remoteConnector);
+    when(serviceMock.getRemoteConnectors()).thenReturn(Arrays.asList(remoteConnector));
 
     ContinuityContext continuityCtx = new ContinuityContext();
     continuityCtx.setConfig(configMock);

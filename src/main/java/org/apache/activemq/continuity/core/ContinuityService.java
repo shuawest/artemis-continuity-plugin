@@ -31,8 +31,6 @@ import org.apache.activemq.continuity.management.ContinuityManagementService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.netty.channel.epoll.EpollServerChannelConfig;
-
 public class ContinuityService {
 
   private static final Logger log = LoggerFactory.getLogger(ContinuityService.class);
@@ -476,8 +474,12 @@ public class ContinuityService {
     return getServer().getConfiguration().getConnectorConfigurations().get(getConfig().getLocalConnectorRef());
   }
 
-  public TransportConfiguration getRemoteConnector() {
-    return getServer().getConfiguration().getConnectorConfigurations().get(getConfig().getRemoteConnectorRef());
+  public List<TransportConfiguration> getRemoteConnectors() {
+    List<TransportConfiguration> remoteConnectors = new ArrayList<TransportConfiguration>();
+    for(String connectorRef : getConfig().getRemoteConnectorRefs()) {
+      remoteConnectors.add(getServer().getConfiguration().getConnectorConfigurations().get(connectorRef));
+    }
+    return remoteConnectors;
   }
 
   private TransportConfiguration locateAcceptorTransportConfig(String name) throws ContinuityException {

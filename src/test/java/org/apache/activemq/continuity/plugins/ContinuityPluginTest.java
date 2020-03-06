@@ -16,6 +16,7 @@ package org.apache.activemq.continuity.plugins;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 import org.apache.activemq.artemis.api.core.RoutingType;
@@ -42,7 +43,7 @@ public class ContinuityPluginTest extends ContinuityTestBase {
       put("remote-username", "myuser");
       put("remote-password", "mypass");
       put("local-connector-ref", "local-connector");
-      put("remote-connector-ref", "remote-connector");
+      put("remote-connector-refs", "remote-connector");
       put("serving-acceptors", "artemis");
       put("active-on-start", "true");
     }}); 
@@ -60,7 +61,7 @@ public class ContinuityPluginTest extends ContinuityTestBase {
     assertThat(plugin.getConfig(), notNullValue());
     assertThat(plugin.getConfig().getSiteId(), equalTo("site2"));
     assertThat(plugin.getConfig().getLocalConnectorRef(), equalTo("local-connector"));
-    assertThat(plugin.getConfig().getRemoteConnectorRef(), equalTo("remote-connector"));
+    assertThat(plugin.getConfig().getRemoteConnectorRefs(), equalTo(Arrays.asList("remote-connector")));
     assertThat(plugin.getConfig().getLocalUsername(), equalTo("myuser"));
     assertThat(plugin.getConfig().getLocalPassword(), equalTo("mypass"));
     assertThat(plugin.getConfig().getRemoteUsername(), equalTo("myuser"));

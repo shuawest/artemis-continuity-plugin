@@ -250,13 +250,13 @@ public interface ContinuityAuditLogger extends BasicLogger {
     @Message(id = 221017, value = "User {0} is getting getLocalConnector on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
     void getLocalConnector(String user, Object source, Object... args);
 
-    static void getRemoteConnector(Object source) {
-        LOGGER.getRemoteConnector(getCaller(), source);
+    static void getRemoteConnectors(Object source) {
+        LOGGER.getRemoteConnectors(getCaller(), source);
     }
 
     @LogMessage(level = Logger.Level.INFO)
-    @Message(id = 221018, value = "User {0} is getting getRemoteConnector on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
-    void getRemoteConnector(String user, Object source, Object... args);
+    @Message(id = 221018, value = "User {0} is getting getRemoteConnectors on target resource: {1} {2}", format = Message.Format.MESSAGE_FORMAT)
+    void getRemoteConnectors(String user, Object source, Object... args);
 
     static void startService(Object source) {
         LOGGER.startService(getCaller(), source);

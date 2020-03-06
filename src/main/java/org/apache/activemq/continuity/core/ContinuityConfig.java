@@ -55,7 +55,7 @@ public class ContinuityConfig {
   private Boolean isReorgManagementHierarchy;
   
   private String localConnectorRef;
-  private String remoteConnectorRef;
+  private List<String> remoteConnectorRefs;
 
   public ContinuityConfig(Map<String, String> properties) throws ContinuityException {
     this.siteId = parseRequiredProperty(properties, "site-id");
@@ -65,7 +65,7 @@ public class ContinuityConfig {
     this.remotePassword = parseRequiredProperty(properties, "remote-password");
     this.servingAcceptors = parseRequiredListProperty(properties, "serving-acceptors");
     this.localConnectorRef = parseRequiredProperty(properties, "local-connector-ref");
-    this.remoteConnectorRef = parseRequiredProperty(properties, "remote-connector-ref");
+    this.remoteConnectorRefs = parseRequiredListProperty(properties, "remote-connector-refs");
     this.siteActiveByDefault = parseRequiredBooleanProperty(properties, "active-on-start");
 
     this.outflowMirrorSuffix = parseProperty(properties, "outflow-mirror-suffix", DEFAULT_OUTFLOW_MIRROR_SUFFIX);
@@ -113,8 +113,8 @@ public class ContinuityConfig {
     return localConnectorRef;
   }
 
-  public String getRemoteConnectorRef() {
-    return remoteConnectorRef;
+  public List<String> getRemoteConnectorRefs() {
+    return remoteConnectorRefs;
   }
 
   public boolean isSiteActiveByDefault() {
@@ -178,7 +178,7 @@ public class ContinuityConfig {
       ", remoteUsername=" + remoteUsername +
       ", remotePassword=" + ((remotePassword == null)? "null" : "******") + 
       ", localConnectorRef=" + localConnectorRef + 
-      ", remoteConnectorRef=" + remoteConnectorRef + 
+      ", remoteConnectorRefs=" + remoteConnectorRefs + 
       ", servingAcceptors=" + servingAcceptors +
       ", siteActiveByDefault=" + siteActiveByDefault +
       ", outMirrorSuffix=" + outflowMirrorSuffix +

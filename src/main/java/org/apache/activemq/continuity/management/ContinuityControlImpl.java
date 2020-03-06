@@ -13,6 +13,9 @@
  */
 package org.apache.activemq.continuity.management;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanOperationInfo;
 
@@ -338,16 +341,16 @@ public class ContinuityControlImpl extends AbstractControl implements Continuity
     }
     
     @Override
-    public String getRemoteConnector()  {
+    public List<String> getRemoteConnectors()  {
         if (ContinuityAuditLogger.isEnabled() && service != null && service.getConfig() != null) {
-            ContinuityAuditLogger.getRemoteConnector(service.getConfig());
+            ContinuityAuditLogger.getRemoteConnectors(service.getConfig());
         }
         clearIO();
         try {
             if(service == null || service.getConfig() == null)
-                return "Continuity configuration does not exist";
+                return new ArrayList<String>();
             else
-                return service.getConfig().getRemoteConnectorRef();
+                return service.getConfig().getRemoteConnectorRefs();
         } finally {
             blockOnIO();
         }

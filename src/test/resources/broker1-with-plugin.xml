@@ -140,7 +140,7 @@ under the License.
             <property key="remote-password" value="mypass" />
             <property key="serving-acceptors" value="artemis" />
             <property key="local-connector-ref" value="local-connector" />
-            <property key="remote-connector-ref" value="remote-connector" />
+            <property key="remote-connector-refs" value="remote-connector" />
             <property key="active-on-start" value="true" />
             <property key="inflow-staging-delay-ms" value="2000" />  
             <property key="outflow-exhausted-poll-duration-ms" value="100" /> 
