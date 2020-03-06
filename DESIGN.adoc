@@ -79,6 +79,8 @@ x add security configuration to allow more than static user/pass for intra-broke
 x test with master:slave cluster for each site
 x test model with shared nothing broker cluster in two sites
 
+- consolidate ansible inventory variable with all:vars
+
 - create operator to deploy image and connect between two sites
 - create Operator to orchestrate the broker swapover
 
@@ -88,7 +90,9 @@ x test model with shared nothing broker cluster in two sites
   - Outflow Recovery Point Actual: time of last bridged message - time it was acked by bridge
   - Inflow Recovery Point Actual: time of bridged message - time originally sent
   - Recovery Time Estimate: time to receive peer mirror and acks, plus time to remove messages based on acks
-  
+
+- determine if queues should be emptied on deactivation, or otherwise moved to inflow queue
+
 - load test 2 site single broker install (compare with single site without the plugin)
 
 - implement queue / address removal

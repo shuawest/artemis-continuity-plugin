@@ -152,15 +152,17 @@ public class ContinuityFlow {
 
   private void startBridge(Bridge bridge) throws ContinuityException {
     try {
-      if (log.isDebugEnabled()) {
-        log.debug("Starting bridge from '{}' to '{}''", bridge.getQueue().getName().toString(),
-            bridge.getForwardingAddress());
-      }
+      if(!bridge.isStarted()) {
+        if (log.isDebugEnabled()) {
+          log.debug("Starting bridge from '{}' to '{}''", bridge.getQueue().getName().toString(),
+              bridge.getForwardingAddress());
+        }
 
-      if (bridge == null) {
-        log.warn("Unable to start bridge for flow '{}', it doesn't exist", this.getSubjectQueueName());
-      } else {
-        bridge.start();
+        if (bridge == null) {
+          log.warn("Unable to start bridge for flow '{}', it doesn't exist", this.getSubjectQueueName());
+        } else {
+          bridge.start();
+        }
       }
 
     } catch (Exception e) {
