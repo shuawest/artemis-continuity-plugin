@@ -76,8 +76,8 @@ x rationalize what happens when there are nondurable and temporary susbscribers
 x add mbeans for observability of plugin components
 x add additional queues to the same address both anycast and multicast
 x add security configuration to allow more than static user/pass for intra-broker communication, plus continuity role/permissions
-
-- test with master:slave cluster for each site
+x test with master:slave cluster for each site
+x test model with shared nothing broker cluster in two sites
 
 - create operator to deploy image and connect between two sites
 - create Operator to orchestrate the broker swapover
@@ -95,13 +95,13 @@ x add security configuration to allow more than static user/pass for intra-broke
 
 - load test 2 site single broker install (compare with single site without the plugin)
 - soak test broker with continuity replication
-- test model with shared nothing broker cluster in two sites
+
 - add additional queue configuration synchronization (beyond initial queue/address pair it does now - filters, diverts, etc)
 - deal with queue configuration updates (beyond the add it has today)
 
 - allow for more than one remote site
-- add discovery groups for remote site connectivity
-- add finer tuning of continuity strategy
+- add discovery groups for remote site and cluster connectivity
+- add finer tuning of continuity strategy - time versus staging based
 - create examples of swapover for local DC, and DC spanned clients, with swapover model
 - automatically adjust delivery delay strategy timeframe based on detected RTO/RPO
 - improve plugin failure / error handling, and shutdown cleanup
@@ -114,8 +114,6 @@ x add security configuration to allow more than static user/pass for intra-broke
 - convert info logging to AuditLogger pattern
 
 - fix server stop issue (can't figure out how to hook into pre-server shutdown to stop sessions, bridges, etc)
-
-- flow name 'address-queue' name in case queue name, in case queue not is not easily derived from address name, or if queue name is reused (although queue names must be unique, if reusing they will only be aligned with the first address)
 
 
 ## Risks
