@@ -78,8 +78,12 @@ x add additional queues to the same address both anycast and multicast
 x add security configuration to allow more than static user/pass for intra-broker communication, plus continuity role/permissions
 x test with master:slave cluster for each site
 x test model with shared nothing broker cluster in two sites
+x consolidate ansible inventory variable with all:vars
 
-- consolidate ansible inventory variable with all:vars
+- deal with multiple contexts for oc/kube in ansible cloud deployments
+- deal with linux/osx differences in sed in launch scripts
+- break out amq-broker-continuity image into its own repository
+- fork or extend activemq-artemis-operator
 
 - create operator to deploy image and connect between two sites
 - create Operator to orchestrate the broker swapover
