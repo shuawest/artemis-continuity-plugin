@@ -69,7 +69,7 @@ public class ContinuityConfig {
     this.siteActiveByDefault = parseRequiredBooleanProperty(properties, "active-on-start");
 
     this.inflowStagingDelay = parseLongProperty(properties, "inflow-staging-delay-ms", 60000L);
-    this.bridgeInterval = parseLongProperty(properties, "bridge-interval-ms", 100L);
+    this.bridgeInterval = parseLongProperty(properties, "bridge-interval-ms", 1000L);
     this.bridgeIntervalMultiplier = parseDoubleProperty(properties, "bridge-interval-multiplier", 0.5);
     this.outflowExhaustedPollDuration = parseLongProperty(properties, "outflow-exhausted-poll-duration-ms", 100L);
     this.inflowAcksConsumedPollDuration = parseLongProperty(properties, "inflow-acks-consumed-poll-duration-ms", 100L);
