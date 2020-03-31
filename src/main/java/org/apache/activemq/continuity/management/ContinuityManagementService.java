@@ -21,6 +21,7 @@ import javax.management.ObjectName;
 import org.apache.activemq.artemis.api.core.management.ObjectNameBuilder;
 import org.apache.activemq.artemis.api.core.management.ResourceNames;
 import org.apache.activemq.artemis.core.server.management.ManagementService;
+import org.apache.activemq.continuity.core.ContinuityBootstrapService;
 import org.apache.activemq.continuity.core.ContinuityException;
 import org.apache.activemq.continuity.core.ContinuityFlow;
 import org.apache.activemq.continuity.core.ContinuityService;
@@ -30,7 +31,8 @@ import org.slf4j.LoggerFactory;
 public class ContinuityManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(ContinuityManagementService.class);
-
+    
+    public static final String CONTINUITY_BOOTSTRAP_NAME = "continuity.bootstrap";
     public static final String CONTINUITY_SERVICE_NAME = "continuity.service";
 
     private final ManagementService managementService;
@@ -55,6 +57,11 @@ public class ContinuityManagementService {
         return getBrokerObjectName().toString().trim();
     }
 
+    public ObjectName getContinuityBootstrapName() throws Exception {
+        String name = String.format("%s,component=continuity,name=%s", getBrokerPrefix(), ObjectName.quote(CONTINUITY_BOOTSTRAP_NAME));
+        return ObjectName.getInstance(name);
+    }
+
     public ObjectName getContinuityServiceName() throws Exception {
         String name = String.format("%s,component=continuity,name=%s", getBrokerPrefix(), ObjectName.quote(CONTINUITY_SERVICE_NAME));
         return ObjectName.getInstance(name);
@@ -73,6 +80,37 @@ public class ContinuityManagementService {
 
     public String getContinuityFlowPrefix(ContinuityService service, ContinuityFlow flow) throws Exception {
         return getContinuityFlowName(service, flow).toString().trim();
+    }
+
+    public void registerContinuityBootstrap(ContinuityBootstrapService bootstrap) throws ContinuityException {
+        try {
+            ObjectName name = getContinuityBootstrapName();
+            if (log.isDebugEnabled()) {
+                log.debug("Registering continuity bootstrap service for management: {}", name);
+            }
+            ContinuityBootstrapControl bootstrapControl = new ContinuityBootstrapControlImpl(bootstrap);
+            managementService.registerInJMX(name, bootstrapControl);
+            managementService.registerInRegistry(CONTINUITY_BOOTSTRAP_NAME, bootstrapControl);
+        } catch (Exception e) {
+            String msg = "Unable to register continuity bootstrap service for management";
+            log.error(msg, e);
+            throw new ContinuityException(msg, e);
+        }
+    }
+
+    public synchronized void unregisterContinuityBootstrap() throws ContinuityException {
+        try {
+            ObjectName name = getContinuityBootstrapName();
+            if (log.isDebugEnabled()) {
+                log.debug("Unregistering continuity bootstrap service from management: {}", name);
+            }
+            managementService.unregisterFromJMX(name);
+            managementService.unregisterFromRegistry(CONTINUITY_BOOTSTRAP_NAME);
+        } catch (Exception e) {
+            String msg = "Unable to register continuity service for management";
+            log.error(msg, e);
+            throw new ContinuityException(msg, e);
+        }
     }
 
     public void registerContinuityService(ContinuityService service) throws ContinuityException {

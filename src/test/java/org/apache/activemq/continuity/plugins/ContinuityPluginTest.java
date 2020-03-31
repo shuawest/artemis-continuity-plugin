@@ -37,14 +37,13 @@ public class ContinuityPluginTest extends ContinuityTestBase {
     ContinuityPlugin plugin = new ContinuityPlugin();
     plugin.init(new HashMap<String, String>() {{
       put("site-id", "site2");
-      put("local-invm-uri", "vm://2");
       put("local-username", "myuser");
       put("local-password", "mypass");
       put("remote-username", "myuser");
       put("remote-password", "mypass");
+      put("serving-acceptors", "artemis");
       put("local-connector-ref", "local-connector");
       put("remote-connector-refs", "remote-connector");
-      put("serving-acceptors", "artemis");
       put("active-on-start", "true");
     }}); 
 

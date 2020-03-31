@@ -33,6 +33,11 @@ public class ContinuityPlugin implements ActiveMQServerPlugin {
   private ContinuityConfig continuityConfig;
   private boolean isConfigValid = false;
 
+  private DestinationPlugin destinationPlugin;
+  private DuplicateIdPlugin duplicateIdPlugin;
+  private InflowMirrorPlugin inflowMirrorPlugin;
+  private AckInterceptorPlugin ackInterceptorPlugin;
+
   @Override
   public void init(Map<String, String> properties) {
     try {
@@ -54,19 +59,33 @@ public class ContinuityPlugin implements ActiveMQServerPlugin {
 
     log.debug("Registering dependent plugins");
     Configuration brokerConfig = server.getConfiguration();
-    brokerConfig.registerBrokerPlugin(new DestinationPlugin(continuityService));
-    brokerConfig.registerBrokerPlugin(new DuplicateIdPlugin(continuityService));
-    brokerConfig.registerBrokerPlugin(new InflowMirrorPlugin(continuityService));
-    brokerConfig.registerBrokerPlugin(new AckInterceptorPlugin(continuityService));
+
+    destinationPlugin = new DestinationPlugin(continuityService);
+    brokerConfig.registerBrokerPlugin(destinationPlugin);
+
+    duplicateIdPlugin = new DuplicateIdPlugin(continuityService); 
+    brokerConfig.registerBrokerPlugin(duplicateIdPlugin);
+
+    inflowMirrorPlugin = new InflowMirrorPlugin(continuityService);
+    brokerConfig.registerBrokerPlugin(inflowMirrorPlugin);
+
+    ackInterceptorPlugin = new AckInterceptorPlugin(continuityService);
+    brokerConfig.registerBrokerPlugin(ackInterceptorPlugin);
   }
 
   @Override
   public void unregistered(ActiveMQServer server) {
     log.debug("Unregistering continuity service");
     try {
-      if(isConfigValid) {
+      if(isConfigValid && continuityService.isStarted()) {
         continuityService.stop();
       }
+
+      Configuration brokerConfig = server.getConfiguration();
+      brokerConfig.unRegisterBrokerPlugin(destinationPlugin);
+      brokerConfig.unRegisterBrokerPlugin(duplicateIdPlugin);
+      brokerConfig.unRegisterBrokerPlugin(inflowMirrorPlugin);
+      brokerConfig.unRegisterBrokerPlugin(ackInterceptorPlugin);
     } catch (ContinuityException e) {
       if(log.isErrorEnabled()) {
         log.error("Unable to stop continuity service on unregister", e);

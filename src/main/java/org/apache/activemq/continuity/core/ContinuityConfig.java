@@ -31,6 +31,25 @@ public class ContinuityConfig {
   private static final String DEFAULT_INFLOW_ACKS_SUFFIX = ".in.acks";
   private static final String DEFAULT_CMD_DESTINATION_PREFIX = "continuity.cmd";
 
+  public static final String CONFIG_SITE_ID = "site-id";
+  public static final String CONFIG_LOCAL_USERNAME =  "local-username";
+  public static final String CONFIG_LOCAL_PASSWORD =  "local-password";
+  public static final String CONFIG_REMOTE_USERNAME =   "remote-username";
+  public static final String CONFIG_REMOTE_PASSWORD =   "remote-password";
+  public static final String CONFIG_SERVING_ACCEPTORS =  "serving-acceptors";
+  public static final String CONFIG_LOCAL_CONNECTOR_REF =  "local-connector-ref";
+  public static final String CONFIG_REMOTE_CONNECTOR_REFS =  "remote-connector-refs";
+  public static final String CONFIG_ACTIVE_ON_START =  "active-on-start";
+  
+  public static final String CONFIG_INFLOW_STAGING_DELAY =  "inflow-staging-delay-ms";
+  public static final String CONFIG_BRIDGE_INTERVAL =  "bridge-interval-ms";
+  public static final String CONFIG_BRIDGE_INTERVAL_MULTIPLIER =  "bridge-interval-multiplier";
+  public static final String CONFIG_OUTFLOW_EXHAUSTED_POLL_DURATION =  "outflow-exhausted-poll-duration-ms";
+  public static final String CONFIG_INFLOW_ACKS_CONSUMED_POLL_DURATION =  "inflow-acks-consumed-poll-duration-ms";
+  public static final String CONFIG_ACTIVATION_TIMEOUT =  "activation-timeout-ms";
+  public static final String CONFIG_REORG_MGMT =  "reorg-management-hierarchy";
+
+
   private String siteId; 
   
   private String localUsername; 
@@ -58,23 +77,23 @@ public class ContinuityConfig {
   private List<String> remoteConnectorRefs;
 
   public ContinuityConfig(Map<String, String> properties) throws ContinuityException {
-    this.siteId = parseRequiredProperty(properties, "site-id");
-    this.localUsername = parseRequiredProperty(properties, "local-username");
-    this.localPassword = parseRequiredProperty(properties, "local-password");
-    this.remoteUsername = parseRequiredProperty(properties, "remote-username");
-    this.remotePassword = parseRequiredProperty(properties, "remote-password");
-    this.servingAcceptors = parseRequiredListProperty(properties, "serving-acceptors");
-    this.localConnectorRef = parseRequiredProperty(properties, "local-connector-ref");
-    this.remoteConnectorRefs = parseRequiredListProperty(properties, "remote-connector-refs");
-    this.siteActiveByDefault = parseRequiredBooleanProperty(properties, "active-on-start");
+    this.siteId = parseRequiredProperty(properties, CONFIG_SITE_ID);
+    this.localUsername = parseRequiredProperty(properties, CONFIG_LOCAL_USERNAME);
+    this.localPassword = parseRequiredProperty(properties, CONFIG_LOCAL_PASSWORD);
+    this.remoteUsername = parseRequiredProperty(properties, CONFIG_REMOTE_USERNAME);
+    this.remotePassword = parseRequiredProperty(properties, CONFIG_REMOTE_PASSWORD);
+    this.servingAcceptors = parseRequiredListProperty(properties, CONFIG_SERVING_ACCEPTORS);
+    this.localConnectorRef = parseRequiredProperty(properties, CONFIG_LOCAL_CONNECTOR_REF);
+    this.remoteConnectorRefs = parseRequiredListProperty(properties, CONFIG_REMOTE_CONNECTOR_REFS);
+    this.siteActiveByDefault = parseRequiredBooleanProperty(properties, CONFIG_ACTIVE_ON_START);
 
-    this.inflowStagingDelay = parseLongProperty(properties, "inflow-staging-delay-ms", 60000L);
-    this.bridgeInterval = parseLongProperty(properties, "bridge-interval-ms", 1000L);
-    this.bridgeIntervalMultiplier = parseDoubleProperty(properties, "bridge-interval-multiplier", 0.5);
-    this.outflowExhaustedPollDuration = parseLongProperty(properties, "outflow-exhausted-poll-duration-ms", 100L);
-    this.inflowAcksConsumedPollDuration = parseLongProperty(properties, "inflow-acks-consumed-poll-duration-ms", 100L);
-    this.activationTimeout = parseLongProperty(properties, "activation-timeout-ms", 300000L); // default to 5mins
-    this.isReorgManagementHierarchy = parseBooleanProperty(properties, "reorg-management-hierarchy", true);
+    this.inflowStagingDelay = parseLongProperty(properties, CONFIG_INFLOW_STAGING_DELAY, 60000L);
+    this.bridgeInterval = parseLongProperty(properties, CONFIG_BRIDGE_INTERVAL, 1000L);
+    this.bridgeIntervalMultiplier = parseDoubleProperty(properties, CONFIG_BRIDGE_INTERVAL_MULTIPLIER, 0.5);
+    this.outflowExhaustedPollDuration = parseLongProperty(properties, CONFIG_OUTFLOW_EXHAUSTED_POLL_DURATION, 100L);
+    this.inflowAcksConsumedPollDuration = parseLongProperty(properties, CONFIG_INFLOW_ACKS_CONSUMED_POLL_DURATION, 100L);
+    this.activationTimeout = parseLongProperty(properties, CONFIG_ACTIVATION_TIMEOUT, 300000L); // 5min default 
+    this.isReorgManagementHierarchy = parseBooleanProperty(properties, CONFIG_REORG_MGMT, true);
 
     this.outflowMirrorSuffix = parseProperty(properties, "outflow-mirror-suffix", DEFAULT_OUTFLOW_MIRROR_SUFFIX);
     this.outflowAcksSuffix = parseProperty(properties, "outflow-acks-suffix", DEFAULT_OUTFLOW_ACKS_SUFFIX);
@@ -225,10 +244,14 @@ public class ContinuityConfig {
 
   private static List<String> parseListProperty(Map<String, String> properties, String name) {
     String value = properties.get(name);
-    if(value == null)
+    if(value == null || value.trim() == "")
       return new ArrayList<String>();
-    else
-      return Arrays.asList(value.split(";"));
+    else {
+      if(value.contains(";"))
+        return Arrays.asList(value.split(";"));
+      else 
+        return Arrays.asList(value.split(","));
+    }
   }
 
   private static Long parseLongProperty(Map<String, String> properties, String name, long defaultValue) {
