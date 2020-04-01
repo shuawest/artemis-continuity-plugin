@@ -94,8 +94,7 @@ public class ContinuityBootstrapControlImpl extends AbstractControl implements C
     }
 
     @Override
-    public void configure(String siteId, Boolean activeOnStart, String servingAcceptors, String localConnectorRef,
-            String remoteConnectorRefs, Boolean reorgManagement) throws Exception {
+    public void configure(String siteId, Boolean activeOnStart, String servingAcceptors, String localConnectorRef, String remoteConnectorRefs, Boolean reorgManagement) throws Exception {
         if (ContinuityBootstrapAuditLogger.isEnabled()) {
             ContinuityBootstrapAuditLogger.configure(bootstrapService, siteId, activeOnStart, servingAcceptors, localConnectorRef, remoteConnectorRefs, reorgManagement);
         }
@@ -121,14 +120,13 @@ public class ContinuityBootstrapControlImpl extends AbstractControl implements C
     }
 
     @Override
-    public void tune(Long inflowStagingDelay, Long bridgeInterval,
-            Double bridgeIntervalMultiplier, Long pollDuration, Long activationTimeout) throws Exception {        
+    public void tune(Long activationTimeout, Long inflowStagingDelay, Long bridgeInterval, Double bridgeIntervalMultiplier, Long pollDuration) throws Exception {        
         if (ContinuityBootstrapAuditLogger.isEnabled()) {
-            ContinuityBootstrapAuditLogger.tune(bootstrapService, inflowStagingDelay, bridgeInterval, bridgeIntervalMultiplier, pollDuration, activationTimeout);
+            ContinuityBootstrapAuditLogger.tune(bootstrapService, activationTimeout, inflowStagingDelay, bridgeInterval, bridgeIntervalMultiplier, pollDuration);
         }
         clearIO();
         try {
-            bootstrapService.tune(inflowStagingDelay, bridgeInterval, bridgeIntervalMultiplier, pollDuration, activationTimeout);
+            bootstrapService.tune(activationTimeout, inflowStagingDelay, bridgeInterval, bridgeIntervalMultiplier, pollDuration);
         } finally {
             blockOnIO();
         } 

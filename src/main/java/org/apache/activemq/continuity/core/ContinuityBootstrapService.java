@@ -83,7 +83,7 @@ public class ContinuityBootstrapService {
   public void configure(String siteId, 
                         Boolean activeOnStart, 
                         String servingAcceptors, 
-                        String localConnectorRef, 
+                        String localConnectorRef,
                         String remoteConnectorRefs, 
                         Boolean reorgManagement) throws Exception 
   {
@@ -106,18 +106,28 @@ public class ContinuityBootstrapService {
     properties.put(ContinuityConfig.CONFIG_REMOTE_PASSWORD, remoteontinuityPass);
   }
 
-  public void tune(Long inflowStagingDelay, 
+  public void tune(Long activationTimeout,
+                   Long inflowStagingDelay, 
                    Long bridgeInterval,
                    Double bridgeIntervalMultiplier, 
-                   Long pollDuration,
-                   Long activationTimeout) throws Exception 
+                   Long pollDuration) throws Exception 
   {
-    properties.put(ContinuityConfig.CONFIG_INFLOW_STAGING_DELAY, Long.toString(inflowStagingDelay));
-    properties.put(ContinuityConfig.CONFIG_BRIDGE_INTERVAL, Long.toString(activationTimeout));
-    properties.put(ContinuityConfig.CONFIG_BRIDGE_INTERVAL_MULTIPLIER, Double.toString(bridgeIntervalMultiplier));
-    properties.put(ContinuityConfig.CONFIG_OUTFLOW_EXHAUSTED_POLL_DURATION, Long.toString(pollDuration));
-    properties.put(ContinuityConfig.CONFIG_INFLOW_ACKS_CONSUMED_POLL_DURATION, Long.toString(pollDuration));
-    properties.put(ContinuityConfig.CONFIG_ACTIVATION_TIMEOUT, Long.toString(activationTimeout));
+    if(activationTimeout != null)
+      properties.put(ContinuityConfig.CONFIG_ACTIVATION_TIMEOUT, Long.toString(activationTimeout));
+    
+    if(inflowStagingDelay != null)
+      properties.put(ContinuityConfig.CONFIG_INFLOW_STAGING_DELAY, Long.toString(inflowStagingDelay));
+
+    if(bridgeInterval != null)
+      properties.put(ContinuityConfig.CONFIG_BRIDGE_INTERVAL, Long.toString(bridgeInterval));
+
+    if(bridgeIntervalMultiplier != null)
+      properties.put(ContinuityConfig.CONFIG_BRIDGE_INTERVAL_MULTIPLIER, Double.toString(bridgeIntervalMultiplier));
+      
+    if(pollDuration != null) {
+      properties.put(ContinuityConfig.CONFIG_OUTFLOW_EXHAUSTED_POLL_DURATION, Long.toString(pollDuration));
+      properties.put(ContinuityConfig.CONFIG_INFLOW_ACKS_CONSUMED_POLL_DURATION, Long.toString(pollDuration));
+    }
   } 
 
   public ContinuityPlugin getContinuityPlugin() {

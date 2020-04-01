@@ -43,7 +43,7 @@ public class ContinuityBootstrapPluginTest extends ContinuityTestBase {
 
     bootstrapService.configure("site1", true, "artemis", "local-connector", "remote-connector", true);
     bootstrapService.setSecrets("myuser", "mypass", "asdf", "zxcv");
-    bootstrapService.tune(200000L, 1234L, 0.9D, 2000L, 990000L);
+    bootstrapService.tune(990000L, 990001L, 2121L, 0.9D, 333L);
     bootstrapService.boot();
 
     Thread.sleep(500L);
@@ -73,7 +73,7 @@ public class ContinuityBootstrapPluginTest extends ContinuityTestBase {
     ContinuityBootstrapService bootstrapService = bootstrapPlugin.getBootstrapService();
     bootstrapService.configure("site1", true, "artemis", "local-connector", "remote-connector", true);
     bootstrapService.setSecrets("myuser", "mypass", "asdf", "zxcv");
-    bootstrapService.tune(200000L, 1234L, 0.9D, 2000L, 990000L);
+    bootstrapService.tune(990000L, 990001L, 2121L, 0.9D, 333L);
     bootstrapService.boot();
 
     Thread.sleep(500L);
@@ -97,7 +97,7 @@ public class ContinuityBootstrapPluginTest extends ContinuityTestBase {
     ContinuityBootstrapService bootstrapService = bootstrapPlugin.getBootstrapService();
     bootstrapService.configure("site1", true, "artemis", "local-connector", "remote-connector", true);
     bootstrapService.setSecrets("myuser", "mypass", "asdf", "zxcv");
-    bootstrapService.tune(200000L, 1234L, 0.9D, 2000L, 990000L);
+    bootstrapService.tune(990000L, 990001L, 2121L, 0.9D, 333L);
     bootstrapService.boot();
 
     Thread.sleep(500L);

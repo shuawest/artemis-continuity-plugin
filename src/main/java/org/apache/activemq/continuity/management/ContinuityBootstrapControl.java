@@ -41,7 +41,7 @@ public interface ContinuityBootstrapControl {
     void configure(@Parameter(name = "siteId", desc = "Site Id") String siteId, 
                    @Parameter(name = "activeOnStart", desc = "Active on Start") Boolean activeOnStart, 
                    @Parameter(name = "servingAcceptors", desc = "Serving Acceptors") String servingAcceptors,
-                   @Parameter(name = "localConnectorRef", desc = "Local Connector") String localConnectorRef,
+                   @Parameter(name = "localConnectorRef", desc = "Local Connector") String localConnectorRef, 
                    @Parameter(name = "remoteConnectorRefs", desc = "Remote Connectors (, or ; separated)") String remoteConnectorRefs,               
                    @Parameter(name = "reorgManagement", desc = "Reorg Management Hierarchy") Boolean reorgManagement) throws Exception;
 
@@ -52,10 +52,10 @@ public interface ContinuityBootstrapControl {
                     @Parameter(name = "remoteContinuityPass", desc = "Remote Continuity Pass") String remoteontinuityPass) throws Exception;
 
     @Operation(desc = "Override continuity service tuning defaults", impact = MBeanOperationInfo.ACTION)
-    void tune(@Parameter(name = "inflowStagingDelay", desc = "Inflow Staging Delay (ms)") Long inflowStagingDelay,
+    void tune(@Parameter(name = "activationTimeout", desc = "Activation Timeout (ms)") Long activationTimeout,
+              @Parameter(name = "inflowStagingDelay", desc = "Inflow Staging Delay (ms)") Long inflowStagingDelay,
               @Parameter(name = "bridgeInterval", desc = "Bridge Interval (ms)") Long bridgeInterval,
               @Parameter(name = "bridgeIntervalMultiplier", desc = "Bridge Interval Multiplier") Double bridgeIntervalMultiplier,
-              @Parameter(name = "pollDuration", desc = "Poll Duration (ms)") Long pollDuration,
-              @Parameter(name = "activationTimeout", desc = "Activation Timeout (ms)") Long activationTimeout) throws Exception;
+              @Parameter(name = "pollDuration", desc = "Poll Duration (ms)") Long pollDuration) throws Exception;
 
 }
