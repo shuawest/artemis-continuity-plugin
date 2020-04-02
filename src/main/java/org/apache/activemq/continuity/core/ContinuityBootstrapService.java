@@ -40,8 +40,8 @@ public class ContinuityBootstrapService {
   }
 
   public synchronized void initialize() throws ContinuityException {
-    if (log.isDebugEnabled()) {
-      log.debug("Initializing continuity bootstrap");
+    if (log.isInfoEnabled()) {
+      log.info("Initializing continuity bootstrap");
     }
 
     mgmt.registerContinuityBootstrap(this);
