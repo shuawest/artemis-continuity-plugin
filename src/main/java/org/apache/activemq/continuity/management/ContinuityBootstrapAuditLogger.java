@@ -42,7 +42,7 @@ import org.jboss.logging.annotations.MessageLogger;
  *
  * so an INFO message would be 601000 to 601999
  */
-@MessageLogger(projectCode = "CTY")
+@MessageLogger(projectCode = "CTB")
 public interface ContinuityBootstrapAuditLogger extends BasicLogger {
 
     ContinuityBootstrapAuditLogger LOGGER = Logger.getMessageLogger(ContinuityBootstrapAuditLogger.class, "org.apache.activemq.audit.base");

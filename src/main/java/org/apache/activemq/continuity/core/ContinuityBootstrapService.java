@@ -52,6 +52,10 @@ public class ContinuityBootstrapService {
   }
 
   public void boot() throws Exception {
+    if(log.isInfoEnabled()) {
+      log.info("booting");
+    }
+
     this.continuityPlugin = new ContinuityPlugin();
     continuityPlugin.init(properties);
 
@@ -87,6 +91,11 @@ public class ContinuityBootstrapService {
                         String remoteConnectorRefs, 
                         Boolean reorgManagement) throws Exception 
   {
+    if(log.isInfoEnabled()) {
+      log.info("configuring bootstrap siteid: '{}', activeOnStart: '{}', servingAcceptors: '{}', localConnectorRef: '{}', remoteConnectorRefs: '{}', reorgManagement: '{}'", 
+        siteId, activeOnStart, servingAcceptors, localConnectorRef, remoteConnectorRefs, reorgManagement);
+    }
+    
     properties.put(ContinuityConfig.CONFIG_SITE_ID, siteId);
     properties.put(ContinuityConfig.CONFIG_ACTIVE_ON_START, Boolean.toString(activeOnStart));
     properties.put(ContinuityConfig.CONFIG_SERVING_ACCEPTORS, servingAcceptors);
@@ -100,6 +109,14 @@ public class ContinuityBootstrapService {
                          String remoteContinuityUser, 
                          String remoteontinuityPass) throws Exception 
   {
+    if(log.isInfoEnabled()) {
+      log.info("setting secrets localContinuityUser: '{}', localContinuityPass: '{}', remoteContinuityUser: '{}', remoteontinuityPass: '{}'", 
+        localContinuityUser, 
+        (localContinuityPass==null)?"":"***", 
+        remoteContinuityUser, 
+        (remoteontinuityPass==null)?"":"***");
+    }
+    
     properties.put(ContinuityConfig.CONFIG_LOCAL_USERNAME, localContinuityUser);
     properties.put(ContinuityConfig.CONFIG_LOCAL_PASSWORD, localContinuityPass);
     properties.put(ContinuityConfig.CONFIG_REMOTE_USERNAME, remoteContinuityUser);
@@ -112,6 +129,11 @@ public class ContinuityBootstrapService {
                    Double bridgeIntervalMultiplier, 
                    Long pollDuration) throws Exception 
   {
+    if(log.isInfoEnabled()) {
+      log.info("tuning bootstrap activationTimeout: '{}', inflowStagingDelay: '{}', bridgeInterval: '{}', bridgeIntervalMultiplier: '{}', pollDuration: '{}'", 
+        activationTimeout, inflowStagingDelay, bridgeInterval, bridgeIntervalMultiplier, pollDuration);
+    }
+    
     if(activationTimeout != null)
       properties.put(ContinuityConfig.CONFIG_ACTIVATION_TIMEOUT, Long.toString(activationTimeout));
     
